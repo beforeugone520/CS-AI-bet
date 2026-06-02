@@ -1,0 +1,179 @@
+{
+  "blocked_pages": 0,
+  "cache_dir": "/Users/bruce/Desktop/work/data/cologne2026/raw/fivee_cache",
+  "error_pages": 4,
+  "kind": "team-pages",
+  "maps": 109,
+  "maps_path": "data/cologne2026/raw/fivee_stage1_6m_2026-06-01/fivee_maps.csv",
+  "match_window_end": "2026-06-01",
+  "match_window_start": "2025-12-01",
+  "matches": 0,
+  "matches_path": "data/cologne2026/raw/fivee_stage1_6m_2026-06-01/fivee_matches.csv",
+  "ok_pages": 12,
+  "output_dir": "/Users/bruce/Desktop/work/data/cologne2026/raw/fivee_stage1_6m_2026-06-01",
+  "page_reports": [
+    {
+      "all_matches": 355,
+      "cache_path": "data/cologne2026/raw/fivee_cache/29706164f1d4cc19fb617c88.html",
+      "maps": 9,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "GamerLegion",
+      "url": "https://csgo.5eplay.com/data/team/gamerlegion"
+    },
+    {
+      "all_matches": 42,
+      "cache_path": "data/cologne2026/raw/fivee_cache/5091f69b2487625b954d9b85.html",
+      "maps": 6,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "B8",
+      "url": "https://csgo.5eplay.com/data/team/b8"
+    },
+    {
+      "all_matches": 0,
+      "error": "all fetchers failed for https://csgo.5eplay.com/data/team/betboom: urllib: HTTP Error 404: Not Found; requests: requests is not installed; install cs2pickem[scrape] for this fallback; curl: Command '['curl', '-L', '--fail', '--silent', '--show-error', '--max-time', '30', '-H', 'User-Agent: cs2pickem-offline-research/0.1 (+personal analytics)', 'https://csgo.5eplay.com/data/team/betboom']' returned non-zero exit status 22.",
+      "maps": 0,
+      "matches": 0,
+      "players": 0,
+      "status": "error",
+      "url": "https://csgo.5eplay.com/data/team/betboom"
+    },
+    {
+      "all_matches": 423,
+      "cache_path": "data/cologne2026/raw/fivee_cache/4f8326fa01f38db592de5ade.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "MIBR",
+      "url": "https://csgo.5eplay.com/data/team/mibr"
+    },
+    {
+      "all_matches": 691,
+      "cache_path": "data/cologne2026/raw/fivee_cache/4b2de532d576082cd733bea5.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "Heroic",
+      "url": "https://csgo.5eplay.com/data/team/heroic"
+    },
+    {
+      "all_matches": 348,
+      "cache_path": "data/cologne2026/raw/fivee_cache/e380a2f2d8895433a12067ae.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "Lynn Vision",
+      "url": "https://csgo.5eplay.com/data/team/lynn-vision"
+    },
+    {
+      "all_matches": 600,
+      "cache_path": "data/cologne2026/raw/fivee_cache/a21fa43007af42a201d602ea.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "BIG",
+      "url": "https://csgo.5eplay.com/data/team/big"
+    },
+    {
+      "all_matches": 657,
+      "cache_path": "data/cologne2026/raw/fivee_cache/c84b4092ea681e68097d5d64.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "TYLOO",
+      "url": "https://csgo.5eplay.com/data/team/tyloo"
+    },
+    {
+      "all_matches": 260,
+      "cache_path": "data/cologne2026/raw/fivee_cache/204702b26a3934f441b8a6bb.html",
+      "maps": 8,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "SINNERS",
+      "url": "https://csgo.5eplay.com/data/team/sinners"
+    },
+    {
+      "all_matches": 0,
+      "error": "all fetchers failed for https://csgo.5eplay.com/data/team/m80: urllib: HTTP Error 404: Not Found; requests: requests is not installed; install cs2pickem[scrape] for this fallback; curl: Command '['curl', '-L', '--fail', '--silent', '--show-error', '--max-time', '30', '-H', 'User-Agent: cs2pickem-offline-research/0.1 (+personal analytics)', 'https://csgo.5eplay.com/data/team/m80']' returned non-zero exit status 22.",
+      "maps": 0,
+      "matches": 0,
+      "players": 0,
+      "status": "error",
+      "url": "https://csgo.5eplay.com/data/team/m80"
+    },
+    {
+      "all_matches": 765,
+      "cache_path": "data/cologne2026/raw/fivee_cache/7175d4c44824f215b303c8c8.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "Liquid",
+      "url": "https://csgo.5eplay.com/data/team/liquid"
+    },
+    {
+      "all_matches": 130,
+      "cache_path": "data/cologne2026/raw/fivee_cache/82898fde353e7e11ed1f6c2d.html",
+      "maps": 10,
+      "matches": 0,
+      "players": 5,
+      "status": "ok",
+      "team": "Sharks",
+      "url": "https://csgo.5eplay.com/data/team/sharks"
+    },
+    {
+      "all_matches": 408,
+      "cache_path": "data/cologne2026/raw/fivee_cache/950a1f98ad73cb51447887d1.html",
+      "maps": 9,
+      "matches": 0,
+      "players": 0,
+      "status": "ok",
+      "team": "NRG",
+      "url": "https://csgo.5eplay.com/data/team/nrg"
+    },
+    {
+      "all_matches": 27,
+      "cache_path": "data/cologne2026/raw/fivee_cache/5a6f1fa5e6cc6553edb7e160.html",
+      "maps": 7,
+      "matches": 0,
+      "players": 0,
+      "status": "ok",
+      "team": "Gaimin Gladiators",
+      "url": "https://csgo.5eplay.com/data/team/gaimin-gladiators"
+    },
+    {
+      "all_matches": 0,
+      "error": "all fetchers failed for https://csgo.5eplay.com/data/team/thunder-downunder: urllib: HTTP Error 404: Not Found; requests: requests is not installed; install cs2pickem[scrape] for this fallback; curl: Command '['curl', '-L', '--fail', '--silent', '--show-error', '--max-time', '30', '-H', 'User-Agent: cs2pickem-offline-research/0.1 (+personal analytics)', 'https://csgo.5eplay.com/data/team/thunder-downunder']' returned non-zero exit status 22.",
+      "maps": 0,
+      "matches": 0,
+      "players": 0,
+      "status": "error",
+      "url": "https://csgo.5eplay.com/data/team/thunder-downunder"
+    },
+    {
+      "all_matches": 0,
+      "error": "all fetchers failed for https://csgo.5eplay.com/data/team/flyquest: urllib: HTTP Error 404: Not Found; requests: requests is not installed; install cs2pickem[scrape] for this fallback; curl: Command '['curl', '-L', '--fail', '--silent', '--show-error', '--max-time', '30', '-H', 'User-Agent: cs2pickem-offline-research/0.1 (+personal analytics)', 'https://csgo.5eplay.com/data/team/flyquest']' returned non-zero exit status 22.",
+      "maps": 0,
+      "matches": 0,
+      "players": 0,
+      "status": "error",
+      "url": "https://csgo.5eplay.com/data/team/flyquest"
+    }
+  ],
+  "players": 50,
+  "players_path": "data/cologne2026/raw/fivee_stage1_6m_2026-06-01/fivee_players.csv",
+  "source": "5e",
+  "teams": 16,
+  "teams_path": "data/cologne2026/raw/fivee_stage1_6m_2026-06-01/fivee_teams.csv",
+  "updated_at": "2026-06-01T09:09:14.691238+00:00",
+  "urls": 16
+}

@@ -1,0 +1,7 @@
+date,event,event_tier,status,team1,team2,winner,best_of,map,team1_rank,team2_rank,team1_rmr_points,team2_rmr_points,team1_rating,team2_rating,team1_kd,team2_kd,odds_team1,odds_team2
+2026-05-01,IEM Cologne Qualifier,S,completed,Alpha,Bravo,Alpha,1,mirage,4,18,900,520,1.18,1.02,1.15,0.99,1.55,2.35
+2026-05-03,IEM Cologne Qualifier,S,completed,Alpha,Charlie,Alpha,3,mirage,4,19,900,520,1.18,1.02,1.15,0.99,1.55,2.35
+2026-05-05,IEM Cologne Qualifier,S,completed,Alpha,Bravo,Alpha,1,mirage,4,20,900,520,1.18,1.02,1.15,0.99,1.55,2.35
+2026-05-07,IEM Cologne Qualifier,S,completed,Alpha,Charlie,Charlie,3,mirage,4,21,900,520,1.18,1.02,1.15,0.99,1.55,2.35
+2026-05-09,IEM Cologne Qualifier,S,completed,Alpha,Bravo,Alpha,1,inferno,4,22,900,520,1.18,1.02,1.15,0.99,1.55,2.35
+2026-05-12,IEM Cologne Qualifier,S,completed,Bravo,Alpha,Alpha,1,mirage,22,4,500,900,1.01,1.2,0.98,1.17,2.8,1.42

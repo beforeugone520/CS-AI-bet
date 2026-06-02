@@ -1,0 +1,71 @@
+{
+  "aliases": {
+    "B8": [
+      "B8"
+    ],
+    "BIG": [
+      "BIG"
+    ],
+    "BetBoom": [
+      "BB",
+      "BetBoom",
+      "BetBoom Team"
+    ],
+    "FlyQuest": [
+      "FlyQuest"
+    ],
+    "Gaimin Gladiators": [
+      "Gaimin Gladiators"
+    ],
+    "GamerLegion": [
+      "GL",
+      "GamerLegion"
+    ],
+    "HEROIC": [
+      "Heroic",
+      "HEROIC"
+    ],
+    "Liquid": [
+      "Liquid"
+    ],
+    "Lynn Vision": [
+      "LVG",
+      "Lynn Vision",
+      "Lynn Vision Gaming"
+    ],
+    "M80": [
+      "M80"
+    ],
+    "MIBR": [
+      "MIBR"
+    ],
+    "NRG": [
+      "NRG"
+    ],
+    "SINNERS": [
+      "SINNERS"
+    ],
+    "Sharks": [
+      "Sharks"
+    ],
+    "THUNDER dOWNUNDER": [
+      "THUNDER dOWNUNDER"
+    ],
+    "TYLOO": [
+      "TYLOO"
+    ]
+  },
+  "features_path": "data/cologne2026/processed/stage1_teams_with_fivee_match_features_6m_2026-06-01.csv",
+  "filtered_maps": 1412,
+  "filtered_maps_path": "data/cologne2026/processed/fivee_stage1_match_maps_6m_2026-06-01.csv",
+  "filtered_matches": 646,
+  "filtered_matches_path": "data/cologne2026/processed/fivee_stage1_match_results_6m_2026-06-01.csv",
+  "kind": "stage1-six-month-feature-build",
+  "matched_stage1_teams": 16,
+  "raw_maps_path": "data/cologne2026/raw/fivee_match_results_6m_2026-06-01/fivee_match_maps.csv",
+  "raw_matches_path": "data/cologne2026/raw/fivee_match_results_6m_2026-06-01/fivee_match_results.csv",
+  "source": "5e",
+  "stage1_teams": 16,
+  "window_end": "2026-06-01",
+  "window_start": "2025-12-01"
+}

@@ -1,0 +1,46 @@
+{
+  "event": "IEM Cologne Major 2026 Stage 1",
+  "collected": "2026-06-01",
+  "method": "web search (skin.club aggregation, legalsportsbetting odds, gameofskill/polymarket)",
+  "sources": [
+    "https://community.skin.club/en/news/all-pickem-predictions-for-iem-cologne-2026",
+    "https://www.legalsportsbetting.com/news/iem-cologne-major-2026-pickem-guide-for-stage-1-matches-05-26-2026/",
+    "https://egamersworld.com/blog/iem-cologne-major-2026-stage-1-pickem-predictions--9sRd0Ly3J-",
+    "https://www.gameofskill.gg/iem-cologne-major-2026"
+  ],
+  "expert_ballots": {
+    "Ash":         {"3-0": ["MIBR", "B8"],                 "0-3": ["Lynn Vision", "THUNDER dOWNUNDER"], "advance": ["HEROIC", "BetBoom", "GamerLegion", "BIG", "M80", "Liquid", "Gaimin Gladiators"]},
+    "James Banks": {"3-0": ["GamerLegion", "B8"],          "0-3": ["Sharks", "THUNDER dOWNUNDER"],      "advance": ["MIBR", "BetBoom", "TYLOO", "BIG", "M80", "HEROIC"]},
+    "Mauisnake":   {"3-0": ["GamerLegion", "BetBoom"],     "0-3": ["FlyQuest", "THUNDER dOWNUNDER"],    "advance": ["MIBR", "BIG", "SINNERS", "M80", "B8", "HEROIC"]},
+    "STYKO":       {"3-0": ["BIG", "GamerLegion"],         "0-3": ["THUNDER dOWNUNDER", "FlyQuest"],    "advance": ["BetBoom", "B8", "HEROIC", "SINNERS", "M80", "MIBR"]},
+    "fl0m":        {"3-0": ["GamerLegion", "BetBoom"],     "0-3": ["Gaimin Gladiators", "FlyQuest"],    "advance": ["M80", "NRG", "BIG", "SINNERS", "B8", "HEROIC"]},
+    "kane":        {"3-0": ["GamerLegion", "B8"],          "0-3": ["Gaimin Gladiators", "THUNDER dOWNUNDER"], "advance": ["BetBoom", "MIBR", "NRG", "BIG", "HEROIC", "M80"]},
+    "NartOutHere": {"3-0": ["GamerLegion", "BetBoom"],     "0-3": ["Gaimin Gladiators", "THUNDER dOWNUNDER"], "advance": ["MIBR", "Liquid", "BIG", "SINNERS", "B8", "HEROIC"]},
+    "cmtry":       {"3-0": ["GamerLegion", "MIBR"],        "0-3": ["NRG", "THUNDER dOWNUNDER"],         "advance": ["HEROIC", "BIG", "Liquid", "BetBoom", "B8", "TYLOO"]},
+    "launders":    {"3-0": ["GamerLegion", "B8"],          "0-3": ["FlyQuest", "THUNDER dOWNUNDER"],    "advance": ["HEROIC", "BIG", "M80", "Liquid", "MIBR", "BetBoom"]},
+    "Mrtweeday":   {"3-0": ["HEROIC", "GamerLegion"],      "0-3": ["Lynn Vision", "THUNDER dOWNUNDER"], "advance": ["B8", "BIG", "Sharks", "BetBoom", "M80", "Liquid"]},
+    "shox":        {"3-0": ["GamerLegion", "BetBoom"],     "0-3": ["Gaimin Gladiators", "Sharks"],      "advance": ["M80", "Liquid", "BIG", "MIBR", "TYLOO", "B8"]},
+    "Cnd":         {"3-0": ["BetBoom", "GamerLegion"],     "0-3": ["Gaimin Gladiators", "Sharks"],      "advance": ["B8", "BIG", "NRG", "Liquid", "SINNERS", "MIBR"]},
+    "Anders Blume":{"3-0": ["BetBoom", "GamerLegion"],     "0-3": ["NRG", "TYLOO"],                     "advance": ["HEROIC", "M80", "MIBR", "BIG", "Liquid", "B8"]},
+    "Golden":      {"3-0": ["BetBoom", "BIG"],             "0-3": ["SINNERS", "Sharks"],                "advance": ["GamerLegion", "B8", "HEROIC", "Liquid", "MIBR", "Gaimin Gladiators"]},
+    "Joispoi24":   {"3-0": ["MIBR", "TYLOO"],              "0-3": ["NRG", "Liquid"],                    "advance": ["M80", "HEROIC", "GamerLegion", "BIG", "BetBoom", "B8"]},
+    "ThourCS2":    {"3-0": ["GamerLegion", "Lynn Vision"], "0-3": ["NRG", "FlyQuest"],                  "advance": ["BIG", "BetBoom", "HEROIC", "MIBR", "TYLOO", "SINNERS"]},
+    "Tedd":        {"3-0": ["MIBR", "GamerLegion"],        "0-3": ["Gaimin Gladiators", "FlyQuest"],    "advance": ["SINNERS", "BIG", "HEROIC", "BetBoom", "B8", "M80"]},
+    "peacemaker":  {"3-0": ["B8", "HEROIC"],               "0-3": ["Gaimin Gladiators", "THUNDER dOWNUNDER"], "advance": ["MIBR", "BetBoom", "GamerLegion", "Liquid", "M80", "BIG"]},
+    "Ozzny":       {"3-0": ["GamerLegion", "B8"],          "0-3": ["Gaimin Gladiators", "THUNDER dOWNUNDER"], "advance": ["M80", "HEROIC", "BIG", "BetBoom", "MIBR", "Liquid"]}
+  },
+  "opening_match_odds_american": {
+    "M80 vs Lynn Vision":        {"M80": -185, "Lynn Vision": 140},
+    "SINNERS vs FlyQuest":       {"SINNERS": -155, "FlyQuest": 120},
+    "B8 vs TYLOO":               {"B8": -155, "TYLOO": 120},
+    "MIBR vs THUNDER dOWNUNDER": {"MIBR": -275, "THUNDER dOWNUNDER": 200},
+    "GamerLegion vs NRG":        {"GamerLegion": -230, "NRG": 175},
+    "HEROIC vs Sharks":          {"HEROIC": -205, "Sharks": 155},
+    "BetBoom vs Gaimin Gladiators": {"BetBoom": -275, "Gaimin Gladiators": 200},
+    "BIG vs Liquid":             {"BIG": -135, "Liquid": 105}
+  },
+  "category_odds_american": {
+    "3-0": {"GamerLegion": 300, "MIBR": 700},
+    "0-3": {"THUNDER dOWNUNDER": 185}
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "coverage": {
+    "hltv_deep_match_pages_blocked_or_stale": 6,
+    "hltv_deep_match_pages_parsed": 2,
+    "stage1_fixtures": 8,
+    "stage1_teams": 16
+  },
+  "hard_rule": "do not use Kaggle 2024 dataset for production Cologne 2026 predictions",
+  "notes": [
+    "odds are still missing; HLTV fan poll is stored separately and not mapped to odds_team1/odds_team2",
+    "map profiles are availability/count proxies, not true map winrates, until full HLTV stats pages are parsed"
+  ],
+  "sources": [
+    {
+      "fields": [
+        "fan_poll",
+        "star_player_rating",
+        "lineups",
+        "map_counts",
+        "vrs_forecast"
+      ],
+      "name": "HLTV match 2394777",
+      "url": "https://www.hltv.org/matches/2394777/m80-vs-lynn-vision-iem-cologne-major-2026-stage-1"
+    },
+    {
+      "fields": [
+        "fan_poll",
+        "star_player_rating",
+        "lineups",
+        "map_counts",
+        "vrs_forecast"
+      ],
+      "name": "HLTV match 2394776",
+      "url": "https://www.hltv.org/matches/2394776/big-vs-liquid-iem-cologne-major-2026-stage-1"
+    },
+    {
+      "fields": [
+        "opening_fixtures",
+        "format",
+        "stage_start"
+      ],
+      "name": "HLTV opening matchups article",
+      "url": "https://www.hltv.org/news/44679/iem-cologne-major-stage-1-opening-matchups-announced"
+    },
+    {
+      "fields": [
+        "event_dates",
+        "map_pool",
+        "event_metadata"
+      ],
+      "name": "Liquipedia event page",
+      "url": "https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne"
+    }
+  ],
+  "status": "partial_real_prediction_inputs",
+  "updated_at": "2026-06-01T08:34:22.831202+00:00",
+  "usable_now": [
+    "data/cologne2026/processed/stage1_teams_prediction_real_2026-06-01.csv",
+    "data/cologne2026/processed/stage1_opening_fixtures_prediction_real_2026-06-01.csv",
+    "data/cologne2026/processed/stage1_player_highlights_real_2026-06-01.csv",
+    "data/cologne2026/processed/stage1_map_profiles_real_2026-06-01.json"
+  ]
+}

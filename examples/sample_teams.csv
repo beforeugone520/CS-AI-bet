@@ -1,0 +1,5 @@
+team,seed,strength,rank,rmr_points,major_best_placement,rating,kd,recent_winrate_10,bo1_winrate_6m,bo3_winrate_6m
+Alpha,1,0.82,4,900,1,1.18,1.16,0.8,0.78,0.75
+Delta,2,0.8,12,740,4,1.1,1.08,0.62,0.6,0.64
+Bravo,3,0.52,20,520,12,1.01,0.99,0.35,0.42,0.44
+Charlie,4,0.44,18,560,16,1.04,1.0,0.48,0.5,0.5

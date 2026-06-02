@@ -1,0 +1,27 @@
+{
+  "answer_sheet_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/pickem_answer_sheet.json",
+  "ensemble_weights": {
+    "logistic": 1.0,
+    "neural_network": 0.0,
+    "random_forest": 0.0,
+    "xgboost": 0.0
+  },
+  "fixture_rows": 8,
+  "fixtures_path": "data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_2026-06-01.csv",
+  "forecast_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_report.json",
+  "history_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/enriched_matches.csv",
+  "history_rows": 13609,
+  "kind": "fivee_full_data_prediction",
+  "max_age_days": 180,
+  "model_mode": "full-data logistic-only ensemble weights to avoid dropping samples after default pure-Python tree ensemble exceeded 30 minutes",
+  "pickem_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/pickem_report.json",
+  "profiles_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/team_profiles.json",
+  "simulations": 100000,
+  "stage": "challengers",
+  "team_rows": 16,
+  "teams_path": "data/cologne2026/processed/stage1_teams_prediction_fivee_6m_model_2026-06-01.csv",
+  "trained_matches_forecast": 12941,
+  "trained_matches_pickem": 12941,
+  "window_end": "2026-06-01",
+  "window_start": "2025-12-01"
+}

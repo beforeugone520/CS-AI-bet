@@ -1,0 +1,14 @@
+{
+  "fixture_rows": 8,
+  "fixtures_path": "data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_2026-06-01.csv",
+  "history_path": "data/cologne2026/processed/fivee_training_history_maps_6m_2026-06-01.csv",
+  "history_rows": 13609,
+  "kind": "prediction-input-build",
+  "market_odds_policy": "real odds unavailable; hltv fan polls kept out of odds_team fields",
+  "source": "5e",
+  "team_rows": 16,
+  "teams_path": "data/cologne2026/processed/stage1_teams_prediction_fivee_6m_model_2026-06-01.csv",
+  "tier_mapping": "Major/S+/S -> S; all other 5E grades -> A to keep the full six-month corpus in the model intake",
+  "window_end": "2026-06-01",
+  "window_start": "2025-12-01"
+}

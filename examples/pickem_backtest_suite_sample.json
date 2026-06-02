@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "name": "historical-major-pass",
+      "pickems": {
+        "3-0": ["Alpha", "Bravo"],
+        "advance": ["Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"],
+        "0-3": ["India", "Juliet"]
+      },
+      "results": [
+        {"team": "Alpha", "wins": 3, "losses": 0},
+        {"team": "Bravo", "wins": 3, "losses": 1},
+        {"team": "Charlie", "wins": 3, "losses": 1},
+        {"team": "Delta", "wins": 3, "losses": 2},
+        {"team": "Echo", "wins": 3, "losses": 2},
+        {"team": "Foxtrot", "wins": 2, "losses": 3},
+        {"team": "Golf", "wins": 1, "losses": 3},
+        {"team": "Hotel", "wins": 0, "losses": 3},
+        {"team": "India", "wins": 0, "losses": 3},
+        {"team": "Juliet", "wins": 1, "losses": 3}
+      ]
+    },
+    {
+      "name": "historical-major-miss",
+      "pickems": {
+        "3-0": ["Kilo", "Lima"],
+        "advance": ["Mike", "November", "Oscar", "Papa", "Quebec", "Romeo"],
+        "0-3": ["Sierra", "Tango"]
+      },
+      "results": [
+        {"team": "Kilo", "wins": 3, "losses": 1},
+        {"team": "Lima", "wins": 2, "losses": 3},
+        {"team": "Mike", "wins": 2, "losses": 3},
+        {"team": "November", "wins": 1, "losses": 3},
+        {"team": "Oscar", "wins": 0, "losses": 3},
+        {"team": "Papa", "wins": 1, "losses": 3},
+        {"team": "Quebec", "wins": 2, "losses": 3},
+        {"team": "Romeo", "wins": 2, "losses": 3},
+        {"team": "Sierra", "wins": 3, "losses": 2},
+        {"team": "Tango", "wins": 3, "losses": 1}
+      ]
+    }
+  ]
+}

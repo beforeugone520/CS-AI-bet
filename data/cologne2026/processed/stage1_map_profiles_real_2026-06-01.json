@@ -1,0 +1,90 @@
+{
+  "BIG": {
+    "ban_top3": [
+      "dust2",
+      "inferno",
+      "anubis"
+    ],
+    "map_winrates": {
+      "ancient": 0.5,
+      "anubis": 0.5,
+      "dust2": 0.5,
+      "inferno": 0.5,
+      "mirage": 0.5,
+      "nuke": 0.5,
+      "overpass": 0.5
+    },
+    "prefer_top3": [
+      "overpass",
+      "ancient",
+      "mirage"
+    ],
+    "source": "hltv_match_page_2394776_map_counts"
+  },
+  "Liquid": {
+    "ban_top3": [
+      "overpass",
+      "anubis",
+      "mirage"
+    ],
+    "map_winrates": {
+      "ancient": 0.5,
+      "anubis": 0.5,
+      "dust2": 0.5,
+      "inferno": 0.5,
+      "mirage": 0.5,
+      "nuke": 0.5,
+      "overpass": 0.5
+    },
+    "prefer_top3": [
+      "ancient",
+      "dust2",
+      "nuke"
+    ],
+    "source": "hltv_match_page_2394776_map_counts"
+  },
+  "Lynn Vision": {
+    "ban_top3": [
+      "mirage",
+      "overpass",
+      "anubis"
+    ],
+    "map_winrates": {
+      "ancient": 0.5,
+      "anubis": 0.5,
+      "dust2": 0.5,
+      "inferno": 0.5,
+      "mirage": 0.5,
+      "nuke": 0.5,
+      "overpass": 0.5
+    },
+    "prefer_top3": [
+      "dust2",
+      "ancient",
+      "inferno"
+    ],
+    "source": "hltv_match_page_2394777_map_counts"
+  },
+  "M80": {
+    "ban_top3": [
+      "nuke",
+      "overpass",
+      "anubis"
+    ],
+    "map_winrates": {
+      "ancient": 0.5,
+      "anubis": 0.5,
+      "dust2": 0.5,
+      "inferno": 0.5,
+      "mirage": 0.5,
+      "nuke": 0.5,
+      "overpass": 0.5
+    },
+    "prefer_top3": [
+      "inferno",
+      "mirage",
+      "dust2"
+    ],
+    "source": "hltv_match_page_2394777_map_counts"
+  }
+}

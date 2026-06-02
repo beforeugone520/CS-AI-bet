@@ -1,0 +1,29 @@
+source,team,map,source_team_url,wins,losses,draws,winrate,rounds,opening_winrate,opening_denied_winrate,last_big_win_score,last_big_win_opponent,last_big_loss_score,last_big_loss_opponent,fetched_at
+5e,Case,de_inferno,https://csgo.5eplay.com/data/team/case,21,28,0,0.43,1283,0.681,0.267,16:3,Nexus,3:16,CopenhagenFlames,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_mirage,https://csgo.5eplay.com/data/team/case,8,21,0,0.28,793,0.713,0.231,16:8,Isurus,2:16,Trident,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_nuke,https://csgo.5eplay.com/data/team/case,10,18,0,0.36,741,0.678,0.281,16:5,MADLions,2:16,eXploit,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_dust2,https://csgo.5eplay.com/data/team/case,15,11,0,0.58,700,0.738,0.288,16:2,FTW,0:16,HAVU,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_overpass,https://csgo.5eplay.com/data/team/case,12,10,0,0.55,581,0.712,0.287,16:5,FTW,4:16,Endpoint,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_train,https://csgo.5eplay.com/data/team/case,4,6,0,0.4,255,0.697,0.257,16:8,FTW,1:16,BudapestFive,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_vertigo,https://csgo.5eplay.com/data/team/case,2,4,0,0.33,160,0.718,0.225,16:12,BocaJuniors,6:16,ECBrugge,2026-06-01T08:54:33.749464+00:00
+5e,Case,de_ancient,https://csgo.5eplay.com/data/team/case,1,4,0,0.2,152,0.711,0.184,16:14,Finest,10:16,Sharks,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_mirage,https://csgo.5eplay.com/data/team/natus-vincere,260,147,5,0.63,10938,0.763,0.306,16:1,Virtus.pro,0:16,MOUZ,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_inferno,https://csgo.5eplay.com/data/team/natus-vincere,189,153,1,0.55,9132,0.738,0.31,16:1,FlipSid3,2:16,fnatic,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_dust2,https://csgo.5eplay.com/data/team/natus-vincere,199,131,3,0.6,8839,0.754,0.296,16:1,3DMAX,1:16,GPlay,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_overpass,https://csgo.5eplay.com/data/team/natus-vincere,165,102,0,0.62,7131,0.749,0.295,16:2,EvilGeniuses,2:16,Luminosity,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_train,https://csgo.5eplay.com/data/team/natus-vincere,155,77,5,0.65,6249,0.755,0.301,16:2,Vexed,2:16,NinjasinPyjamas,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_nuke,https://csgo.5eplay.com/data/team/natus-vincere,114,77,1,0.59,5040,0.737,0.276,16:2,MOUZ,2:16,NinjasinPyjamas,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_cbble,https://csgo.5eplay.com/data/team/natus-vincere,67,58,0,0.54,3254,0.724,0.276,16:3,Dignitas,2:16,Virtus.pro,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_ancient,https://csgo.5eplay.com/data/team/natus-vincere,20,9,0,0.69,744,0.758,0.29,16:2,ENCE,4:16,Complexity,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_cache,https://csgo.5eplay.com/data/team/natus-vincere,6,22,0,0.21,695,0.683,0.186,16:3,PENTA,3:16,fnatic,2026-06-01T08:54:33.749464+00:00
+5e,Natus Vincere,de_vertigo,https://csgo.5eplay.com/data/team/natus-vincere,0,2,0,0.0,40,0.278,0.273,,--,2:13,FaZe,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_mirage,https://csgo.5eplay.com/data/team/faze,178,119,3,0.59,8050,0.756,0.298,16:1,OPAA,1:16,Liquid,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_inferno,https://csgo.5eplay.com/data/team/faze,144,90,1,0.61,6196,0.752,0.309,16:1,NinjasinPyjamas,1:16,NatusVincere,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_overpass,https://csgo.5eplay.com/data/team/faze,102,76,0,0.57,4717,0.755,0.289,16:1,BIG,2:16,SK,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_nuke,https://csgo.5eplay.com/data/team/faze,96,74,0,0.56,4527,0.749,0.287,16:1,BIG,2:16,Astralis,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_dust2,https://csgo.5eplay.com/data/team/faze,94,72,0,0.57,4529,0.742,0.287,16:2,Liquid,0:16,Astralis,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_train,https://csgo.5eplay.com/data/team/faze,84,75,1,0.53,4160,0.75,0.279,16:2,FlipSid3,1:16,Astralis,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_cache,https://csgo.5eplay.com/data/team/faze,57,48,0,0.54,2825,0.734,0.279,16:1,Cloud9,2:16,MOUZ,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_ancient,https://csgo.5eplay.com/data/team/faze,23,18,0,0.56,1056,0.741,0.312,16:0,Complexity,5:16,Outsiders,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_cbble,https://csgo.5eplay.com/data/team/faze,9,16,0,0.36,590,0.699,0.248,16:2,FlipSid3,0:16,fnatic,2026-06-01T08:54:33.749464+00:00
+5e,FaZe,de_vertigo,https://csgo.5eplay.com/data/team/faze,4,6,0,0.4,263,0.703,0.336,13:2,NatusVincere,6:16,EvilGeniuses,2026-06-01T08:54:33.749464+00:00

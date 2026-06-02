@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Scraped HTML cache (regenerable)
+data/fivee/cache/

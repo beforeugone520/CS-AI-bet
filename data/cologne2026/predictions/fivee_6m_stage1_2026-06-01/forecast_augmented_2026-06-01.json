@@ -1,0 +1,360 @@
+{
+  "trained_matches": 13085,
+  "fixtures": 8,
+  "selected_feature_names": [
+    "bo3_winrate_diff",
+    "h2h_team1_winrate",
+    "recent_winrate_10_diff",
+    "recent_winrate_5_diff",
+    "map_winrate_diff",
+    "matches_30d_diff",
+    "team1_code",
+    "team2_code",
+    "bo1_winrate_diff",
+    "is_bo1",
+    "map_ancient",
+    "event_code",
+    "map_mirage",
+    "map_anubis",
+    "map_overpass",
+    "event_tier_code",
+    "map_nuke",
+    "map_train",
+    "map_inferno"
+  ],
+  "imbalance": {
+    "strategy": "smote_minority_oversample_plus_class_weight",
+    "original_counts": {
+      "0": 5923,
+      "1": 7162
+    },
+    "balanced_counts": {
+      "0": 7162,
+      "1": 7162
+    },
+    "synthetic_rows": 1239,
+    "class_weights": {
+      "0": 1.1045922674320445,
+      "1": 0.913501815135437
+    }
+  },
+  "ensemble_weights": {
+    "logistic": 0.23529411764705885,
+    "neural_network": 0.0,
+    "random_forest": 0.35294117647058826,
+    "xgboost": 0.4117647058823529
+  },
+  "model_hyperparameters": {
+    "logistic": {
+      "learning_rate": 0.08,
+      "epochs": 50
+    },
+    "random_forest": {
+      "trees": 150,
+      "max_depth": 8,
+      "min_leaf_samples": 3
+    },
+    "xgboost": {
+      "rounds": 120,
+      "learning_rate": 0.08,
+      "max_depth": 6,
+      "subsample": 0.8
+    },
+    "neural_network": {
+      "hidden_layers": [
+        64,
+        32
+      ],
+      "activation": "relu",
+      "epochs": 50
+    }
+  },
+  "bp_report": null,
+  "predictions": [
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "M80",
+      "team2": "Lynn Vision",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.5943960757800435,
+      "adjusted_probability_team1": 0.5943960757800435,
+      "market_adjustment_applied": false,
+      "pick": "M80",
+      "confidence_margin": 0.0943960757800435,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.6646854363784291,
+        "random_forest": 0.544743502605359,
+        "xgboost": 0.596790075302124
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.15639657326551276,
+        "random_forest": 0.19226241268424435,
+        "xgboost": 0.24573708983028636
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "SINNERS",
+      "team2": "FlyQuest",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.49481549080217324,
+      "adjusted_probability_team1": 0.49481549080217324,
+      "market_adjustment_applied": false,
+      "pick": "avoid",
+      "confidence_margin": 0.005184509197826759,
+      "low_confidence": true,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.5410031238505503,
+        "random_forest": 0.5152676673394194,
+        "xgboost": 0.4508921205997467
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.12729485267071772,
+        "random_forest": 0.1818591767080304,
+        "xgboost": 0.1856614614234251
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "B8",
+      "team2": "TYLOO",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.3580700152230124,
+      "adjusted_probability_team1": 0.3580700152230124,
+      "market_adjustment_applied": false,
+      "pick": "TYLOO",
+      "confidence_margin": 0.1419299847769876,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.5081924186190556,
+        "random_forest": 0.3794308542996521,
+        "xgboost": 0.2539764940738678
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.11957468673389546,
+        "random_forest": 0.13391677210575959,
+        "xgboost": 0.10457855638335732
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "MIBR",
+      "team2": "THUNDER dOWNUNDER",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.4728708468823051,
+      "adjusted_probability_team1": 0.4728708468823051,
+      "market_adjustment_applied": false,
+      "pick": "THUNDER dOWNUNDER",
+      "confidence_margin": 0.027129153117694926,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.6091123194073437,
+        "random_forest": 0.42690527882549284,
+        "xgboost": 0.43441763520240784
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.1433205457429044,
+        "random_forest": 0.15067245135017396,
+        "xgboost": 0.17887784978922674
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "GamerLegion",
+      "team2": "NRG",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.5675049049443804,
+      "adjusted_probability_team1": 0.5675049049443804,
+      "market_adjustment_applied": false,
+      "pick": "GamerLegion",
+      "confidence_margin": 0.06750490494438044,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.7053306780012357,
+        "random_forest": 0.6156031813947364,
+        "xgboost": 0.4475202262401581
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.16596015952970253,
+        "random_forest": 0.2172717110804952,
+        "xgboost": 0.18427303433418274
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "HEROIC",
+      "team2": "Sharks",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.32420880370457245,
+      "adjusted_probability_team1": 0.32420880370457245,
+      "market_adjustment_applied": false,
+      "pick": "Sharks",
+      "confidence_margin": 0.17579119629542755,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.4547661844404836,
+        "random_forest": 0.3288630884596633,
+        "xgboost": 0.24561519920825958
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.10700380810364321,
+        "random_forest": 0.11606932533870469,
+        "xgboost": 0.10113567026222453
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "BetBoom",
+      "team2": "Gaimin Gladiators",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.6002827211580823,
+      "adjusted_probability_team1": 0.6002827211580823,
+      "market_adjustment_applied": false,
+      "pick": "BetBoom",
+      "confidence_margin": 0.10028272115808234,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.7089704941950115,
+        "random_forest": 0.6405260004796761,
+        "xgboost": 0.5036811828613281
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.16681658686941447,
+        "random_forest": 0.22606800016929746,
+        "xgboost": 0.2073981341193704
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "event": "IEM Cologne Major 2026 Stage 1",
+      "team1": "BIG",
+      "team2": "Liquid",
+      "best_of": "1",
+      "map": "unknown",
+      "model_probability_team1": 0.7388586812142697,
+      "adjusted_probability_team1": 0.7388586812142697,
+      "market_adjustment_applied": false,
+      "pick": "BIG",
+      "confidence_margin": 0.23885868121426967,
+      "low_confidence": false,
+      "bp_applied": 0,
+      "bp_source": null,
+      "bp_confidence": null,
+      "candidate_maps": [],
+      "per_map_probability_team1": {},
+      "model_probabilities_team1": {
+        "logistic": 0.7360556239903943,
+        "random_forest": 0.6675140453647728,
+        "xgboost": 0.8016129732131958
+      },
+      "model_weights": {
+        "logistic": 0.23529411764705885,
+        "neural_network": 0.0,
+        "random_forest": 0.35294117647058826,
+        "xgboost": 0.4117647058823529
+      },
+      "weighted_model_contributions_team1": {
+        "logistic": 0.17318955858597515,
+        "random_forest": 0.23559319248168453,
+        "xgboost": 0.33007593014661
+      }
+    }
+  ],
+  "decision_summary": {
+    "fixtures": 8,
+    "actionable_picks": 7,
+    "low_confidence_avoids": 1
+  }
+}

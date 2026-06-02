@@ -1,0 +1,11 @@
+date,team,player,rating,kd,opening_success,clutch_winrate,is_substitute
+2026-05-14,Alpha,alpha_igl,1.08,1.04,0.51,0.57,0
+2026-05-16,Alpha,alpha_awp,1.34,1.28,0.61,0.64,0
+2026-05-18,Alpha,alpha_rifle,1.14,1.11,0.54,0.59,0
+2026-05-20,Alpha,alpha_anchor,0.98,0.96,0.47,0.52,0
+2026-05-22,Alpha,alpha_stand_in,1.02,1.00,0.50,0.50,1
+2026-05-15,Bravo,bravo_igl,0.97,0.95,0.48,0.49,0
+2026-05-17,Bravo,bravo_awp,1.09,1.06,0.55,0.53,0
+2026-05-19,Bravo,bravo_rifle,1.03,1.01,0.52,0.51,0
+2026-05-21,Bravo,bravo_anchor,0.91,0.89,0.44,0.46,0
+2026-05-24,Bravo,bravo_stand_in,0.88,0.87,0.43,0.44,1

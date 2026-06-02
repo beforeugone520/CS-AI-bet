@@ -1,0 +1,11 @@
+slot,category,pick,alternative_if_swing,fused_margin,confidence,tier,signals_agree,expert_3-0,expert_advance,expert_0-3,market_win_r1,model_3-0,model_advance,model_0-3
+3-0 #1,3-0,GamerLegion,,,0.381,Medium,2,15,4,0,0.657,0.061,0.299,0.223
+3-0 #2,3-0,MIBR,,,0.197,High,3,4,13,0,0.688,0.189,0.626,0.067
+advance #1,advance,BIG,,,0.812,High,3,2,17,0,0.541,0.221,0.678,0.061
+advance #2,advance,B8,,,0.728,Medium,2,6,12,0,0.572,0.103,0.466,0.14
+advance #3,advance,BetBoom,,,0.73,Medium,2,7,12,0,0.688,0.062,0.309,0.212
+advance #4,advance,M80,,,0.636,Medium,2,0,14,0,0.609,0.096,0.485,0.138
+advance #5,advance,HEROIC,,,0.664,Medium,2,2,15,0,0.632,0.066,0.301,0.197
+advance #6,advance,SINNERS,Liquid,0.0079,0.455,Low,1,0,7,1,0.572,0.12,0.522,0.115
+0-3 #1,0-3,THUNDER dOWNUNDER,,,0.622,Medium,2,0,0,11,0.312,0.19,0.659,0.07
+0-3 #2,0-3,Gaimin Gladiators,NRG,0.0366,0.528,Medium,2,0,2,8,0.312,0.149,0.583,0.082

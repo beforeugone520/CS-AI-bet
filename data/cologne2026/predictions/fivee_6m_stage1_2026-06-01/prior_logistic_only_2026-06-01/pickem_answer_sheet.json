@@ -1,0 +1,322 @@
+{
+  "confidence": {
+    "cached_matchups": 201,
+    "market_adjusted_matchups": 0,
+    "minimum_selection_margin": 0.7244625
+  },
+  "failed_checks": [],
+  "pickems": {
+    "0-3": [
+      "B8",
+      "GamerLegion"
+    ],
+    "3-0": [
+      "THUNDER dOWNUNDER",
+      "FlyQuest"
+    ],
+    "advance": [
+      "NRG",
+      "Gaimin Gladiators",
+      "Sharks",
+      "SINNERS",
+      "Liquid",
+      "M80"
+    ]
+  },
+  "picks": [
+    {
+      "category": "3-0",
+      "next_best_score": 0.0,
+      "probability": 0.99123,
+      "rank": 57,
+      "selection_margin": 0.7434225000000001,
+      "selection_score": 0.7434225000000001,
+      "team": "THUNDER dOWNUNDER"
+    },
+    {
+      "category": "3-0",
+      "next_best_score": 0.0,
+      "probability": 0.98545,
+      "rank": 78,
+      "selection_margin": 0.7390875,
+      "selection_score": 0.7390875,
+      "team": "FlyQuest"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.99999,
+      "rank": 49,
+      "selection_margin": 0.7364550000000001,
+      "selection_score": 0.7499925000000001,
+      "team": "NRG"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.99997,
+      "rank": 53,
+      "selection_margin": 0.73644,
+      "selection_score": 0.7499775,
+      "team": "Gaimin Gladiators"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.99996,
+      "rank": 45,
+      "selection_margin": 0.7364325,
+      "selection_score": 0.74997,
+      "team": "Sharks"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.99436,
+      "rank": 30,
+      "selection_margin": 0.7322325000000001,
+      "selection_score": 0.74577,
+      "team": "SINNERS"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.99393,
+      "rank": 42,
+      "selection_margin": 0.7319100000000001,
+      "selection_score": 0.7454475,
+      "team": "Liquid"
+    },
+    {
+      "category": "advance",
+      "next_best_score": 0.013537500000000001,
+      "probability": 0.984,
+      "rank": 31,
+      "selection_margin": 0.7244625,
+      "selection_score": 0.738,
+      "team": "M80"
+    },
+    {
+      "category": "0-3",
+      "next_best_score": 0.0244559,
+      "probability": 0.98336,
+      "rank": 16,
+      "selection_margin": 1.0375729,
+      "selection_score": 1.0620288,
+      "team": "B8"
+    },
+    {
+      "category": "0-3",
+      "next_best_score": 0.0244559,
+      "probability": 0.99076,
+      "rank": 11,
+      "selection_margin": 1.0207959,
+      "selection_score": 1.0452518,
+      "team": "GamerLegion"
+    }
+  ],
+  "ready": null,
+  "simulations": 100000,
+  "stage": "challengers",
+  "team_outcomes": [
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 0.0,
+      "3-0": 0.98545,
+      "3-1": 0.01447,
+      "3-2": 8e-05,
+      "advance": 1.0,
+      "eliminate": 0.0,
+      "most_likely_record": "3-0",
+      "team": "FlyQuest"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 0.0,
+      "3-0": 0.99123,
+      "3-1": 0.0087,
+      "3-2": 7e-05,
+      "advance": 1.0,
+      "eliminate": 0.0,
+      "most_likely_record": "3-0",
+      "team": "THUNDER dOWNUNDER"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 1e-05,
+      "3-0": 0.00702,
+      "3-1": 0.98857,
+      "3-2": 0.0044,
+      "advance": 0.99999,
+      "eliminate": 1e-05,
+      "most_likely_record": "3-1",
+      "team": "NRG"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 3e-05,
+      "3-0": 0.01601,
+      "3-1": 0.97895,
+      "3-2": 0.00501,
+      "advance": 0.99997,
+      "eliminate": 3e-05,
+      "most_likely_record": "3-1",
+      "team": "Gaimin Gladiators"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 4e-05,
+      "3-0": 0.00013,
+      "3-1": 0.99148,
+      "3-2": 0.00835,
+      "advance": 0.99996,
+      "eliminate": 4e-05,
+      "most_likely_record": "3-1",
+      "team": "Sharks"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 2e-05,
+      "2-3": 0.00562,
+      "3-0": 4e-05,
+      "3-1": 0.00503,
+      "3-2": 0.98929,
+      "advance": 0.99436,
+      "eliminate": 0.00564,
+      "most_likely_record": "3-2",
+      "team": "SINNERS"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 0.0,
+      "2-3": 0.00607,
+      "3-0": 9e-05,
+      "3-1": 0.00838,
+      "3-2": 0.98546,
+      "advance": 0.99393,
+      "eliminate": 0.00607,
+      "most_likely_record": "3-2",
+      "team": "Liquid"
+    },
+    {
+      "0-3": 0.0,
+      "1-3": 1e-05,
+      "2-3": 0.01599,
+      "3-0": 3e-05,
+      "3-1": 0.00432,
+      "3-2": 0.97965,
+      "advance": 0.984,
+      "eliminate": 0.016,
+      "most_likely_record": "3-2",
+      "team": "M80"
+    },
+    {
+      "0-3": 3e-05,
+      "1-3": 0.00351,
+      "2-3": 0.97841,
+      "3-0": 0.0,
+      "3-1": 1e-05,
+      "3-2": 0.01804,
+      "advance": 0.01805,
+      "eliminate": 0.98195,
+      "most_likely_record": "2-3",
+      "team": "TYLOO"
+    },
+    {
+      "0-3": 5e-05,
+      "1-3": 0.00435,
+      "2-3": 0.98929,
+      "3-0": 0.0,
+      "3-1": 8e-05,
+      "3-2": 0.00623,
+      "advance": 0.00631,
+      "eliminate": 0.99369,
+      "most_likely_record": "2-3",
+      "team": "BIG"
+    },
+    {
+      "0-3": 3e-05,
+      "1-3": 0.00643,
+      "2-3": 0.99014,
+      "3-0": 0.0,
+      "3-1": 1e-05,
+      "3-2": 0.00339,
+      "advance": 0.0034,
+      "eliminate": 0.9966,
+      "most_likely_record": "2-3",
+      "team": "Lynn Vision"
+    },
+    {
+      "0-3": 0.00012,
+      "1-3": 0.99352,
+      "2-3": 0.00633,
+      "3-0": 0.0,
+      "3-1": 0.0,
+      "3-2": 3e-05,
+      "advance": 3e-05,
+      "eliminate": 0.99997,
+      "most_likely_record": "1-3",
+      "team": "HEROIC"
+    },
+    {
+      "0-3": 0.98336,
+      "1-3": 0.01656,
+      "2-3": 8e-05,
+      "3-0": 0.0,
+      "3-1": 0.0,
+      "3-2": 0.0,
+      "advance": 0.0,
+      "eliminate": 1.0,
+      "most_likely_record": "0-3",
+      "team": "B8"
+    },
+    {
+      "0-3": 0.02254,
+      "1-3": 0.97396,
+      "2-3": 0.0035,
+      "3-0": 0.0,
+      "3-1": 0.0,
+      "3-2": 0.0,
+      "advance": 0.0,
+      "eliminate": 1.0,
+      "most_likely_record": "1-3",
+      "team": "BetBoom"
+    },
+    {
+      "0-3": 0.99076,
+      "1-3": 0.00915,
+      "2-3": 9e-05,
+      "3-0": 0.0,
+      "3-1": 0.0,
+      "3-2": 0.0,
+      "advance": 0.0,
+      "eliminate": 1.0,
+      "most_likely_record": "0-3",
+      "team": "GamerLegion"
+    },
+    {
+      "0-3": 0.00311,
+      "1-3": 0.99249,
+      "2-3": 0.0044,
+      "3-0": 0.0,
+      "3-1": 0.0,
+      "3-2": 0.0,
+      "advance": 0.0,
+      "eliminate": 1.0,
+      "most_likely_record": "1-3",
+      "team": "MIBR"
+    }
+  ],
+  "warnings": [
+    {
+      "cached_matchups": 201,
+      "code": "no_market_adjusted_matchups",
+      "message": "Fixture odds were available but no Swiss matchup probability used a market adjustment."
+    }
+  ]
+}

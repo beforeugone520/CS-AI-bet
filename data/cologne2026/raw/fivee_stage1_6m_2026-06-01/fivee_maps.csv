@@ -1,0 +1,110 @@
+source,team,map,source_team_url,wins,losses,draws,winrate,rounds,opening_winrate,opening_denied_winrate,last_big_win_score,last_big_win_opponent,last_big_loss_score,last_big_loss_opponent,fetched_at
+5e,GamerLegion,de_mirage,https://csgo.5eplay.com/data/team/gamerlegion,108,71,0,0.6,4824,0.751,0.283,16:0,FORZE,3:16,GODSENT,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_overpass,https://csgo.5eplay.com/data/team/gamerlegion,91,73,0,0.55,4448,0.738,0.289,16:0,Heroic,1:16,Dignitas,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_inferno,https://csgo.5eplay.com/data/team/gamerlegion,76,63,0,0.55,3712,0.711,0.295,16:3,SpiritAcademy,1:16,Sprout,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_nuke,https://csgo.5eplay.com/data/team/gamerlegion,51,72,0,0.41,3352,0.707,0.259,16:4,Tricked,0:16,MOUZNXT,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_vertigo,https://csgo.5eplay.com/data/team/gamerlegion,46,36,0,0.56,2182,0.72,0.294,16:4,mYinsanity,3:16,DBLPONEY,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_ancient,https://csgo.5eplay.com/data/team/gamerlegion,34,33,0,0.51,1834,0.739,0.285,16:1,Forward,3:16,INDEIRAE,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_dust2,https://csgo.5eplay.com/data/team/gamerlegion,33,32,0,0.51,1793,0.734,0.288,16:1,ex-Epsilon,4:16,Winstrike,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_train,https://csgo.5eplay.com/data/team/gamerlegion,19,36,0,0.35,1565,0.698,0.261,16:2,pharsyde,2:16,WislaKrakow,2026-06-01T09:09:14.691238+00:00
+5e,GamerLegion,de_cache,https://csgo.5eplay.com/data/team/gamerlegion,1,1,0,0.5,47,0.714,0.269,16:9,Sprout,6:16,Valiance,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_nuke,https://csgo.5eplay.com/data/team/b8,8,7,0,0.53,347,0.727,0.257,16:4,OFFSET,2:16,HONORIS,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_dust2,https://csgo.5eplay.com/data/team/b8,3,9,0,0.25,327,0.677,0.225,16:8,bankaPEPSI,6:16,SKADE,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_vertigo,https://csgo.5eplay.com/data/team/b8,5,4,0,0.56,220,0.736,0.212,16:2,RunorDie,3:16,EternalFire,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_mirage,https://csgo.5eplay.com/data/team/b8,3,5,0,0.38,248,0.664,0.292,16:6,GUESS,8:16,ECLOT,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_overpass,https://csgo.5eplay.com/data/team/b8,4,4,0,0.5,203,0.752,0.382,16:3,Moralezz,9:16,okura,2026-06-01T09:09:14.691238+00:00
+5e,B8,de_ancient,https://csgo.5eplay.com/data/team/b8,2,5,0,0.29,188,0.681,0.255,16:3,okura,6:16,okura,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_inferno,https://csgo.5eplay.com/data/team/mibr,96,93,1,0.51,4966,0.714,0.284,16:1,Liquid,3:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_dust2,https://csgo.5eplay.com/data/team/mibr,78,54,0,0.59,3403,0.729,0.279,16:1,VivaAlgeria,0:16,Astralis,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_mirage,https://csgo.5eplay.com/data/team/mibr,70,53,5,0.55,3440,0.742,0.289,16:2,Renegades,2:16,Axolotls,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_overpass,https://csgo.5eplay.com/data/team/mibr,60,58,0,0.51,3197,0.713,0.279,16:1,Complexity,3:16,TYLOO,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_vertigo,https://csgo.5eplay.com/data/team/mibr,58,49,0,0.54,2897,0.722,0.297,16:2,RedWolves,2:16,Outsiders,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_nuke,https://csgo.5eplay.com/data/team/mibr,53,37,0,0.59,2333,0.748,0.266,16:1,DavenportUniversity,2:16,Complexity,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_train,https://csgo.5eplay.com/data/team/mibr,49,34,2,0.58,2217,0.745,0.26,16:1,Cloud9,1:16,MADLions,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_ancient,https://csgo.5eplay.com/data/team/mibr,26,21,0,0.55,1220,0.747,0.296,16:2,X13,5:16,G2,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_cache,https://csgo.5eplay.com/data/team/mibr,14,10,0,0.58,637,0.73,0.248,16:1,Flash,2:16,Liquid,2026-06-01T09:09:14.691238+00:00
+5e,MIBR,de_cbble,https://csgo.5eplay.com/data/team/mibr,1,2,0,0.33,64,0.688,0.25,13:5,FURIA,4:13,NinjasinPyjamas,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_nuke,https://csgo.5eplay.com/data/team/heroic,177,87,0,0.67,7044,0.756,0.306,16:1,EHOME,3:16,Dignitas,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_mirage,https://csgo.5eplay.com/data/team/heroic,147,110,0,0.57,6767,0.738,0.299,16:1,BadNewsBears,1:16,ENCE,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_inferno,https://csgo.5eplay.com/data/team/heroic,122,112,0,0.52,6261,0.713,0.294,16:2,HUKKA,2:16,Envy,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_overpass,https://csgo.5eplay.com/data/team/heroic,134,87,0,0.61,5962,0.736,0.297,16:1,Overcome,0:16,GamerLegion,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_train,https://csgo.5eplay.com/data/team/heroic,88,86,0,0.51,4486,0.747,0.264,16:0,Valiance,1:16,Liquid,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_vertigo,https://csgo.5eplay.com/data/team/heroic,57,35,0,0.62,2390,0.753,0.302,16:2,BIG,3:16,Gambit,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_dust2,https://csgo.5eplay.com/data/team/heroic,34,40,0,0.46,1971,0.691,0.264,16:2,AGO,1:16,Virtus.pro,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_cbble,https://csgo.5eplay.com/data/team/heroic,31,27,0,0.53,1548,0.725,0.281,16:2,Preparation,1:16,SpaceSoldiers,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_ancient,https://csgo.5eplay.com/data/team/heroic,16,14,0,0.53,839,0.728,0.322,16:5,MOUZ,7:16,G2,2026-06-01T09:09:14.691238+00:00
+5e,Heroic,de_cache,https://csgo.5eplay.com/data/team/heroic,4,15,0,0.21,515,0.651,0.271,16:1,Spirit,5:16,Luminosity,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_inferno,https://csgo.5eplay.com/data/team/lynn-vision,43,44,0,0.49,2244,0.681,0.33,16:3,BTRG,1:16,RareAtom,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_dust2,https://csgo.5eplay.com/data/team/lynn-vision,39,30,0,0.57,1810,0.73,0.292,16:1,Aster,2:16,K23,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_nuke,https://csgo.5eplay.com/data/team/lynn-vision,31,36,0,0.46,1750,0.732,0.268,16:1,kebabs,2:16,Renewal,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_overpass,https://csgo.5eplay.com/data/team/lynn-vision,27,20,0,0.57,1308,0.761,0.285,16:5,NKT,3:16,5POWER,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_vertigo,https://csgo.5eplay.com/data/team/lynn-vision,19,12,0,0.61,849,0.734,0.319,16:2,Newhappy,8:16,Savage,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_ancient,https://csgo.5eplay.com/data/team/lynn-vision,15,12,0,0.56,700,0.74,0.302,16:4,Nexus,5:16,Eruption,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_train,https://csgo.5eplay.com/data/team/lynn-vision,11,10,0,0.52,545,0.753,0.286,16:2,Beyond,4:16,Bren,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_mirage,https://csgo.5eplay.com/data/team/lynn-vision,6,14,0,0.3,540,0.672,0.231,16:4,TYLOO,5:16,TYLOO,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_cbble,https://csgo.5eplay.com/data/team/lynn-vision,1,2,0,0.33,65,0.786,0.135,16:6,NASR,3:16,Eclipse,2026-06-01T09:09:14.691238+00:00
+5e,Lynn Vision,de_cache,https://csgo.5eplay.com/data/team/lynn-vision,2,0,0,1.0,54,0.733,0.417,16:8,QDLM,,--,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_dust2,https://csgo.5eplay.com/data/team/big,148,83,0,0.64,6147,0.753,0.325,16:1,MIBR,2:16,Vitality,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_mirage,https://csgo.5eplay.com/data/team/big,119,90,0,0.57,5651,0.741,0.288,16:1,Illuminar,1:16,G2,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_inferno,https://csgo.5eplay.com/data/team/big,96,93,0,0.51,4977,0.713,0.289,16:1,ALTERNATEaTTaX,1:16,NatusVincere,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_nuke,https://csgo.5eplay.com/data/team/big,93,90,0,0.51,4947,0.737,0.276,16:1,Spirit,1:16,FaZe,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_overpass,https://csgo.5eplay.com/data/team/big,77,81,0,0.49,4233,0.718,0.283,16:1,Heroic,1:16,FaZe,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_train,https://csgo.5eplay.com/data/team/big,58,53,0,0.52,2914,0.712,0.263,16:3,GODSENT,0:16,NinjasinPyjamas,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_vertigo,https://csgo.5eplay.com/data/team/big,55,35,0,0.61,2499,0.727,0.292,16:2,ALTERNATEaTTaX,2:16,Heroic,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_cache,https://csgo.5eplay.com/data/team/big,41,32,1,0.55,2025,0.733,0.265,16:4,HellRaisers,4:16,MOUZ,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_cbble,https://csgo.5eplay.com/data/team/big,33,25,0,0.57,1510,0.748,0.269,16:2,EnVyUsAcademy,1:16,MOUZ,2026-06-01T09:09:14.691238+00:00
+5e,BIG,de_ancient,https://csgo.5eplay.com/data/team/big,9,16,0,0.36,639,0.701,0.261,16:4,GODSENT,3:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_mirage,https://csgo.5eplay.com/data/team/tyloo,242,94,1,0.72,8496,0.777,0.356,16:0,eFuture,2:16,fnatic,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_inferno,https://csgo.5eplay.com/data/team/tyloo,156,102,0,0.6,6799,0.744,0.313,16:0,HSGfe,1:16,BOOT-d[S],2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_overpass,https://csgo.5eplay.com/data/team/tyloo,100,59,0,0.63,4118,0.762,0.315,16:1,Renegades,2:16,GODSENT,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_cache,https://csgo.5eplay.com/data/team/tyloo,100,37,0,0.73,3554,0.789,0.331,16:1,Athletico,3:16,Epsilon,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_dust2,https://csgo.5eplay.com/data/team/tyloo,91,45,0,0.67,3510,0.763,0.319,16:1,ViCi,0:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_train,https://csgo.5eplay.com/data/team/tyloo,80,52,0,0.61,3487,0.756,0.307,16:1,Yalla,2:16,iGame.com,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_cbble,https://csgo.5eplay.com/data/team/tyloo,60,22,0,0.73,2114,0.745,0.353,16:2,Eclipse,3:16,Dignitas,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_vertigo,https://csgo.5eplay.com/data/team/tyloo,35,20,0,0.64,1471,0.709,0.354,16:2,Invictus,2:16,Complexity,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_ancient,https://csgo.5eplay.com/data/team/tyloo,14,10,0,0.58,627,0.779,0.29,16:2,ViCi,4:16,SAW,2026-06-01T09:09:14.691238+00:00
+5e,TYLOO,de_nuke,https://csgo.5eplay.com/data/team/tyloo,4,10,0,0.29,381,0.687,0.269,16:1,Bren,4:16,TIGER,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_inferno,https://csgo.5eplay.com/data/team/sinners,96,69,0,0.58,4435,0.729,0.315,16:2,ONYX,4:16,SAW,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_vertigo,https://csgo.5eplay.com/data/team/sinners,102,57,0,0.64,4187,0.736,0.323,16:1,EYEBALLERS,1:16,Gambit,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_nuke,https://csgo.5eplay.com/data/team/sinners,79,63,0,0.56,3769,0.752,0.277,16:1,Seven.Modula,3:16,LyngbyVikings,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_mirage,https://csgo.5eplay.com/data/team/sinners,65,62,0,0.51,3416,0.721,0.294,16:2,BLUEJAYS,2:16,Entropiq,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_overpass,https://csgo.5eplay.com/data/team/sinners,60,43,0,0.58,2761,0.744,0.295,16:1,TITANS,1:16,ex-Winstrike,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_ancient,https://csgo.5eplay.com/data/team/sinners,36,31,0,0.54,1842,0.72,0.288,16:4,BLUEJAYS,5:16,DBLPONEY,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_train,https://csgo.5eplay.com/data/team/sinners,15,19,0,0.44,907,0.713,0.291,16:2,TeamOne,3:16,Sangal,2026-06-01T09:09:14.691238+00:00
+5e,SINNERS,de_dust2,https://csgo.5eplay.com/data/team/sinners,13,13,0,0.5,687,0.701,0.272,16:4,Dignitas,2:16,Falcons,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_mirage,https://csgo.5eplay.com/data/team/liquid,188,122,0,0.61,8216,0.746,0.303,16:1,FaZe,1:16,CLG,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_inferno,https://csgo.5eplay.com/data/team/liquid,180,114,0,0.61,7753,0.751,0.311,16:1,CLG,1:16,NinjasinPyjamas,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_dust2,https://csgo.5eplay.com/data/team/liquid,114,97,0,0.54,5523,0.741,0.294,16:1,KKona,1:16,Astralis,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_overpass,https://csgo.5eplay.com/data/team/liquid,130,77,1,0.63,5487,0.757,0.307,16:1,Immortals,0:16,TSM,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_cache,https://csgo.5eplay.com/data/team/liquid,98,50,0,0.66,3837,0.755,0.319,16:2,MIBR,2:16,Immortals,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_nuke,https://csgo.5eplay.com/data/team/liquid,74,74,0,0.5,3874,0.716,0.286,16:1,Astralis,1:16,FaZe,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_cbble,https://csgo.5eplay.com/data/team/liquid,89,50,0,0.64,3613,0.754,0.309,16:1,KKona,1:16,fnatic,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_train,https://csgo.5eplay.com/data/team/liquid,65,50,0,0.57,2971,0.747,0.287,16:1,Heroic,1:16,Astralis,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_vertigo,https://csgo.5eplay.com/data/team/liquid,58,40,0,0.59,2558,0.745,0.3,16:0,BigRigger,3:16,100Thieves,2026-06-01T09:09:14.691238+00:00
+5e,Liquid,de_ancient,https://csgo.5eplay.com/data/team/liquid,17,12,0,0.59,816,0.72,0.306,16:4,GODSENT,5:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_mirage,https://csgo.5eplay.com/data/team/sharks,74,45,0,0.62,3026,0.762,0.294,16:1,Supremacy,2:16,REDCanids,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_nuke,https://csgo.5eplay.com/data/team/sharks,58,59,0,0.5,3067,0.733,0.267,16:1,WINDINGO,0:16,G2,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_inferno,https://csgo.5eplay.com/data/team/sharks,55,59,0,0.48,2979,0.71,0.271,16:1,Sørby,0:16,Virtue,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_dust2,https://csgo.5eplay.com/data/team/sharks,45,44,0,0.51,2306,0.706,0.274,16:1,MIBR,2:16,Tricked,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_train,https://csgo.5eplay.com/data/team/sharks,56,32,0,0.64,2165,0.766,0.279,16:1,Sørby,1:16,eXtatus,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_vertigo,https://csgo.5eplay.com/data/team/sharks,35,24,0,0.59,1562,0.749,0.274,16:0,FURIAAcademy,3:16,BOOM,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_cache,https://csgo.5eplay.com/data/team/sharks,25,13,0,0.66,1012,0.757,0.295,16:2,Yeah,5:16,ArenaBulls,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_ancient,https://csgo.5eplay.com/data/team/sharks,18,13,0,0.58,846,0.749,0.311,16:1,SWS,2:16,Keyd,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_cbble,https://csgo.5eplay.com/data/team/sharks,8,5,0,0.62,288,0.765,0.326,16:2,Singularity,4:16,FURIA,2026-06-01T09:09:14.691238+00:00
+5e,Sharks,de_overpass,https://csgo.5eplay.com/data/team/sharks,4,3,0,0.57,172,0.75,0.298,16:6,Luminosity,8:16,eXtatus,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_mirage,https://csgo.5eplay.com/data/team/nrg,90,56,0,0.62,3738,0.736,0.306,16:1,TrumpsAnime,2:16,Immortals,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_inferno,https://csgo.5eplay.com/data/team/nrg,81,44,0,0.65,3266,0.741,0.336,16:0,Immortals,2:16,Renegades,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_overpass,https://csgo.5eplay.com/data/team/nrg,64,45,0,0.59,2788,0.734,0.321,16:2,eUnited,1:16,SK,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_train,https://csgo.5eplay.com/data/team/nrg,67,41,0,0.62,2861,0.757,0.321,16:0,North,1:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_cache,https://csgo.5eplay.com/data/team/nrg,40,48,0,0.45,2354,0.716,0.263,16:2,Ghost,1:16,Renegades,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_cbble,https://csgo.5eplay.com/data/team/nrg,28,42,0,0.4,1774,0.723,0.252,16:2,Luminosity,3:16,Cloud9,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_nuke,https://csgo.5eplay.com/data/team/nrg,40,27,1,0.59,1805,0.743,0.304,16:2,Liquid,5:16,TSM,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_dust2,https://csgo.5eplay.com/data/team/nrg,37,20,0,0.65,1544,0.738,0.3,16:3,Mythic,3:16,Astralis,2026-06-01T09:09:14.691238+00:00
+5e,NRG,de_vertigo,https://csgo.5eplay.com/data/team/nrg,0,2,0,0.0,57,0.8,0.243,,--,12:16,eUnited,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_inferno,https://csgo.5eplay.com/data/team/gaimin-gladiators,23,11,0,0.68,915,0.768,0.329,16:1,PartyAstronauts,3:16,ATK,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_mirage,https://csgo.5eplay.com/data/team/gaimin-gladiators,15,11,0,0.58,703,0.762,0.292,16:2,Omega,5:16,PartyAstronauts,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_dust2,https://csgo.5eplay.com/data/team/gaimin-gladiators,10,8,0,0.56,427,0.765,0.294,16:2,MadKings,4:16,GasMoney,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_ancient,https://csgo.5eplay.com/data/team/gaimin-gladiators,12,4,0,0.75,421,0.747,0.347,16:4,Brazen,6:16,ATK,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_overpass,https://csgo.5eplay.com/data/team/gaimin-gladiators,6,7,0,0.46,351,0.784,0.257,16:1,TeamOne,10:16,GasMoney,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_nuke,https://csgo.5eplay.com/data/team/gaimin-gladiators,7,5,0,0.58,317,0.747,0.281,16:4,Valors,5:16,PartyAstronauts,2026-06-01T09:09:14.691238+00:00
+5e,Gaimin Gladiators,de_vertigo,https://csgo.5eplay.com/data/team/gaimin-gladiators,4,4,0,0.5,189,0.733,0.238,16:6,Eros,4:16,Liquid,2026-06-01T09:09:14.691238+00:00

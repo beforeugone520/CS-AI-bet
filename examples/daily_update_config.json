@@ -1,0 +1,21 @@
+{
+  "dataset": "/tmp/cs2pickem_training_matches.csv",
+  "dataset_manifest": "/tmp/cs2pickem_training_manifest.json",
+  "participants": "major_participants_sample.csv",
+  "top_teams": "top80_teams_sample.csv",
+  "minimum_rows": 8000,
+  "required_teams": 80,
+  "version_log": "version_log.csv",
+  "team_metadata": "sample_teams.csv",
+  "player_stats": "player_stats.csv",
+  "player_window_days": 15,
+  "default_swiss_state": true,
+  "jobs": [
+    {
+      "name": "hltv-results-sample",
+      "kind": "results",
+      "html": "hltv_results_fixture.html",
+      "source_name": "hltv-results"
+    }
+  ]
+}

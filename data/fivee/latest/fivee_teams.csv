@@ -1,0 +1,4 @@
+source,status,team,slug,region,world_rank,regional_rank,regional_label,winrate,wins,draws,losses,rating,kd,maps,prize,source_team_url,fetched_at
+5e,ok,Case,case,br,151,46,南美洲,0.42,75,0,104,0.99,0.98,179,,https://csgo.5eplay.com/data/team/case,2026-06-01T08:54:33.749464+00:00
+5e,ok,Natus Vincere,natus-vincere,ua,5,3,独联体,0.6,1183,16,781,1.02,1.07,1980,9239759,https://csgo.5eplay.com/data/team/natus-vincere,2026-06-01T08:54:33.749464+00:00
+5e,ok,FaZe,faze,eu,4,3,欧洲,0.57,792,5,594,1.04,1.05,1391,5597197,https://csgo.5eplay.com/data/team/faze,2026-06-01T08:54:33.749464+00:00

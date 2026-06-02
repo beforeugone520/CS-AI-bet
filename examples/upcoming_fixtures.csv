@@ -1,0 +1,2 @@
+date,event,event_tier,status,team1,team2,best_of,map,team1_rank,team2_rank,team1_rmr_points,team2_rmr_points,team1_major_best_placement,team2_major_best_placement,team1_recent_winrate_10,team2_recent_winrate_10,team1_bo1_winrate_6m,team2_bo1_winrate_6m,team1_bo3_winrate_6m,team2_bo3_winrate_6m,team1_rating,team2_rating,team1_kd,team2_kd,team1_star_rating,team2_star_rating,odds_team1,odds_team2
+2026-06-01,IEM Cologne Major,S,scheduled,Alpha,Bravo,1,unknown,4,22,900,500,1,12,0.8,0.35,0.78,0.42,0.75,0.44,1.18,1.01,1.16,0.99,1.32,1.06,2.05,1.85

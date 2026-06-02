@@ -1,0 +1,28 @@
+"""CS2 Major Pick'em prediction toolkit."""
+
+__all__ = [
+    "backtest",
+    "bp",
+    "cleaning",
+    "dataset_store",
+    "enrichment",
+    "export",
+    "forecast",
+    "features",
+    "imbalance",
+    "maps",
+    "models",
+    "odds",
+    "pickem",
+    "players",
+    "predictor",
+    "readiness",
+    "selection",
+    "splitting",
+    "sources",
+    "strategy",
+    "swiss",
+    "update",
+    "visualization",
+    "workflow",
+]

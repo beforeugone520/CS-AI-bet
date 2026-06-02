@@ -1,0 +1,16 @@
+{
+  "input_fivee_maps": "data/cologne2026/raw/fivee_stage1_2026-06-01/fivee_maps.csv",
+  "input_fivee_teams": "data/cologne2026/raw/fivee_stage1_2026-06-01/fivee_teams.csv",
+  "input_stage1_teams": "data/cologne2026/processed/stage1_teams_prediction_real_2026-06-01.csv",
+  "kind": "stage1_team_feature_join",
+  "matched": 12,
+  "missing": [
+    "BetBoom",
+    "M80",
+    "THUNDER dOWNUNDER",
+    "FlyQuest"
+  ],
+  "output": "data/cologne2026/processed/stage1_teams_with_fivee_features_2026-06-01.csv",
+  "source": "5e",
+  "teams": 16
+}

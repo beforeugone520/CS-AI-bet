@@ -1,0 +1,40 @@
+{
+  "sources": [
+    {
+      "name": "hltv-stage1-opening-article",
+      "url": "https://www.hltv.org/news/44679/iem-cologne-major-stage-1-opening-matchups-announced",
+      "usable_for": [
+        "fixtures",
+        "stage_format",
+        "team_ranks_rosters"
+      ]
+    },
+    {
+      "name": "liquipedia-cologne-event",
+      "url": "https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne",
+      "usable_for": [
+        "event_metadata",
+        "map_pool",
+        "stage_dates"
+      ]
+    },
+    {
+      "name": "csapi",
+      "note": "data endpoints returned HTTP 500 during probe",
+      "url": "https://api.csapi.de/openapi.json",
+      "usable_for": [
+        "api_schema_only"
+      ]
+    },
+    {
+      "name": "kaggle-hltv-match-resultscs2",
+      "note": "downloaded but latest rows are 2024-10-24, excluded from production prediction",
+      "url": "https://www.kaggle.com/datasets/ilyazored/hltv-match-resultscs2",
+      "usable_for": [
+        "historical_schema_test_only"
+      ]
+    }
+  ],
+  "status": "in_progress",
+  "updated_at": "2026-06-01T08:29:53.299213+00:00"
+}

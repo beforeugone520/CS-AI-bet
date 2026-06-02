@@ -1,0 +1,44 @@
+{
+  "split_date": "2026-04-27",
+  "train_n": 10887,
+  "test_n": 2722,
+  "results": [
+    {
+      "config": "baseline_0.5",
+      "n": 2722,
+      "accuracy": 0.5529,
+      "auc": 0.5,
+      "log_loss": 0.6931,
+      "brier": 0.25,
+      "ece": 0.0529
+    },
+    {
+      "config": "baseline_recent_form",
+      "n": 2722,
+      "accuracy": 0.5496,
+      "auc": 0.5675,
+      "log_loss": 0.8209,
+      "brier": 0.2524,
+      "ece": 0.0715
+    },
+    {
+      "config": "model_4_nn_fixed",
+      "n": 2722,
+      "accuracy": 0.5955,
+      "auc": 0.6299,
+      "log_loss": 0.6603,
+      "brier": 0.2344,
+      "ece": 0.0256
+    },
+    {
+      "config": "model_3_no_nn",
+      "n": 2722,
+      "accuracy": 0.6021,
+      "auc": 0.6366,
+      "log_loss": 0.6585,
+      "brier": 0.2334,
+      "ece": 0.0249
+    }
+  ],
+  "best_by_log_loss": "model_3_no_nn"
+}

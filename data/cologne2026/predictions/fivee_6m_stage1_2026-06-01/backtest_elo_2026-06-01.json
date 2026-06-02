@@ -1,0 +1,24 @@
+{
+  "split_date": "2026-04-27",
+  "results": [
+    {
+      "config": "no_elo",
+      "accuracy": 0.6021,
+      "auc": 0.6366,
+      "log_loss": 0.6585,
+      "brier": 0.2334,
+      "ece": 0.0249,
+      "elo_diff_selected": false
+    },
+    {
+      "config": "with_elo",
+      "accuracy": 0.6051,
+      "auc": 0.6429,
+      "log_loss": 0.6562,
+      "brier": 0.2324,
+      "ece": 0.0288,
+      "elo_diff_selected": true
+    }
+  ],
+  "best": "with_elo"
+}

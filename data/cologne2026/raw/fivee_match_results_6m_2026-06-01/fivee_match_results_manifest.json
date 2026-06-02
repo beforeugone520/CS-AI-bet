@@ -1,0 +1,621 @@
+{
+  "cache_dir": "/Users/bruce/Desktop/work/data/cologne2026/raw/fivee_results_cache",
+  "end_date": "2026-06-01",
+  "kind": "match-results",
+  "maps": 13609,
+  "maps_path": "data/cologne2026/raw/fivee_match_results_6m_2026-06-01/fivee_match_maps.csv",
+  "matches": 6572,
+  "matches_path": "data/cologne2026/raw/fivee_match_results_6m_2026-06-01/fivee_match_results.csv",
+  "max_pages": 500,
+  "output_dir": "/Users/bruce/Desktop/work/data/cologne2026/raw/fivee_match_results_6m_2026-06-01",
+  "page_reports": [
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/8efef918e52cdbe44a273504.html",
+      "max_date": "2026-06-01",
+      "min_date": "2026-05-29",
+      "next_page_token": "2026-05-29 22:00:00,csgo_mc_2394518,csgo_mc_2394569,csgo_mc_2395025",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-06-02%2000%3A00%3A00%2C"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/bd6f48d5a376fc1e644f69d4.html",
+      "max_date": "2026-05-29",
+      "min_date": "2026-05-27",
+      "next_page_token": "2026-05-27 19:00:00,csgo_mc_2394960",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-29%2022%3A00%3A00%2Ccsgo_mc_2394518%2Ccsgo_mc_2394569%2Ccsgo_mc_2395025"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/296f3d3588b7f5e9129a7286.html",
+      "max_date": "2026-05-27",
+      "min_date": "2026-05-25",
+      "next_page_token": "2026-05-25 01:00:00,csgo_mc_2394647,csgo_mc_2394702",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-27%2019%3A00%3A00%2Ccsgo_mc_2394960"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/a17195164c1b7ef9fc8d7294.html",
+      "max_date": "2026-05-25",
+      "min_date": "2026-05-23",
+      "next_page_token": "2026-05-23 01:00:00,csgo_mc_2394414,csgo_mc_2394542",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-25%2001%3A00%3A00%2Ccsgo_mc_2394647%2Ccsgo_mc_2394702"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/0eda6228aa28a7af4c446b21.html",
+      "max_date": "2026-05-23",
+      "min_date": "2026-05-20",
+      "next_page_token": "2026-05-20 22:00:00,csgo_mc_2393975",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-23%2001%3A00%3A00%2Ccsgo_mc_2394414%2Ccsgo_mc_2394542"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/fcca8233110c9501cc6018fd.html",
+      "max_date": "2026-05-20",
+      "min_date": "2026-05-16",
+      "next_page_token": "2026-05-16 21:00:00,csgo_mc_2394154",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-20%2022%3A00%3A00%2Ccsgo_mc_2393975"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b7083010013590ad1385f02b.html",
+      "max_date": "2026-05-16",
+      "min_date": "2026-05-13",
+      "next_page_token": "2026-05-13 15:30:00,csgo_mc_2394147",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-16%2021%3A00%3A00%2Ccsgo_mc_2394154"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/ad6eec2342e0046aaa13c4f0.html",
+      "max_date": "2026-05-13",
+      "min_date": "2026-05-10",
+      "next_page_token": "2026-05-10 22:45:00,csgo_mc_2394107",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-13%2015%3A30%3A00%2Ccsgo_mc_2394147"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/591b773b4631347808e4e4df.html",
+      "max_date": "2026-05-10",
+      "min_date": "2026-05-06",
+      "next_page_token": "2026-05-06 22:15:00,csgo_mc_2393929",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-10%2022%3A45%3A00%2Ccsgo_mc_2394107"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/bb9f4809c04b226855835134.html",
+      "max_date": "2026-05-06",
+      "min_date": "2026-05-03",
+      "next_page_token": "2026-05-03 02:05:00,csgo_mc_2393983",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-06%2022%3A15%3A00%2Ccsgo_mc_2393929"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/e86dca18ca50e73885639719.html",
+      "max_date": "2026-05-03",
+      "min_date": "2026-05-01",
+      "next_page_token": "2026-05-01 05:00:00,csgo_mc_2393622,csgo_mc_2393623",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-03%2002%3A05%3A00%2Ccsgo_mc_2393983"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/cb9335b568830782d010119a.html",
+      "max_date": "2026-05-01",
+      "min_date": "2026-04-28",
+      "next_page_token": "2026-04-28 22:00:00,csgo_mc_2393986",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-05-01%2005%3A00%3A00%2Ccsgo_mc_2393622%2Ccsgo_mc_2393623"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/32fccec27d80844413f09d6b.html",
+      "max_date": "2026-04-28",
+      "min_date": "2026-04-27",
+      "next_page_token": "2026-04-27 00:00:00,csgo_mc_2393422",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-28%2022%3A00%3A00%2Ccsgo_mc_2393986"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/365965d009a7a974521bb1c8.html",
+      "max_date": "2026-04-26",
+      "min_date": "2026-04-25",
+      "next_page_token": "2026-04-25 19:30:00,csgo_mc_2393427",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-27%2000%3A00%3A00%2Ccsgo_mc_2393422"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/e8730433736fedb536a38eed.html",
+      "max_date": "2026-04-25",
+      "min_date": "2026-04-23",
+      "next_page_token": "2026-04-23 18:00:00,cg_mc_manual_2037,cg_mc_manual_2038",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-25%2019%3A30%3A00%2Ccsgo_mc_2393427"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/590022570bc728a586360176.html",
+      "max_date": "2026-04-23",
+      "min_date": "2026-04-19",
+      "next_page_token": "2026-04-19 19:00:00,csgo_mc_2393399",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-23%2018%3A00%3A00%2Ccg_mc_manual_2037%2Ccg_mc_manual_2038"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/cd4b8afd91c60a56d61a44dd.html",
+      "max_date": "2026-04-19",
+      "min_date": "2026-04-14",
+      "next_page_token": "2026-04-14 04:45:00,csgo_mc_2393085",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-19%2019%3A00%3A00%2Ccsgo_mc_2393399"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/cae2f65c195546c24efd1332.html",
+      "max_date": "2026-04-14",
+      "min_date": "2026-04-10",
+      "next_page_token": "2026-04-10 02:00:00,csgo_mc_2392497",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-14%2004%3A45%3A00%2Ccsgo_mc_2393085"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/8e0ee2ce85ef204c0272b2b8.html",
+      "max_date": "2026-04-10",
+      "min_date": "2026-04-06",
+      "next_page_token": "2026-04-06 21:30:00,csgo_mc_2392938",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-10%2002%3A00%3A00%2Ccsgo_mc_2392497"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/17550e01255392975cb016df.html",
+      "max_date": "2026-04-06",
+      "min_date": "2026-04-05",
+      "next_page_token": "2026-04-05 01:00:00,csgo_mc_2392795",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-06%2021%3A30%3A00%2Ccsgo_mc_2392938"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/cbe3c8e4e6d9d3cae3153387.html",
+      "max_date": "2026-04-05",
+      "min_date": "2026-04-03",
+      "next_page_token": "2026-04-03 22:00:00,csgo_mc_2392390",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-05%2001%3A00%3A00%2Ccsgo_mc_2392795"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/628cc8ca8f4dfcfc948249ca.html",
+      "max_date": "2026-04-03",
+      "min_date": "2026-04-02",
+      "next_page_token": "2026-04-02 22:00:00,csgo_mc_2391843,csgo_mc_2392132,csgo_mc_2392386,csgo_mc_2392666",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-03%2022%3A00%3A00%2Ccsgo_mc_2392390"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/eedf880803e61abb9911f49d.html",
+      "max_date": "2026-04-02",
+      "min_date": "2026-04-01",
+      "next_page_token": "2026-04-01 21:00:00,csgo_mc_2392618,csgo_mc_2392619,csgo_mc_2392760,csgo_mc_2392762,csgo_mc_2392763,csgo_mc_2392765,csgo_mc_2392764,csgo_mc_2392766,csgo_mc_2392767",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-02%2022%3A00%3A00%2Ccsgo_mc_2391843%2Ccsgo_mc_2392132%2Ccsgo_mc_2392386%2Ccsgo_mc_2392666"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b8928b2e010459f78d2bb252.html",
+      "max_date": "2026-04-01",
+      "min_date": "2026-03-31",
+      "next_page_token": "2026-03-31 19:30:00,csgo_mc_2392642",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-04-01%2021%3A00%3A00%2Ccsgo_mc_2392618%2Ccsgo_mc_2392619%2Ccsgo_mc_2392760%2Ccsgo_mc_2392762%2Ccsgo_mc_2392763%2Ccsgo_mc_2392765%2Ccsgo_mc_2392764%2Ccsgo_mc_2392766%2Ccsgo_mc_2392767"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/5753e56560e3ab818e4e3e8a.html",
+      "max_date": "2026-03-31",
+      "min_date": "2026-03-30",
+      "next_page_token": "2026-03-30 03:50:00,csgo_mc_2392533",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-31%2019%3A30%3A00%2Ccsgo_mc_2392642"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/e7208121f4538aef11ae4b97.html",
+      "max_date": "2026-03-30",
+      "min_date": "2026-03-29",
+      "next_page_token": "2026-03-29 02:30:00,csgo_mc_2392564",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-30%2003%3A50%3A00%2Ccsgo_mc_2392533"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b90b1f6fd1f3e2ce23edb795.html",
+      "max_date": "2026-03-29",
+      "min_date": "2026-03-27",
+      "next_page_token": "2026-03-27 17:00:00,csgo_mc_2392360",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-29%2002%3A30%3A00%2Ccsgo_mc_2392564"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/3d538b629fff1a1373483b5e.html",
+      "max_date": "2026-03-27",
+      "min_date": "2026-03-25",
+      "next_page_token": "2026-03-25 18:00:00,csgo_mc_2392006",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-27%2017%3A00%3A00%2Ccsgo_mc_2392360"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/3c5872bb4ab9d38f5c8b294e.html",
+      "max_date": "2026-03-25",
+      "min_date": "2026-03-24",
+      "next_page_token": "2026-03-24 02:00:00,csgo_mc_2391932,csgo_mc_2391933,csgo_mc_2391934,csgo_mc_2391935,csgo_mc_2392230,csgo_mc_2392347",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-25%2018%3A00%3A00%2Ccsgo_mc_2392006"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/0ac1d9b63620d7f9216c7e25.html",
+      "max_date": "2026-03-24",
+      "min_date": "2026-03-22",
+      "next_page_token": "2026-03-22 05:00:00,csgo_mc_2391716",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-24%2002%3A00%3A00%2Ccsgo_mc_2391932%2Ccsgo_mc_2391933%2Ccsgo_mc_2391934%2Ccsgo_mc_2391935%2Ccsgo_mc_2392230%2Ccsgo_mc_2392347"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/95dd3605ea3e0da3b68ea58b.html",
+      "max_date": "2026-03-22",
+      "min_date": "2026-03-20",
+      "next_page_token": "2026-03-20 17:30:00,csgo_mc_2392010",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-22%2005%3A00%3A00%2Ccsgo_mc_2391716"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/ce4c2f90dbb5e18eeb1d0d35.html",
+      "max_date": "2026-03-20",
+      "min_date": "2026-03-18",
+      "next_page_token": "2026-03-18 05:25:00,csgo_mc_2391970",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-20%2017%3A30%3A00%2Ccsgo_mc_2392010"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/8f2d1d3662bdae047cc1925c.html",
+      "max_date": "2026-03-18",
+      "min_date": "2026-03-16",
+      "next_page_token": "2026-03-16 02:00:00,csgo_mc_2391202,csgo_mc_2391268,csgo_mc_2391517",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-18%2005%3A25%3A00%2Ccsgo_mc_2391970"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/6d17cf4b193d1d799a360158.html",
+      "max_date": "2026-03-16",
+      "min_date": "2026-03-14",
+      "next_page_token": "2026-03-14 00:30:00,csgo_mc_2391665",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-16%2002%3A00%3A00%2Ccsgo_mc_2391202%2Ccsgo_mc_2391268%2Ccsgo_mc_2391517"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/2a3031ceeee9c78e328a26e0.html",
+      "max_date": "2026-03-14",
+      "min_date": "2026-03-12",
+      "next_page_token": "2026-03-12 02:15:00,csgo_mc_2390976",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-14%2000%3A30%3A00%2Ccsgo_mc_2391665"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/4d6f2704db6fcfd7043ff5fb.html",
+      "max_date": "2026-03-12",
+      "min_date": "2026-03-09",
+      "next_page_token": "2026-03-09 23:00:00,csgo_mc_2390967,csgo_mc_2391128,csgo_mc_2391179,csgo_mc_2391366,csgo_mc_2391496",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-12%2002%3A15%3A00%2Ccsgo_mc_2390976"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/c0ca512d4339b17d90218fa9.html",
+      "max_date": "2026-03-09",
+      "min_date": "2026-03-08",
+      "next_page_token": "2026-03-08 18:30:00,csgo_mc_2391118",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-09%2023%3A00%3A00%2Ccsgo_mc_2390967%2Ccsgo_mc_2391128%2Ccsgo_mc_2391179%2Ccsgo_mc_2391366%2Ccsgo_mc_2391496"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/f0b4a647d71e91554b93ff63.html",
+      "max_date": "2026-03-08",
+      "min_date": "2026-03-06",
+      "next_page_token": "2026-03-06 04:00:00,csgo_mc_2391062",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-08%2018%3A30%3A00%2Ccsgo_mc_2391118"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/328629267a3ed6f53806a9a5.html",
+      "max_date": "2026-03-06",
+      "min_date": "2026-03-04",
+      "next_page_token": "2026-03-04 17:00:00,csgo_mc_2390285,csgo_mc_2390948,csgo_mc_2391079,csgo_mc_2391157",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-06%2004%3A00%3A00%2Ccsgo_mc_2391062"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/4c52c40768e00a1bc965ba0b.html",
+      "max_date": "2026-03-04",
+      "min_date": "2026-03-02",
+      "next_page_token": "2026-03-02 03:10:00,csgo_mc_2391148",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-04%2017%3A00%3A00%2Ccsgo_mc_2390285%2Ccsgo_mc_2390948%2Ccsgo_mc_2391079%2Ccsgo_mc_2391157"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/6848d9526603a9d5b4a4af74.html",
+      "max_date": "2026-03-02",
+      "min_date": "2026-02-28",
+      "next_page_token": "2026-02-28 00:30:00,csgo_mc_2391003",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-03-02%2003%3A10%3A00%2Ccsgo_mc_2391148"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b1dad3a8ca94264ab60b295d.html",
+      "max_date": "2026-02-27",
+      "min_date": "2026-02-26",
+      "next_page_token": "2026-02-26 12:30:00,csgo_mc_2390798",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-28%2000%3A30%3A00%2Ccsgo_mc_2391003"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/ec22d61a75778328966384ab.html",
+      "max_date": "2026-02-26",
+      "min_date": "2026-02-24",
+      "next_page_token": "2026-02-24 02:40:00,csgo_mc_2390059",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-26%2012%3A30%3A00%2Ccsgo_mc_2390798"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/69b8139d173c458bb177b390.html",
+      "max_date": "2026-02-24",
+      "min_date": "2026-02-22",
+      "next_page_token": "2026-02-22 18:00:00,csgo_mc_2390513",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-24%2002%3A40%3A00%2Ccsgo_mc_2390059"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/713868331ef676c14e944f87.html",
+      "max_date": "2026-02-22",
+      "min_date": "2026-02-20",
+      "next_page_token": "2026-02-20 18:00:00,csgo_mc_2390508,csgo_mc_2390509",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-22%2018%3A00%3A00%2Ccsgo_mc_2390513"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/c62d2a786f8b6ee1679ce381.html",
+      "max_date": "2026-02-20",
+      "min_date": "2026-02-18",
+      "next_page_token": "2026-02-18 20:00:00,csgo_mc_2390241,csgo_mc_2390625",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-20%2018%3A00%3A00%2Ccsgo_mc_2390508%2Ccsgo_mc_2390509"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/1175d478e83940ca26375a33.html",
+      "max_date": "2026-02-18",
+      "min_date": "2026-02-16",
+      "next_page_token": "2026-02-16 22:00:00,csgo_mc_2390365,csgo_mc_2390361,csgo_mc_2390364",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-18%2020%3A00%3A00%2Ccsgo_mc_2390241%2Ccsgo_mc_2390625"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/ecf84db5b2193b96a3531a38.html",
+      "max_date": "2026-02-16",
+      "min_date": "2026-02-15",
+      "next_page_token": "2026-02-15 02:00:00,csgo_mc_2390002,csgo_mc_2390026,csgo_mc_2390337,csgo_mc_2390338,csgo_mc_2390339,csgo_mc_2390343,csgo_mc_2390340,csgo_mc_2390341",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-16%2022%3A00%3A00%2Ccsgo_mc_2390365%2Ccsgo_mc_2390361%2Ccsgo_mc_2390364"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/9c354c40694a42ef1ad95e45.html",
+      "max_date": "2026-02-15",
+      "min_date": "2026-02-13",
+      "next_page_token": "2026-02-13 05:12:18,csgo_mc_2390164",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-15%2002%3A00%3A00%2Ccsgo_mc_2390002%2Ccsgo_mc_2390026%2Ccsgo_mc_2390337%2Ccsgo_mc_2390338%2Ccsgo_mc_2390339%2Ccsgo_mc_2390343%2Ccsgo_mc_2390340%2Ccsgo_mc_2390341"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/690867bc11b5e9f2b779fe3d.html",
+      "max_date": "2026-02-13",
+      "min_date": "2026-02-10",
+      "next_page_token": "2026-02-10 23:00:00,csgo_mc_2389847,csgo_mc_2390009",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-13%2005%3A12%3A18%2Ccsgo_mc_2390164"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/8486ad3c345025bae94ba91a.html",
+      "max_date": "2026-02-10",
+      "min_date": "2026-02-07",
+      "next_page_token": "2026-02-07 06:30:00,csgo_mc_2389756,csgo_mc_2389930",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-10%2023%3A00%3A00%2Ccsgo_mc_2389847%2Ccsgo_mc_2390009"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/5103d5677a0410bd87b27807.html",
+      "max_date": "2026-02-07",
+      "min_date": "2026-02-03",
+      "next_page_token": "2026-02-03 20:00:00,csgo_mc_2389229,csgo_mc_2389818",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-07%2006%3A30%3A00%2Ccsgo_mc_2389756%2Ccsgo_mc_2389930"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/55215ab84098abd5d8613dae.html",
+      "max_date": "2026-02-03",
+      "min_date": "2026-01-31",
+      "next_page_token": "2026-01-31 22:00:00,csgo_mc_2389688",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-02-03%2020%3A00%3A00%2Ccsgo_mc_2389229%2Ccsgo_mc_2389818"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/fe58eccc20b30838e3e7b431.html",
+      "max_date": "2026-01-31",
+      "min_date": "2026-01-28",
+      "next_page_token": "2026-01-28 17:00:00,csgo_mc_2389211",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-31%2022%3A00%3A00%2Ccsgo_mc_2389688"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/bea73803ff0e596b9123e80f.html",
+      "max_date": "2026-01-28",
+      "min_date": "2026-01-24",
+      "next_page_token": "2026-01-24 17:45:00,csgo_mc_2389370",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-28%2017%3A00%3A00%2Ccsgo_mc_2389211"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/a374601a5d98e56ef252ab4e.html",
+      "max_date": "2026-01-24",
+      "min_date": "2026-01-22",
+      "next_page_token": "2026-01-22 17:00:00,csgo_mc_2389467",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-24%2017%3A45%3A00%2Ccsgo_mc_2389370"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/990c8f97db3b402391edef7f.html",
+      "max_date": "2026-01-22",
+      "min_date": "2026-01-18",
+      "next_page_token": "2026-01-18 23:00:00,csgo_mc_2389101",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-22%2017%3A00%3A00%2Ccsgo_mc_2389467"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/6d7e51b10bab4560c3bcd466.html",
+      "max_date": "2026-01-18",
+      "min_date": "2026-01-17",
+      "next_page_token": "2026-01-17 00:45:00,csgo_mc_2389401",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-18%2023%3A00%3A00%2Ccsgo_mc_2389101"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b8ca89ba3031402a496ff8fb.html",
+      "max_date": "2026-01-17",
+      "min_date": "2026-01-13",
+      "next_page_token": "2026-01-13 23:15:00,csgo_mc_2389073",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-17%2000%3A45%3A00%2Ccsgo_mc_2389401"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/b448a1d104181c3722b9fb8a.html",
+      "max_date": "2026-01-13",
+      "min_date": "2026-01-04",
+      "next_page_token": "2026-01-04 17:00:00,csgo_mc_2388826",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-13%2023%3A15%3A00%2Ccsgo_mc_2389073"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/f1c7c737c0301c4d712324e9.html",
+      "max_date": "2026-01-04",
+      "min_date": "2025-12-23",
+      "next_page_token": "2025-12-23 17:00:00,csgo_mc_2388782,cg_mc_manual_1901",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2026-01-04%2017%3A00%3A00%2Ccsgo_mc_2388826"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/8a51f3b8abecc12ee449b150.html",
+      "max_date": "2025-12-23",
+      "min_date": "2025-12-19",
+      "next_page_token": "2025-12-19 22:15:00,csgo_mc_2388696",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-12-23%2017%3A00%3A00%2Ccsgo_mc_2388782%2Ccg_mc_manual_1901"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/273a9c25ac06c2c39918a71b.html",
+      "max_date": "2025-12-19",
+      "min_date": "2025-12-14",
+      "next_page_token": "2025-12-14 15:00:00,csgo_mc_2388575",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-12-19%2022%3A15%3A00%2Ccsgo_mc_2388696"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/53b0742d3faa43dcd238466c.html",
+      "max_date": "2025-12-14",
+      "min_date": "2025-12-08",
+      "next_page_token": "2025-12-08 00:20:00,csgo_mc_2388515",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-12-14%2015%3A00%3A00%2Ccsgo_mc_2388575"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/44ddf447b4101e53cd068204.html",
+      "max_date": "2025-12-08",
+      "min_date": "2025-12-04",
+      "next_page_token": "2025-12-04 23:40:00,csgo_mc_2388098",
+      "raw_matches": 100,
+      "selected_matches": 100,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-12-08%2000%3A20%3A00%2Ccsgo_mc_2388515"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/0a016d1b36fadba8b48137a6.html",
+      "max_date": "2025-12-04",
+      "min_date": "2025-11-30",
+      "next_page_token": "2025-11-30 08:55:00,csgo_mc_2388558,csgo_mc_2388559",
+      "raw_matches": 100,
+      "selected_matches": 72,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-12-04%2023%3A40%3A00%2Ccsgo_mc_2388098"
+    },
+    {
+      "cache_path": "data/cologne2026/raw/fivee_results_cache/561257c997f73b543d172d2b.html",
+      "max_date": "2025-11-30",
+      "min_date": "2025-11-26",
+      "next_page_token": "2025-11-26 23:30:00,csgo_mc_2388347",
+      "raw_matches": 100,
+      "selected_matches": 0,
+      "url": "https://app.5eplay.com/api/tournament/session_result_list?game_type=1&order_by=asc&grades=&page_size=100&page_token=2025-11-30%2008%3A55%3A00%2Ccsgo_mc_2388558%2Ccsgo_mc_2388559"
+    }
+  ],
+  "page_size": 100,
+  "pages_fetched": 67,
+  "source": "5e",
+  "start_date": "2025-12-01",
+  "updated_at": "2026-06-01T09:27:40.610670+00:00"
+}
