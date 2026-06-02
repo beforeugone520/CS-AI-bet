@@ -8,7 +8,29 @@ version = "0.1.0"
 description = "Offline CS2 Major Pick'em prediction pipeline with cleaning, features, ensemble models, Swiss simulation, and strategy output."
 requires-python = ">=3.9"
 readme = "README.md"
-authors = [{ name = "Codex" }]
+license = { text = "MIT" }
+authors = [{ name = "Codex" }, { name = "BeforeUgone" }]
+keywords = [
+  "counter-strike",
+  "cs2",
+  "esports",
+  "pickem",
+  "machine-learning",
+  "prediction",
+  "monte-carlo",
+  "elo",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 [project.optional-dependencies]
 ml = [
@@ -33,6 +55,11 @@ dev = [
 
 [project.scripts]
 cs2pickem = "cs2pickem.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/beforeugone520/CS-AI-bet"
+Repository = "https://github.com/beforeugone520/CS-AI-bet"
+Issues = "https://github.com/beforeugone520/CS-AI-bet/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

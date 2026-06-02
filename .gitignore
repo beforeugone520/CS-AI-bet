@@ -19,3 +19,11 @@ htmlcov/
 
 # Scraped HTML cache (regenerable)
 data/fivee/cache/
+
+# Regenerable prediction by-products (tuning sweeps, backtest configs, market-odds
+# duplicates). The core result files referenced by README stay tracked.
+data/cologne2026/predictions/*/backtest_configs_*.json
+data/cologne2026/predictions/*/backtest_elo_*.json
+data/cologne2026/predictions/*/full_prediction_manifest.json
+data/cologne2026/predictions/*/*tuning_report*.json
+data/cologne2026/predictions/*/*_with_market_odds_*.json
