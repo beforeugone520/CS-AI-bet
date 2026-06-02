@@ -5,27 +5,273 @@
     "random_forest": 0.35294117647058826,
     "xgboost": 0.4117647058823529
   },
+  "feature_preparation": {
+    "elo": {
+      "base": 1500.0,
+      "basis": "chronological_pre_match_online",
+      "k": 24.0,
+      "rows": 12941,
+      "teams": 648,
+      "tier_k": {
+        "A": 20.0,
+        "B": 14.0,
+        "C": 10.0,
+        "S": 32.0
+      }
+    },
+    "excluded_feature_names": [
+      "team1_code",
+      "team2_code",
+      "event_code",
+      "version_tag_code"
+    ]
+  },
   "imbalance": {
     "balanced_counts": {
-      "0": 7081,
-      "1": 7081
+      "0": 6009,
+      "1": 6009
     },
     "class_weights": {
-      "0": 1.1041808873720136,
-      "1": 0.913783363931648
+      "0": 1.1019835704267682,
+      "1": 0.9152937260775503
     },
     "original_counts": {
-      "0": 5860,
-      "1": 7081
+      "0": 4991,
+      "1": 6009
     },
     "strategy": "smote_minority_oversample_plus_class_weight",
-    "synthetic_rows": 1221
+    "synthetic_rows": 1018
   },
   "market_adjustment_summary": {
-    "adjusted_matchup_keys": [],
-    "adjusted_matchups": 0,
+    "adjusted_matchup_keys": [
+      "B8__BIG__bo1",
+      "B8__BIG__bo3",
+      "B8__BetBoom__bo3",
+      "B8__FlyQuest__bo1",
+      "B8__FlyQuest__bo3",
+      "B8__Gaimin Gladiators__bo1",
+      "B8__Gaimin Gladiators__bo3",
+      "B8__HEROIC__bo3",
+      "B8__Liquid__bo1",
+      "B8__Liquid__bo3",
+      "B8__Lynn Vision__bo3",
+      "B8__M80__bo1",
+      "B8__M80__bo3",
+      "B8__MIBR__bo3",
+      "B8__NRG__bo1",
+      "B8__NRG__bo3",
+      "B8__SINNERS__bo1",
+      "B8__SINNERS__bo3",
+      "B8__Sharks__bo1",
+      "B8__Sharks__bo3",
+      "B8__THUNDER dOWNUNDER__bo1",
+      "B8__TYLOO__bo1",
+      "B8__TYLOO__bo3",
+      "BIG__FlyQuest__bo1",
+      "BIG__FlyQuest__bo3",
+      "BIG__Gaimin Gladiators__bo1",
+      "BIG__Gaimin Gladiators__bo3",
+      "BIG__Liquid__bo1",
+      "BIG__Liquid__bo3",
+      "BIG__M80__bo1",
+      "BIG__M80__bo3",
+      "BIG__NRG__bo1",
+      "BIG__NRG__bo3",
+      "BIG__SINNERS__bo1",
+      "BIG__SINNERS__bo3",
+      "BIG__Sharks__bo1",
+      "BIG__Sharks__bo3",
+      "BIG__THUNDER dOWNUNDER__bo1",
+      "BIG__THUNDER dOWNUNDER__bo3",
+      "BIG__TYLOO__bo1",
+      "BIG__TYLOO__bo3",
+      "BetBoom__BIG__bo1",
+      "BetBoom__BIG__bo3",
+      "BetBoom__FlyQuest__bo1",
+      "BetBoom__FlyQuest__bo3",
+      "BetBoom__Gaimin Gladiators__bo1",
+      "BetBoom__Gaimin Gladiators__bo3",
+      "BetBoom__HEROIC__bo3",
+      "BetBoom__Liquid__bo1",
+      "BetBoom__Liquid__bo3",
+      "BetBoom__Lynn Vision__bo1",
+      "BetBoom__Lynn Vision__bo3",
+      "BetBoom__M80__bo1",
+      "BetBoom__M80__bo3",
+      "BetBoom__MIBR__bo3",
+      "BetBoom__NRG__bo1",
+      "BetBoom__NRG__bo3",
+      "BetBoom__SINNERS__bo1",
+      "BetBoom__SINNERS__bo3",
+      "BetBoom__Sharks__bo1",
+      "BetBoom__Sharks__bo3",
+      "BetBoom__THUNDER dOWNUNDER__bo1",
+      "BetBoom__THUNDER dOWNUNDER__bo3",
+      "BetBoom__TYLOO__bo1",
+      "BetBoom__TYLOO__bo3",
+      "Gaimin Gladiators__FlyQuest__bo3",
+      "Gaimin Gladiators__THUNDER dOWNUNDER__bo3",
+      "GamerLegion__B8__bo1",
+      "GamerLegion__BIG__bo3",
+      "GamerLegion__BetBoom__bo3",
+      "GamerLegion__FlyQuest__bo1",
+      "GamerLegion__Gaimin Gladiators__bo1",
+      "GamerLegion__Gaimin Gladiators__bo3",
+      "GamerLegion__HEROIC__bo3",
+      "GamerLegion__Liquid__bo1",
+      "GamerLegion__Liquid__bo3",
+      "GamerLegion__Lynn Vision__bo3",
+      "GamerLegion__M80__bo1",
+      "GamerLegion__M80__bo3",
+      "GamerLegion__MIBR__bo3",
+      "GamerLegion__NRG__bo1",
+      "GamerLegion__NRG__bo3",
+      "GamerLegion__SINNERS__bo1",
+      "GamerLegion__SINNERS__bo3",
+      "GamerLegion__Sharks__bo1",
+      "GamerLegion__Sharks__bo3",
+      "GamerLegion__THUNDER dOWNUNDER__bo1",
+      "GamerLegion__THUNDER dOWNUNDER__bo3",
+      "GamerLegion__TYLOO__bo1",
+      "GamerLegion__TYLOO__bo3",
+      "HEROIC__BIG__bo1",
+      "HEROIC__BIG__bo3",
+      "HEROIC__FlyQuest__bo1",
+      "HEROIC__FlyQuest__bo3",
+      "HEROIC__Gaimin Gladiators__bo1",
+      "HEROIC__Gaimin Gladiators__bo3",
+      "HEROIC__Liquid__bo1",
+      "HEROIC__Liquid__bo3",
+      "HEROIC__Lynn Vision__bo1",
+      "HEROIC__Lynn Vision__bo3",
+      "HEROIC__M80__bo1",
+      "HEROIC__M80__bo3",
+      "HEROIC__NRG__bo1",
+      "HEROIC__NRG__bo3",
+      "HEROIC__SINNERS__bo1",
+      "HEROIC__SINNERS__bo3",
+      "HEROIC__Sharks__bo1",
+      "HEROIC__Sharks__bo3",
+      "HEROIC__THUNDER dOWNUNDER__bo1",
+      "HEROIC__THUNDER dOWNUNDER__bo3",
+      "HEROIC__TYLOO__bo1",
+      "HEROIC__TYLOO__bo3",
+      "Liquid__FlyQuest__bo3",
+      "Liquid__Gaimin Gladiators__bo1",
+      "Liquid__Gaimin Gladiators__bo3",
+      "Liquid__NRG__bo1",
+      "Liquid__NRG__bo3",
+      "Liquid__Sharks__bo1",
+      "Liquid__Sharks__bo3",
+      "Liquid__THUNDER dOWNUNDER__bo3",
+      "Lynn Vision__BIG__bo1",
+      "Lynn Vision__BIG__bo3",
+      "Lynn Vision__FlyQuest__bo1",
+      "Lynn Vision__FlyQuest__bo3",
+      "Lynn Vision__Gaimin Gladiators__bo1",
+      "Lynn Vision__Gaimin Gladiators__bo3",
+      "Lynn Vision__Liquid__bo1",
+      "Lynn Vision__Liquid__bo3",
+      "Lynn Vision__M80__bo1",
+      "Lynn Vision__M80__bo3",
+      "Lynn Vision__NRG__bo1",
+      "Lynn Vision__NRG__bo3",
+      "Lynn Vision__SINNERS__bo1",
+      "Lynn Vision__SINNERS__bo3",
+      "Lynn Vision__Sharks__bo1",
+      "Lynn Vision__Sharks__bo3",
+      "Lynn Vision__THUNDER dOWNUNDER__bo1",
+      "Lynn Vision__THUNDER dOWNUNDER__bo3",
+      "Lynn Vision__TYLOO__bo1",
+      "Lynn Vision__TYLOO__bo3",
+      "M80__FlyQuest__bo3",
+      "M80__Gaimin Gladiators__bo1",
+      "M80__Gaimin Gladiators__bo3",
+      "M80__Liquid__bo1",
+      "M80__Liquid__bo3",
+      "M80__NRG__bo1",
+      "M80__NRG__bo3",
+      "M80__Sharks__bo1",
+      "M80__Sharks__bo3",
+      "M80__THUNDER dOWNUNDER__bo1",
+      "M80__THUNDER dOWNUNDER__bo3",
+      "MIBR__BIG__bo1",
+      "MIBR__BIG__bo3",
+      "MIBR__FlyQuest__bo1",
+      "MIBR__FlyQuest__bo3",
+      "MIBR__Gaimin Gladiators__bo1",
+      "MIBR__Gaimin Gladiators__bo3",
+      "MIBR__HEROIC__bo1",
+      "MIBR__HEROIC__bo3",
+      "MIBR__Liquid__bo1",
+      "MIBR__Liquid__bo3",
+      "MIBR__Lynn Vision__bo1",
+      "MIBR__Lynn Vision__bo3",
+      "MIBR__M80__bo1",
+      "MIBR__M80__bo3",
+      "MIBR__NRG__bo1",
+      "MIBR__NRG__bo3",
+      "MIBR__SINNERS__bo1",
+      "MIBR__SINNERS__bo3",
+      "MIBR__Sharks__bo1",
+      "MIBR__Sharks__bo3",
+      "MIBR__THUNDER dOWNUNDER__bo1",
+      "MIBR__THUNDER dOWNUNDER__bo3",
+      "MIBR__TYLOO__bo1",
+      "MIBR__TYLOO__bo3",
+      "NRG__FlyQuest__bo3",
+      "NRG__Gaimin Gladiators__bo3",
+      "NRG__THUNDER dOWNUNDER__bo3",
+      "SINNERS__FlyQuest__bo1",
+      "SINNERS__FlyQuest__bo3",
+      "SINNERS__Gaimin Gladiators__bo1",
+      "SINNERS__Gaimin Gladiators__bo3",
+      "SINNERS__Liquid__bo1",
+      "SINNERS__Liquid__bo3",
+      "SINNERS__M80__bo1",
+      "SINNERS__M80__bo3",
+      "SINNERS__NRG__bo1",
+      "SINNERS__NRG__bo3",
+      "SINNERS__Sharks__bo1",
+      "SINNERS__Sharks__bo3",
+      "SINNERS__THUNDER dOWNUNDER__bo1",
+      "SINNERS__THUNDER dOWNUNDER__bo3",
+      "Sharks__FlyQuest__bo3",
+      "Sharks__Gaimin Gladiators__bo3",
+      "Sharks__NRG__bo1",
+      "Sharks__NRG__bo3",
+      "Sharks__THUNDER dOWNUNDER__bo3",
+      "THUNDER dOWNUNDER__FlyQuest__bo3",
+      "TYLOO__FlyQuest__bo1",
+      "TYLOO__FlyQuest__bo3",
+      "TYLOO__Gaimin Gladiators__bo1",
+      "TYLOO__Gaimin Gladiators__bo3",
+      "TYLOO__Liquid__bo1",
+      "TYLOO__Liquid__bo3",
+      "TYLOO__M80__bo1",
+      "TYLOO__M80__bo3",
+      "TYLOO__NRG__bo1",
+      "TYLOO__NRG__bo3",
+      "TYLOO__SINNERS__bo1",
+      "TYLOO__SINNERS__bo3",
+      "TYLOO__Sharks__bo1",
+      "TYLOO__Sharks__bo3",
+      "TYLOO__THUNDER dOWNUNDER__bo1",
+      "TYLOO__THUNDER dOWNUNDER__bo3"
+    ],
+    "adjusted_matchups": 214,
+    "adjusted_matchups_by_source": {
+      "fixture_odds": 16,
+      "team_market_strength": 198
+    },
     "cached_matchups": 214,
-    "unadjusted_matchups": 214
+    "proxy_signal_matchups": 0,
+    "signal_counts": {
+      "real_odds": 16,
+      "team_market_strength": 198
+    },
+    "signal_matchups": 214,
+    "unadjusted_matchups": 0
   },
   "model_hyperparameters": {
     "logistic": {
@@ -57,43 +303,43 @@
       {
         "category": "0-3",
         "next_best_probability": null,
-        "next_best_score": 0.2191644,
-        "probability": 0.22277,
-        "rank": 11,
-        "selection_margin": 0.015857949999999982,
-        "selection_score": 0.23502235,
-        "team": "GamerLegion"
+        "next_best_score": 0.21575509999999998,
+        "probability": 0.23247,
+        "rank": 49,
+        "selection_margin": 0.07367005000000004,
+        "selection_score": 0.28942515,
+        "team": "NRG"
       },
       {
         "category": "0-3",
         "next_best_probability": null,
-        "next_best_score": 0.2191644,
-        "probability": 0.21249,
-        "rank": 17,
-        "selection_margin": 0.011387249999999988,
-        "selection_score": 0.23055165,
-        "team": "BetBoom"
+        "next_best_score": 0.21575509999999998,
+        "probability": 0.19009,
+        "rank": 53,
+        "selection_margin": 0.024708750000000057,
+        "selection_score": 0.24046385000000003,
+        "team": "Gaimin Gladiators"
       }
     ],
     "3-0": [
       {
         "category": "3-0",
         "next_best_probability": null,
-        "next_best_score": 0.10398000000000002,
-        "probability": 0.18852,
+        "next_best_score": 0.118515,
+        "probability": 0.21789,
         "rank": 19,
-        "selection_margin": 0.08453999999999998,
-        "selection_score": 0.18852,
+        "selection_margin": 0.099375,
+        "selection_score": 0.21789,
         "team": "MIBR"
       },
       {
         "category": "3-0",
         "next_best_probability": null,
-        "next_best_score": 0.10398000000000002,
-        "probability": 0.22101,
+        "next_best_score": 0.118515,
+        "probability": 0.19529,
         "rank": 27,
-        "selection_margin": 0.061777499999999985,
-        "selection_score": 0.1657575,
+        "selection_margin": 0.027952500000000005,
+        "selection_score": 0.1464675,
         "team": "BIG"
       }
     ],
@@ -101,115 +347,71 @@
       {
         "category": "advance",
         "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.65856,
-        "rank": 57,
-        "selection_margin": 0.09635250000000006,
-        "selection_score": 0.49392,
-        "team": "THUNDER dOWNUNDER"
+        "next_best_score": 0.4348125,
+        "probability": 0.54807,
+        "rank": 11,
+        "selection_margin": 0.11325749999999996,
+        "selection_score": 0.54807,
+        "team": "GamerLegion"
       },
       {
         "category": "advance",
         "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.46592,
+        "next_best_score": 0.4348125,
+        "probability": 0.53586,
+        "rank": 17,
+        "selection_margin": 0.10104750000000001,
+        "selection_score": 0.53586,
+        "team": "BetBoom"
+      },
+      {
+        "category": "advance",
+        "next_best_probability": null,
+        "next_best_score": 0.4348125,
+        "probability": 0.53491,
         "rank": 16,
-        "selection_margin": 0.06835250000000004,
-        "selection_score": 0.46592,
+        "selection_margin": 0.1000975,
+        "selection_score": 0.53491,
         "team": "B8"
       },
       {
         "category": "advance",
         "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.59683,
-        "rank": 78,
-        "selection_margin": 0.050055000000000016,
-        "selection_score": 0.4476225,
-        "team": "FlyQuest"
+        "next_best_score": 0.4348125,
+        "probability": 0.51655,
+        "rank": 23,
+        "selection_margin": 0.08173749999999996,
+        "selection_score": 0.51655,
+        "team": "HEROIC"
       },
       {
         "category": "advance",
         "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.58276,
-        "rank": 53,
-        "selection_margin": 0.039502499999999996,
-        "selection_score": 0.43706999999999996,
-        "team": "Gaimin Gladiators"
-      },
-      {
-        "category": "advance",
-        "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.5825,
+        "next_best_score": 0.4348125,
+        "probability": 0.61363,
         "rank": 29,
-        "selection_margin": 0.03930750000000005,
-        "selection_score": 0.436875,
+        "selection_margin": 0.025409999999999988,
+        "selection_score": 0.4602225,
         "team": "TYLOO"
       },
       {
         "category": "advance",
         "next_best_probability": null,
-        "next_best_score": 0.39756749999999996,
-        "probability": 0.54518,
-        "rank": 45,
-        "selection_margin": 0.011317500000000036,
-        "selection_score": 0.408885,
-        "team": "Sharks"
+        "next_best_score": 0.4348125,
+        "probability": 0.44883,
+        "rank": 24,
+        "selection_margin": 0.014017500000000016,
+        "selection_score": 0.44883,
+        "team": "Lynn Vision"
       }
     ]
   },
   "pickem_risk_details": {
     "0-3": [
       {
-        "base_probability": 0.22277,
+        "base_probability": 0.23247,
         "category": "0-3",
-        "final_score": 0.23502235,
-        "prefer_weak_multiplier": 1.055,
-        "rank": 11,
-        "stage_adjustment": 0.0,
-        "team": "GamerLegion",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 0
-      },
-      {
-        "base_probability": 0.21249,
-        "category": "0-3",
-        "final_score": 0.23055165,
-        "prefer_weak_multiplier": 1.085,
-        "rank": 17,
-        "stage_adjustment": 0.0,
-        "team": "BetBoom",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 6
-      },
-      {
-        "base_probability": 0.19656,
-        "category": "0-3",
-        "final_score": 0.2191644,
-        "prefer_weak_multiplier": 1.115,
-        "rank": 23,
-        "stage_adjustment": 0.0,
-        "team": "HEROIC",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 12
-      },
-      {
-        "base_probability": 0.17927,
-        "category": "0-3",
-        "final_score": 0.20078240000000003,
-        "prefer_weak_multiplier": 1.12,
-        "rank": 24,
-        "stage_adjustment": 0.0,
-        "team": "Lynn Vision",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 13
-      },
-      {
-        "base_probability": 0.14983,
-        "category": "0-3",
-        "final_score": 0.18653835,
+        "final_score": 0.28942515,
         "prefer_weak_multiplier": 1.245,
         "rank": 49,
         "stage_adjustment": 0.0,
@@ -218,75 +420,9 @@
         "upset_rank_gap": 38
       },
       {
-        "base_probability": 0.13818,
+        "base_probability": 0.19009,
         "category": "0-3",
-        "final_score": 0.1595979,
-        "prefer_weak_multiplier": 1.155,
-        "rank": 31,
-        "stage_adjustment": 0.0,
-        "team": "M80",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 20
-      },
-      {
-        "base_probability": 0.14009,
-        "category": "0-3",
-        "final_score": 0.1512972,
-        "prefer_weak_multiplier": 1.08,
-        "rank": 16,
-        "stage_adjustment": 0.0,
-        "team": "B8",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 5
-      },
-      {
-        "base_probability": 0.11476,
-        "category": "0-3",
-        "final_score": 0.13197399999999998,
-        "prefer_weak_multiplier": 1.15,
-        "rank": 30,
-        "stage_adjustment": 0.0,
-        "team": "SINNERS",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 19
-      },
-      {
-        "base_probability": 0.10379,
-        "category": "0-3",
-        "final_score": 0.12714275,
-        "prefer_weak_multiplier": 1.225,
-        "rank": 45,
-        "stage_adjustment": 0.0,
-        "team": "Sharks",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 34
-      },
-      {
-        "base_probability": 0.09953,
-        "category": "0-3",
-        "final_score": 0.12043129999999999,
-        "prefer_weak_multiplier": 1.21,
-        "rank": 42,
-        "stage_adjustment": 0.0,
-        "team": "Liquid",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 31
-      },
-      {
-        "base_probability": 0.07799,
-        "category": "0-3",
-        "final_score": 0.10840610000000002,
-        "prefer_weak_multiplier": 1.3900000000000001,
-        "rank": 78,
-        "stage_adjustment": 0.0,
-        "team": "FlyQuest",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 67
-      },
-      {
-        "base_probability": 0.08245,
-        "category": "0-3",
-        "final_score": 0.10429925000000001,
+        "final_score": 0.24046385000000003,
         "prefer_weak_multiplier": 1.2650000000000001,
         "rank": 53,
         "stage_adjustment": 0.0,
@@ -295,20 +431,97 @@
         "upset_rank_gap": 42
       },
       {
-        "base_probability": 0.08467,
+        "base_probability": 0.17831,
         "category": "0-3",
-        "final_score": 0.09694715,
-        "prefer_weak_multiplier": 1.145,
-        "rank": 29,
+        "final_score": 0.21575509999999998,
+        "prefer_weak_multiplier": 1.21,
+        "rank": 42,
         "stage_adjustment": 0.0,
-        "team": "TYLOO",
+        "team": "Liquid",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 18
+        "upset_rank_gap": 31
       },
       {
-        "base_probability": 0.06971,
+        "base_probability": 0.14942,
         "category": "0-3",
-        "final_score": 0.08957734999999999,
+        "final_score": 0.2076938,
+        "prefer_weak_multiplier": 1.3900000000000001,
+        "rank": 78,
+        "stage_adjustment": 0.0,
+        "team": "FlyQuest",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 67
+      },
+      {
+        "base_probability": 0.14231,
+        "category": "0-3",
+        "final_score": 0.17432975,
+        "prefer_weak_multiplier": 1.225,
+        "rank": 45,
+        "stage_adjustment": 0.0,
+        "team": "Sharks",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 34
+      },
+      {
+        "base_probability": 0.13723,
+        "category": "0-3",
+        "final_score": 0.15369760000000002,
+        "prefer_weak_multiplier": 1.12,
+        "rank": 24,
+        "stage_adjustment": 0.0,
+        "team": "Lynn Vision",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 13
+      },
+      {
+        "base_probability": 0.12623,
+        "category": "0-3",
+        "final_score": 0.14579565000000003,
+        "prefer_weak_multiplier": 1.155,
+        "rank": 31,
+        "stage_adjustment": 0.0,
+        "team": "M80",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 20
+      },
+      {
+        "base_probability": 0.12413,
+        "category": "0-3",
+        "final_score": 0.1427495,
+        "prefer_weak_multiplier": 1.15,
+        "rank": 30,
+        "stage_adjustment": 0.0,
+        "team": "SINNERS",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 19
+      },
+      {
+        "base_probability": 0.11443,
+        "category": "0-3",
+        "final_score": 0.12358440000000001,
+        "prefer_weak_multiplier": 1.08,
+        "rank": 16,
+        "stage_adjustment": 0.0,
+        "team": "B8",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 5
+      },
+      {
+        "base_probability": 0.10463,
+        "category": "0-3",
+        "final_score": 0.11666245,
+        "prefer_weak_multiplier": 1.115,
+        "rank": 23,
+        "stage_adjustment": 0.0,
+        "team": "HEROIC",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 12
+      },
+      {
+        "base_probability": 0.09073,
+        "category": "0-3",
+        "final_score": 0.11658805,
         "prefer_weak_multiplier": 1.285,
         "rank": 57,
         "stage_adjustment": 0.0,
@@ -317,33 +530,66 @@
         "upset_rank_gap": 46
       },
       {
-        "base_probability": 0.06719,
+        "base_probability": 0.10107,
         "category": "0-3",
-        "final_score": 0.07357305,
-        "prefer_weak_multiplier": 1.095,
-        "rank": 19,
+        "final_score": 0.10966095,
+        "prefer_weak_multiplier": 1.085,
+        "rank": 17,
         "stage_adjustment": 0.0,
-        "team": "MIBR",
+        "team": "BetBoom",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 8
+        "upset_rank_gap": 6
       },
       {
-        "base_probability": 0.06072,
+        "base_probability": 0.10213,
         "category": "0-3",
-        "final_score": 0.0689172,
+        "final_score": 0.10774714999999999,
+        "prefer_weak_multiplier": 1.055,
+        "rank": 11,
+        "stage_adjustment": 0.0,
+        "team": "GamerLegion",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 0
+      },
+      {
+        "base_probability": 0.0792,
+        "category": "0-3",
+        "final_score": 0.09068400000000001,
+        "prefer_weak_multiplier": 1.145,
+        "rank": 29,
+        "stage_adjustment": 0.0,
+        "team": "TYLOO",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 18
+      },
+      {
+        "base_probability": 0.06851,
+        "category": "0-3",
+        "final_score": 0.07775885,
         "prefer_weak_multiplier": 1.135,
         "rank": 27,
         "stage_adjustment": 0.0,
         "team": "BIG",
         "upset_penalty_multiplier": 1.0,
         "upset_rank_gap": 16
+      },
+      {
+        "base_probability": 0.05911,
+        "category": "0-3",
+        "final_score": 0.06472545,
+        "prefer_weak_multiplier": 1.095,
+        "rank": 19,
+        "stage_adjustment": 0.0,
+        "team": "MIBR",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 8
       }
     ],
     "3-0": [
       {
-        "base_probability": 0.18852,
+        "base_probability": 0.21789,
         "category": "3-0",
-        "final_score": 0.18852,
+        "final_score": 0.21789,
         "prefer_weak_multiplier": 1.0,
         "rank": 19,
         "stage_adjustment": 0.0,
@@ -352,9 +598,9 @@
         "upset_rank_gap": 8
       },
       {
-        "base_probability": 0.22101,
+        "base_probability": 0.19529,
         "category": "3-0",
-        "final_score": 0.1657575,
+        "final_score": 0.1464675,
         "prefer_weak_multiplier": 1.0,
         "rank": 27,
         "stage_adjustment": 0.0,
@@ -363,141 +609,20 @@
         "upset_rank_gap": 16
       },
       {
-        "base_probability": 0.18968,
+        "base_probability": 0.14379,
         "category": "3-0",
-        "final_score": 0.14226,
+        "final_score": 0.14379,
         "prefer_weak_multiplier": 1.0,
-        "rank": 57,
+        "rank": 11,
         "stage_adjustment": 0.0,
-        "team": "THUNDER dOWNUNDER",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 46
-      },
-      {
-        "base_probability": 0.1605,
-        "category": "3-0",
-        "final_score": 0.12037500000000001,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 78,
-        "stage_adjustment": 0.0,
-        "team": "FlyQuest",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 67
-      },
-      {
-        "base_probability": 0.15631,
-        "category": "3-0",
-        "final_score": 0.1172325,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 29,
-        "stage_adjustment": 0.0,
-        "team": "TYLOO",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 18
-      },
-      {
-        "base_probability": 0.14861,
-        "category": "3-0",
-        "final_score": 0.11145749999999999,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 53,
-        "stage_adjustment": 0.0,
-        "team": "Gaimin Gladiators",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 42
-      },
-      {
-        "base_probability": 0.13864,
-        "category": "3-0",
-        "final_score": 0.10398000000000002,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 42,
-        "stage_adjustment": 0.0,
-        "team": "Liquid",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 31
-      },
-      {
-        "base_probability": 0.10273,
-        "category": "3-0",
-        "final_score": 0.10273,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 16,
-        "stage_adjustment": 0.0,
-        "team": "B8",
+        "team": "GamerLegion",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 5
+        "upset_rank_gap": 0
       },
       {
-        "base_probability": 0.132,
+        "base_probability": 0.14322,
         "category": "3-0",
-        "final_score": 0.099,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 45,
-        "stage_adjustment": 0.0,
-        "team": "Sharks",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 34
-      },
-      {
-        "base_probability": 0.12021,
-        "category": "3-0",
-        "final_score": 0.0901575,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 30,
-        "stage_adjustment": 0.0,
-        "team": "SINNERS",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 19
-      },
-      {
-        "base_probability": 0.09645,
-        "category": "3-0",
-        "final_score": 0.0723375,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 31,
-        "stage_adjustment": 0.0,
-        "team": "M80",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 20
-      },
-      {
-        "base_probability": 0.07159,
-        "category": "3-0",
-        "final_score": 0.07159,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 24,
-        "stage_adjustment": 0.0,
-        "team": "Lynn Vision",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 13
-      },
-      {
-        "base_probability": 0.06581,
-        "category": "3-0",
-        "final_score": 0.06581,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 23,
-        "stage_adjustment": 0.0,
-        "team": "HEROIC",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 12
-      },
-      {
-        "base_probability": 0.0854,
-        "category": "3-0",
-        "final_score": 0.06405,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 49,
-        "stage_adjustment": 0.0,
-        "team": "NRG",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 38
-      },
-      {
-        "base_probability": 0.0617,
-        "category": "3-0",
-        "final_score": 0.0617,
+        "final_score": 0.14322,
         "prefer_weak_multiplier": 1.0,
         "rank": 17,
         "stage_adjustment": 0.0,
@@ -506,22 +631,143 @@
         "upset_rank_gap": 6
       },
       {
-        "base_probability": 0.06084,
+        "base_probability": 0.13207,
         "category": "3-0",
-        "final_score": 0.06084,
+        "final_score": 0.13207,
         "prefer_weak_multiplier": 1.0,
-        "rank": 11,
+        "rank": 23,
         "stage_adjustment": 0.0,
-        "team": "GamerLegion",
+        "team": "HEROIC",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 0
+        "upset_rank_gap": 12
+      },
+      {
+        "base_probability": 0.16981,
+        "category": "3-0",
+        "final_score": 0.12735749999999998,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 29,
+        "stage_adjustment": 0.0,
+        "team": "TYLOO",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 18
+      },
+      {
+        "base_probability": 0.12211,
+        "category": "3-0",
+        "final_score": 0.12211,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 16,
+        "stage_adjustment": 0.0,
+        "team": "B8",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 5
+      },
+      {
+        "base_probability": 0.15802,
+        "category": "3-0",
+        "final_score": 0.118515,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 57,
+        "stage_adjustment": 0.0,
+        "team": "THUNDER dOWNUNDER",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 46
+      },
+      {
+        "base_probability": 0.1067,
+        "category": "3-0",
+        "final_score": 0.1067,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 24,
+        "stage_adjustment": 0.0,
+        "team": "Lynn Vision",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 13
+      },
+      {
+        "base_probability": 0.1102,
+        "category": "3-0",
+        "final_score": 0.08265,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 30,
+        "stage_adjustment": 0.0,
+        "team": "SINNERS",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 19
+      },
+      {
+        "base_probability": 0.10503,
+        "category": "3-0",
+        "final_score": 0.0787725,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 31,
+        "stage_adjustment": 0.0,
+        "team": "M80",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 20
+      },
+      {
+        "base_probability": 0.10058,
+        "category": "3-0",
+        "final_score": 0.075435,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 45,
+        "stage_adjustment": 0.0,
+        "team": "Sharks",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 34
+      },
+      {
+        "base_probability": 0.09982,
+        "category": "3-0",
+        "final_score": 0.074865,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 78,
+        "stage_adjustment": 0.0,
+        "team": "FlyQuest",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 67
+      },
+      {
+        "base_probability": 0.07331,
+        "category": "3-0",
+        "final_score": 0.054982500000000004,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 42,
+        "stage_adjustment": 0.0,
+        "team": "Liquid",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 31
+      },
+      {
+        "base_probability": 0.06927,
+        "category": "3-0",
+        "final_score": 0.0519525,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 53,
+        "stage_adjustment": 0.0,
+        "team": "Gaimin Gladiators",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 42
+      },
+      {
+        "base_probability": 0.05289,
+        "category": "3-0",
+        "final_score": 0.0396675,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 49,
+        "stage_adjustment": 0.0,
+        "team": "NRG",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 38
       }
     ],
     "advance": [
       {
-        "base_probability": 0.62581,
+        "base_probability": 0.66806,
         "category": "advance",
-        "final_score": 0.62581,
+        "final_score": 0.66806,
         "prefer_weak_multiplier": 1.0,
         "rank": 19,
         "stage_adjustment": 0.0,
@@ -530,141 +776,20 @@
         "upset_rank_gap": 8
       },
       {
-        "base_probability": 0.67841,
+        "base_probability": 0.54807,
         "category": "advance",
-        "final_score": 0.5088075,
+        "final_score": 0.54807,
         "prefer_weak_multiplier": 1.0,
-        "rank": 27,
+        "rank": 11,
         "stage_adjustment": 0.0,
-        "team": "BIG",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 16
-      },
-      {
-        "base_probability": 0.65856,
-        "category": "advance",
-        "final_score": 0.49392,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 57,
-        "stage_adjustment": 0.0,
-        "team": "THUNDER dOWNUNDER",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 46
-      },
-      {
-        "base_probability": 0.46592,
-        "category": "advance",
-        "final_score": 0.46592,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 16,
-        "stage_adjustment": 0.0,
-        "team": "B8",
+        "team": "GamerLegion",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 5
+        "upset_rank_gap": 0
       },
       {
-        "base_probability": 0.59683,
+        "base_probability": 0.53586,
         "category": "advance",
-        "final_score": 0.4476225,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 78,
-        "stage_adjustment": 0.0,
-        "team": "FlyQuest",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 67
-      },
-      {
-        "base_probability": 0.58276,
-        "category": "advance",
-        "final_score": 0.43706999999999996,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 53,
-        "stage_adjustment": 0.0,
-        "team": "Gaimin Gladiators",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 42
-      },
-      {
-        "base_probability": 0.5825,
-        "category": "advance",
-        "final_score": 0.436875,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 29,
-        "stage_adjustment": 0.0,
-        "team": "TYLOO",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 18
-      },
-      {
-        "base_probability": 0.54518,
-        "category": "advance",
-        "final_score": 0.408885,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 45,
-        "stage_adjustment": 0.0,
-        "team": "Sharks",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 34
-      },
-      {
-        "base_probability": 0.53009,
-        "category": "advance",
-        "final_score": 0.39756749999999996,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 42,
-        "stage_adjustment": 0.0,
-        "team": "Liquid",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 31
-      },
-      {
-        "base_probability": 0.52231,
-        "category": "advance",
-        "final_score": 0.39173250000000004,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 30,
-        "stage_adjustment": 0.0,
-        "team": "SINNERS",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 19
-      },
-      {
-        "base_probability": 0.48504,
-        "category": "advance",
-        "final_score": 0.36378,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 31,
-        "stage_adjustment": 0.0,
-        "team": "M80",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 20
-      },
-      {
-        "base_probability": 0.35154,
-        "category": "advance",
-        "final_score": 0.35154,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 24,
-        "stage_adjustment": 0.0,
-        "team": "Lynn Vision",
-        "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 13
-      },
-      {
-        "base_probability": 0.46655,
-        "category": "advance",
-        "final_score": 0.3499125,
-        "prefer_weak_multiplier": 1.0,
-        "rank": 49,
-        "stage_adjustment": 0.0,
-        "team": "NRG",
-        "upset_penalty_multiplier": 0.75,
-        "upset_rank_gap": 38
-      },
-      {
-        "base_probability": 0.30891,
-        "category": "advance",
-        "final_score": 0.30891,
+        "final_score": 0.53586,
         "prefer_weak_multiplier": 1.0,
         "rank": 17,
         "stage_adjustment": 0.0,
@@ -673,9 +798,20 @@
         "upset_rank_gap": 6
       },
       {
-        "base_probability": 0.30096,
+        "base_probability": 0.53491,
         "category": "advance",
-        "final_score": 0.30096,
+        "final_score": 0.53491,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 16,
+        "stage_adjustment": 0.0,
+        "team": "B8",
+        "upset_penalty_multiplier": 1.0,
+        "upset_rank_gap": 5
+      },
+      {
+        "base_probability": 0.51655,
+        "category": "advance",
+        "final_score": 0.51655,
         "prefer_weak_multiplier": 1.0,
         "rank": 23,
         "stage_adjustment": 0.0,
@@ -684,51 +820,198 @@
         "upset_rank_gap": 12
       },
       {
-        "base_probability": 0.29863,
+        "base_probability": 0.65643,
         "category": "advance",
-        "final_score": 0.29863,
+        "final_score": 0.4923225,
         "prefer_weak_multiplier": 1.0,
-        "rank": 11,
+        "rank": 27,
         "stage_adjustment": 0.0,
-        "team": "GamerLegion",
+        "team": "BIG",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 16
+      },
+      {
+        "base_probability": 0.61363,
+        "category": "advance",
+        "final_score": 0.4602225,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 29,
+        "stage_adjustment": 0.0,
+        "team": "TYLOO",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 18
+      },
+      {
+        "base_probability": 0.44883,
+        "category": "advance",
+        "final_score": 0.44883,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 24,
+        "stage_adjustment": 0.0,
+        "team": "Lynn Vision",
         "upset_penalty_multiplier": 1.0,
-        "upset_rank_gap": 0
+        "upset_rank_gap": 13
+      },
+      {
+        "base_probability": 0.57975,
+        "category": "advance",
+        "final_score": 0.4348125,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 57,
+        "stage_adjustment": 0.0,
+        "team": "THUNDER dOWNUNDER",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 46
+      },
+      {
+        "base_probability": 0.50099,
+        "category": "advance",
+        "final_score": 0.37574250000000003,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 31,
+        "stage_adjustment": 0.0,
+        "team": "M80",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 20
+      },
+      {
+        "base_probability": 0.49537,
+        "category": "advance",
+        "final_score": 0.3715275,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 30,
+        "stage_adjustment": 0.0,
+        "team": "SINNERS",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 19
+      },
+      {
+        "base_probability": 0.46766,
+        "category": "advance",
+        "final_score": 0.35074500000000003,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 45,
+        "stage_adjustment": 0.0,
+        "team": "Sharks",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 34
+      },
+      {
+        "base_probability": 0.44263,
+        "category": "advance",
+        "final_score": 0.3319725,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 78,
+        "stage_adjustment": 0.0,
+        "team": "FlyQuest",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 67
+      },
+      {
+        "base_probability": 0.34434,
+        "category": "advance",
+        "final_score": 0.258255,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 42,
+        "stage_adjustment": 0.0,
+        "team": "Liquid",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 31
+      },
+      {
+        "base_probability": 0.34238,
+        "category": "advance",
+        "final_score": 0.25678500000000004,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 53,
+        "stage_adjustment": 0.0,
+        "team": "Gaimin Gladiators",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 42
+      },
+      {
+        "base_probability": 0.30454,
+        "category": "advance",
+        "final_score": 0.22840499999999997,
+        "prefer_weak_multiplier": 1.0,
+        "rank": 49,
+        "stage_adjustment": 0.0,
+        "team": "NRG",
+        "upset_penalty_multiplier": 0.75,
+        "upset_rank_gap": 38
       }
     ]
   },
   "pickems": {
     "0-3": [
-      "GamerLegion",
-      "BetBoom"
+      "NRG",
+      "Gaimin Gladiators"
     ],
     "3-0": [
       "MIBR",
       "BIG"
     ],
     "advance": [
-      "THUNDER dOWNUNDER",
+      "GamerLegion",
+      "BetBoom",
       "B8",
-      "FlyQuest",
-      "Gaimin Gladiators",
+      "HEROIC",
       "TYLOO",
-      "Sharks"
+      "Lynn Vision"
     ]
+  },
+  "probability_calibration": {
+    "basis": "holdout_platt_logistic",
+    "calibration_count": 1941,
+    "intercept": 0.2732828622521373,
+    "positive_rate": 0.5522926326635754,
+    "slope": 0.9453290338999226,
+    "training_count": 1941
   },
   "sample_match_details": {
     "B8__BIG__bo1": {
-      "adjusted_probability_team1": 0.4311238309992252,
+      "adjusted_probability_team1": 0.4904889051875583,
       "candidate_maps": [
         "ancient",
         "mirage",
         "overpass"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5178215503180863,
-        "random_forest": 0.4290509121841839,
-        "xgboost": 0.38335906465848285
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4311238309992252,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.514087136608585,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.514087136608585,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.3922833905232612,
+        "random_forest": 0.38404595631544564,
+        "xgboost": 0.38898801803588867
+      },
+      "model_probability_team1": 0.4604889051875583,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -736,30 +1019,69 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.4598073884985583,
-        "mirage": 0.43050360544481825,
-        "overpass": 0.4030604990542991
+        "ancient": 0.49358970430322785,
+        "mirage": 0.42792854451276546,
+        "overpass": 0.45994846674668155
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1681.471425907488,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1218403647807262,
-        "random_forest": 0.15142973371206492,
-        "xgboost": 0.1578537325064341
+        "logistic": 0.09230197424076736,
+        "random_forest": 0.13554563164074554,
+        "xgboost": 0.1601715368383071
       }
     },
     "B8__BIG__bo3": {
-      "adjusted_probability_team1": 0.4250028034630657,
+      "adjusted_probability_team1": 0.4463264754951578,
       "candidate_maps": [
         "ancient",
         "mirage",
         "overpass"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.4409197402827674,
-        "random_forest": 0.4235477609532434,
-        "xgboost": 0.41715459028879803
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4250028034630657,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.514087136608585,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.514087136608585,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.32133802946461404,
+        "random_forest": 0.3627581263546958,
+        "xgboost": 0.341291348139445
+      },
+      "model_probability_team1": 0.41632647549515783,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -767,26 +1089,65 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.465253942630939,
-        "mirage": 0.4207815149770624,
-        "overpass": 0.3889729527811956
+        "ancient": 0.4611300445864787,
+        "mirage": 0.37688444693266354,
+        "overpass": 0.4109649349663312
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1681.471425907488,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1037458212430041,
-        "random_forest": 0.14948744504232123,
-        "xgboost": 0.17176953717774035
+        "logistic": 0.07560894810932096,
+        "random_forest": 0.12803227988989263,
+        "xgboost": 0.1405317315868303
       }
     },
     "B8__BetBoom__bo3": {
-      "adjusted_probability_team1": 0.5711326760633881,
+      "adjusted_probability_team1": 0.48834870256216134,
       "candidate_maps": [],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5952081284709733,
-        "random_forest": 0.5130993451803554,
-        "xgboost": 0.6071181297302246
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.5711326760633881,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.4542124542124542,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.4542124542124542,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.5009073517135206,
+        "random_forest": 0.44423586047024294,
+        "xgboost": 0.4193972647190094
+      },
+      "model_probability_team1": 0.5183487025621614,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -794,26 +1155,66 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {},
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1500.0,
+      "uncalibrated_model_probability_team1": 0.44734267192403565,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1400489714049349,
-        "random_forest": 0.18109388653424308,
-        "xgboost": 0.24998981812421012
+        "logistic": 0.11786055334435781,
+        "random_forest": 0.15678912722479163,
+        "xgboost": 0.17269299135488622
       }
     },
     "B8__FlyQuest__bo1": {
-      "adjusted_probability_team1": 0.49332352023661546,
+      "adjusted_probability_team1": 0.5315341486474395,
       "candidate_maps": [
         "mirage",
         "ancient",
         "anubis"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5925048852222773,
-        "random_forest": 0.4668368889763661,
-        "xgboost": 0.4593512813250224
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.49332352023661546,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.5721476510067114,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.5721476510067114,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.46661458847479964,
+        "random_forest": 0.40910629345454197,
+        "xgboost": 0.42667869726816815
+      },
+      "model_probability_team1": 0.5015341486474395,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -821,30 +1222,69 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.48292508110565935,
-        "anubis": 0.4767582101173621,
-        "mirage": 0.5202872694868248
+        "ancient": 0.5095661017619401,
+        "anubis": 0.4827552887087224,
+        "mirage": 0.5122810554716559
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1624.0705962259435,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1394129141699476,
-        "random_forest": 0.16476596081518805,
-        "xgboost": 0.1891446452514798
+        "logistic": 0.10979166787642346,
+        "random_forest": 0.14439045651336777,
+        "xgboost": 0.17569122828689276
       }
     },
     "B8__FlyQuest__bo3": {
-      "adjusted_probability_team1": 0.47480164472360675,
+      "adjusted_probability_team1": 0.5147836370559346,
       "candidate_maps": [
         "mirage",
         "ancient",
         "anubis"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5169317516417508,
-        "random_forest": 0.46075877358588785,
-        "xgboost": 0.462764044602712
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.47480164472360675,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.5721476510067114,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.5721476510067114,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.39095964598244476,
+        "random_forest": 0.4092491271750656,
+        "xgboost": 0.4279131591320038
+      },
+      "model_probability_team1": 0.4847836370559346,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -852,30 +1292,69 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.4757165785118507,
-        "anubis": 0.45077360909224184,
-        "mirage": 0.49791474656672774
+        "ancient": 0.5046095591797117,
+        "anubis": 0.4624349039841805,
+        "mirage": 0.4873064480039116
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1624.0705962259435,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1216310003862943,
-        "random_forest": 0.16262074361854867,
-        "xgboost": 0.19054990071876374
+        "logistic": 0.09199050493704583,
+        "random_forest": 0.14444086841472906,
+        "xgboost": 0.176199536113178
       }
     },
     "B8__Gaimin Gladiators__bo1": {
-      "adjusted_probability_team1": 0.4971876610676767,
+      "adjusted_probability_team1": 0.6104413943801709,
       "candidate_maps": [
         "ancient",
         "mirage",
         "nuke"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.6483031149551334,
-        "random_forest": 0.47934512025358306,
-        "xgboost": 0.4261295795440674
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4971876610676767,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.6467520151730678,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.6467520151730678,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.6015324737582947,
+        "random_forest": 0.49582096589230434,
+        "xgboost": 0.4786255657672882
+      },
+      "model_probability_team1": 0.5804413943801708,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -883,30 +1362,69 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.49284001537341887,
-        "mirage": 0.5401172241273127,
-        "nuke": 0.4586057437022986
+        "ancient": 0.5713957976418271,
+        "mirage": 0.5988421129486515,
+        "nuke": 0.5710862725500337
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1497.3783314723823,
       "weighted_model_contributions_team1": {
-        "logistic": 0.15254190940120788,
-        "random_forest": 0.1691806306777352,
-        "xgboost": 0.17546512098873362
+        "logistic": 0.14153705264901054,
+        "random_forest": 0.1749956350208133,
+        "xgboost": 0.1970811153159422
       }
     },
     "B8__Gaimin Gladiators__bo3": {
-      "adjusted_probability_team1": 0.4900733572736524,
+      "adjusted_probability_team1": 0.5931045345819,
       "candidate_maps": [
         "ancient",
         "mirage",
         "nuke"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5752154112048108,
-        "random_forest": 0.47547033663704613,
-        "xgboost": 0.45393762985865277
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4900733572736524,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.6467520151730678,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.6467520151730678,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.5254642707138341,
+        "random_forest": 0.4884618396182367,
+        "xgboost": 0.4829801023006439
+      },
+      "model_probability_team1": 0.5631045345819,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -914,26 +1432,65 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.5010558218860376,
-        "mirage": 0.5206678709135926,
-        "nuke": 0.448496379021327
+        "ancient": 0.5700388289487762,
+        "mirage": 0.5774723371789734,
+        "nuke": 0.5418024376179507
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1497.3783314723823,
       "weighted_model_contributions_team1": {
-        "logistic": 0.1353448026364261,
-        "random_forest": 0.1678130599895457,
-        "xgboost": 0.18691549464768054
+        "logistic": 0.12363865193266685,
+        "random_forest": 0.17239829633584824,
+        "xgboost": 0.19887415977085338
       }
     },
     "B8__HEROIC__bo3": {
-      "adjusted_probability_team1": 0.6875927367600355,
+      "adjusted_probability_team1": 0.5812557701183065,
       "candidate_maps": [],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.6600507190914021,
-        "random_forest": 0.543328660314433,
-        "xgboost": 0.8269859552383423
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.6875927367600355,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.4753324545623329,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.4753324545623329,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.5388130734759434,
+        "random_forest": 0.5363524518829599,
+        "xgboost": 0.5614812970161438
+      },
+      "model_probability_team1": 0.6112557701183066,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -941,26 +1498,66 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {},
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1500.0,
+      "uncalibrated_model_probability_team1": 0.5472785931949729,
       "weighted_model_contributions_team1": {
-        "logistic": 0.15530605155091817,
-        "random_forest": 0.19176305658156462,
-        "xgboost": 0.3405236286275527
+        "logistic": 0.12677954670022198,
+        "random_forest": 0.18930086537045643,
+        "xgboost": 0.2311981811242945
       }
     },
     "B8__Liquid__bo1": {
-      "adjusted_probability_team1": 0.4937881824434789,
+      "adjusted_probability_team1": 0.5813575859894008,
       "candidate_maps": [
         "mirage",
         "ancient",
         "nuke"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.6074983303480307,
-        "random_forest": 0.4961316974809605,
-        "xgboost": 0.42680222789446515
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4937881824434789,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.5547526876251224,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.5547526876251224,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.6502283423035838,
+        "random_forest": 0.5438915051319344,
+        "xgboost": 0.49215270082155865
+      },
+      "model_probability_team1": 0.6113575859894008,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -968,30 +1565,69 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.5649317280691185,
-        "mirage": 0.4801218256890044,
-        "nuke": 0.43631099357231373
+        "ancient": 0.6439856160514138,
+        "mirage": 0.576470507857625,
+        "nuke": 0.6136166340591638
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1444.1739135840246,
       "weighted_model_contributions_team1": {
-        "logistic": 0.14294078361130136,
-        "random_forest": 0.17510530499328017,
-        "xgboost": 0.1757420938388974
+        "logistic": 0.15299490407143151,
+        "random_forest": 0.19196170769362392,
+        "xgboost": 0.20265111210299472
       }
     },
     "B8__Liquid__bo3": {
-      "adjusted_probability_team1": 0.4980411484873614,
+      "adjusted_probability_team1": 0.5688327671161832,
       "candidate_maps": [
         "mirage",
         "ancient",
         "nuke"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5321072550894836,
-        "random_forest": 0.5042977926878364,
-        "xgboost": 0.4732119639714559
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.4980411484873614,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.5547526876251224,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.5547526876251224,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.576958833537915,
+        "random_forest": 0.5428612486831824,
+        "xgboost": 0.50143630305926
+      },
+      "model_probability_team1": 0.5988327671161833,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -999,26 +1635,65 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.5615019332820073,
-        "mirage": 0.49057281053636365,
-        "nuke": 0.44204870164371335
+        "ancient": 0.6336456158936592,
+        "mirage": 0.5684629321126845,
+        "nuke": 0.594389753342206
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1444.1739135840246,
       "weighted_model_contributions_team1": {
-        "logistic": 0.12520170707987852,
-        "random_forest": 0.1779874562427658,
-        "xgboost": 0.1948519851647171
+        "logistic": 0.13575501965598002,
+        "random_forest": 0.191598087770535,
+        "xgboost": 0.2064737718479306
       }
     },
     "B8__Lynn Vision__bo3": {
-      "adjusted_probability_team1": 0.5516938997654768,
+      "adjusted_probability_team1": 0.5191122966160292,
       "candidate_maps": [],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5801704760857982,
-        "random_forest": 0.5028704871908298,
-        "xgboost": 0.5772702097892761
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.5516938997654768,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.5940723959192159,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.5940723959192159,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.4975601235322784,
+        "random_forest": 0.4145781521133104,
+        "xgboost": 0.37300410866737366
+      },
+      "model_probability_team1": 0.48911229661602923,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -1026,26 +1701,66 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {},
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1500.0,
+      "uncalibrated_model_probability_team1": 0.41698459808709365,
       "weighted_model_contributions_team1": {
-        "logistic": 0.13651070025548195,
-        "random_forest": 0.17748370136146938,
-        "xgboost": 0.23769949814852545
+        "logistic": 0.11707297024288905,
+        "random_forest": 0.14632170074587428,
+        "xgboost": 0.15358992709833033
       }
     },
     "B8__M80__bo1": {
-      "adjusted_probability_team1": 0.5011060450667207,
+      "adjusted_probability_team1": 0.49725003197626416,
       "candidate_maps": [
         "mirage",
         "ancient",
         "inferno"
       ],
-      "market_adjustment_applied": false,
-      "model_probabilities_team1": {
-        "logistic": 0.5984872736014483,
-        "random_forest": 0.4565909573003462,
-        "xgboost": 0.48361541827519733
+      "feature_preparation": {
+        "elo": {
+          "base": 1500.0,
+          "basis": "chronological_pre_match_online",
+          "k": 24.0,
+          "rows": 12941,
+          "teams": 648,
+          "tier_k": {
+            "A": 20.0,
+            "B": 14.0,
+            "C": 10.0,
+            "S": 32.0
+          }
+        },
+        "excluded_feature_names": [
+          "team1_code",
+          "team2_code",
+          "event_code",
+          "version_tag_code"
+        ]
       },
-      "model_probability_team1": 0.5011060450667207,
+      "market_adjustment_applied": true,
+      "market_adjustment_source": "team_market_strength",
+      "market_probability_team1": 0.4843778314267176,
+      "market_signal": {
+        "basis": "team_market_strength",
+        "probability_team1": 0.4843778314267176,
+        "proxy": false,
+        "source": "team_market_strength"
+      },
+      "model_probabilities_team1": {
+        "logistic": 0.4848885972857491,
+        "random_forest": 0.41383096907524813,
+        "xgboost": 0.47782884041468304
+      },
+      "model_probability_team1": 0.5272500319762642,
       "model_weights": {
         "logistic": 0.23529411764705885,
         "neural_network": 0.0,
@@ -1053,51 +1768,59 @@
         "xgboost": 0.4117647058823529
       },
       "per_map_probability_team1": {
-        "ancient": 0.5317138888625413,
-        "inferno": 0.4367475853967523,
-        "mirage": 0.5348566609408685
+        "ancient": 0.5637150439331909,
+        "inferno": 0.5033115451875081,
+        "mirage": 0.5147235068080935
       },
+      "probability_calibration": {
+        "basis": "holdout_platt_logistic",
+        "calibration_count": 1941,
+        "intercept": 0.2732828622521373,
+        "positive_rate": 0.5522926326635754,
+        "slope": 0.9453290338999226,
+        "training_count": 1941
+      },
+      "team1_elo": 1613.0758734407864,
+      "team2_elo": 1611.1346450030646,
       "weighted_model_contributions_team1": {
-        "logistic": 0.14082053496504668,
-        "random_forest": 0.1611497496354163,
-        "xgboost": 0.19913576046625772
+        "logistic": 0.11409143465547039,
+        "random_forest": 0.1460579890853817,
+        "xgboost": 0.19675305193545772
       }
     }
   },
   "sample_match_probabilities": {
-    "B8__BIG__bo1": 0.4311238309992252,
-    "B8__BIG__bo3": 0.4250028034630657,
-    "B8__BetBoom__bo3": 0.5711326760633881,
-    "B8__FlyQuest__bo1": 0.49332352023661546,
-    "B8__FlyQuest__bo3": 0.47480164472360675,
-    "B8__Gaimin Gladiators__bo1": 0.4971876610676767,
-    "B8__Gaimin Gladiators__bo3": 0.4900733572736524,
-    "B8__HEROIC__bo3": 0.6875927367600355,
-    "B8__Liquid__bo1": 0.4937881824434789,
-    "B8__Liquid__bo3": 0.4980411484873614,
-    "B8__Lynn Vision__bo3": 0.5516938997654768,
-    "B8__M80__bo1": 0.5011060450667207
+    "B8__BIG__bo1": 0.4904889051875583,
+    "B8__BIG__bo3": 0.4463264754951578,
+    "B8__BetBoom__bo3": 0.48834870256216134,
+    "B8__FlyQuest__bo1": 0.5315341486474395,
+    "B8__FlyQuest__bo3": 0.5147836370559346,
+    "B8__Gaimin Gladiators__bo1": 0.6104413943801709,
+    "B8__Gaimin Gladiators__bo3": 0.5931045345819,
+    "B8__HEROIC__bo3": 0.5812557701183065,
+    "B8__Liquid__bo1": 0.5813575859894008,
+    "B8__Liquid__bo3": 0.5688327671161832,
+    "B8__Lynn Vision__bo3": 0.5191122966160292,
+    "B8__M80__bo1": 0.49725003197626416
   },
   "selected_feature_names": [
+    "elo_diff",
     "bo3_winrate_diff",
     "h2h_team1_winrate",
     "recent_winrate_10_diff",
     "recent_winrate_5_diff",
     "map_winrate_diff",
     "matches_30d_diff",
-    "team2_code",
     "bo1_winrate_diff",
-    "team1_code",
     "is_bo1",
-    "event_code",
     "map_ancient",
     "map_anubis",
-    "map_overpass",
     "map_mirage",
+    "map_inferno",
     "map_nuke",
     "map_train",
     "event_tier_code",
-    "map_inferno"
+    "map_overpass"
   ],
   "simulations": 100000,
   "stage_strategy": {
@@ -1106,164 +1829,164 @@
   },
   "team_probabilities": {
     "B8": {
-      "0-3": 0.14009,
-      "1-3": 0.20125,
-      "2-3": 0.19274,
-      "3-0": 0.10273,
-      "3-1": 0.17566,
-      "3-2": 0.18753,
-      "advance": 0.46592,
-      "eliminate": 0.53408
+      "0-3": 0.11443,
+      "1-3": 0.16692,
+      "2-3": 0.18374,
+      "3-0": 0.12211,
+      "3-1": 0.2094,
+      "3-2": 0.2034,
+      "advance": 0.53491,
+      "eliminate": 0.46509
     },
     "BIG": {
-      "0-3": 0.06072,
-      "1-3": 0.11589,
-      "2-3": 0.14498,
-      "3-0": 0.22101,
-      "3-1": 0.25455,
-      "3-2": 0.20285,
-      "advance": 0.67841,
-      "eliminate": 0.32159
+      "0-3": 0.06851,
+      "1-3": 0.12422,
+      "2-3": 0.15084,
+      "3-0": 0.19529,
+      "3-1": 0.25252,
+      "3-2": 0.20862,
+      "advance": 0.65643,
+      "eliminate": 0.34357
     },
     "BetBoom": {
-      "0-3": 0.21249,
-      "1-3": 0.26031,
-      "2-3": 0.21829,
-      "3-0": 0.0617,
-      "3-1": 0.11496,
-      "3-2": 0.13225,
-      "advance": 0.30891,
-      "eliminate": 0.69109
+      "0-3": 0.10107,
+      "1-3": 0.16756,
+      "2-3": 0.19551,
+      "3-0": 0.14322,
+      "3-1": 0.20625,
+      "3-2": 0.18639,
+      "advance": 0.53586,
+      "eliminate": 0.46414
     },
     "FlyQuest": {
-      "0-3": 0.07799,
-      "1-3": 0.14844,
-      "2-3": 0.17674,
-      "3-0": 0.1605,
-      "3-1": 0.22303,
-      "3-2": 0.2133,
-      "advance": 0.59683,
-      "eliminate": 0.40317
+      "0-3": 0.14942,
+      "1-3": 0.21606,
+      "2-3": 0.19189,
+      "3-0": 0.09982,
+      "3-1": 0.15998,
+      "3-2": 0.18283,
+      "advance": 0.44263,
+      "eliminate": 0.55737
     },
     "Gaimin Gladiators": {
-      "0-3": 0.08245,
-      "1-3": 0.15329,
-      "2-3": 0.1815,
-      "3-0": 0.14861,
-      "3-1": 0.22748,
-      "3-2": 0.20667,
-      "advance": 0.58276,
-      "eliminate": 0.41724
+      "0-3": 0.19009,
+      "1-3": 0.25524,
+      "2-3": 0.21229,
+      "3-0": 0.06927,
+      "3-1": 0.12531,
+      "3-2": 0.1478,
+      "advance": 0.34238,
+      "eliminate": 0.65762
     },
     "GamerLegion": {
-      "0-3": 0.22277,
-      "1-3": 0.2588,
-      "2-3": 0.2198,
-      "3-0": 0.06084,
-      "3-1": 0.11141,
-      "3-2": 0.12638,
-      "advance": 0.29863,
-      "eliminate": 0.70137
+      "0-3": 0.10213,
+      "1-3": 0.16147,
+      "2-3": 0.18833,
+      "3-0": 0.14379,
+      "3-1": 0.21174,
+      "3-2": 0.19254,
+      "advance": 0.54807,
+      "eliminate": 0.45193
     },
     "HEROIC": {
-      "0-3": 0.19656,
-      "1-3": 0.27533,
-      "2-3": 0.22715,
-      "3-0": 0.06581,
-      "3-1": 0.10852,
-      "3-2": 0.12663,
-      "advance": 0.30096,
-      "eliminate": 0.69904
+      "0-3": 0.10463,
+      "1-3": 0.17496,
+      "2-3": 0.20386,
+      "3-0": 0.13207,
+      "3-1": 0.19785,
+      "3-2": 0.18663,
+      "advance": 0.51655,
+      "eliminate": 0.48345
     },
     "Liquid": {
-      "0-3": 0.09953,
-      "1-3": 0.18124,
-      "2-3": 0.18914,
-      "3-0": 0.13864,
-      "3-1": 0.19342,
-      "3-2": 0.19803,
-      "advance": 0.53009,
-      "eliminate": 0.46991
+      "0-3": 0.17831,
+      "1-3": 0.25864,
+      "2-3": 0.21871,
+      "3-0": 0.07331,
+      "3-1": 0.12414,
+      "3-2": 0.14689,
+      "advance": 0.34434,
+      "eliminate": 0.65566
     },
     "Lynn Vision": {
-      "0-3": 0.17927,
-      "1-3": 0.24735,
-      "2-3": 0.22184,
-      "3-0": 0.07159,
-      "3-1": 0.13054,
-      "3-2": 0.14941,
-      "advance": 0.35154,
-      "eliminate": 0.64846
+      "0-3": 0.13723,
+      "1-3": 0.20498,
+      "2-3": 0.20896,
+      "3-0": 0.1067,
+      "3-1": 0.16817,
+      "3-2": 0.17396,
+      "advance": 0.44883,
+      "eliminate": 0.55117
     },
     "M80": {
-      "0-3": 0.13818,
-      "1-3": 0.19182,
-      "2-3": 0.18496,
-      "3-0": 0.09645,
-      "3-1": 0.18075,
-      "3-2": 0.20784,
-      "advance": 0.48504,
-      "eliminate": 0.51496
+      "0-3": 0.12623,
+      "1-3": 0.18848,
+      "2-3": 0.1843,
+      "3-0": 0.10503,
+      "3-1": 0.18777,
+      "3-2": 0.20819,
+      "advance": 0.50099,
+      "eliminate": 0.49901
     },
     "MIBR": {
-      "0-3": 0.06719,
-      "1-3": 0.13439,
-      "2-3": 0.17261,
-      "3-0": 0.18852,
-      "3-1": 0.23909,
-      "3-2": 0.1982,
-      "advance": 0.62581,
-      "eliminate": 0.37419
+      "0-3": 0.05911,
+      "1-3": 0.11746,
+      "2-3": 0.15537,
+      "3-0": 0.21789,
+      "3-1": 0.25128,
+      "3-2": 0.19889,
+      "advance": 0.66806,
+      "eliminate": 0.33194
     },
     "NRG": {
-      "0-3": 0.14983,
-      "1-3": 0.19703,
-      "2-3": 0.18659,
-      "3-0": 0.0854,
-      "3-1": 0.17505,
-      "3-2": 0.2061,
-      "advance": 0.46655,
-      "eliminate": 0.53345
+      "0-3": 0.23247,
+      "1-3": 0.26326,
+      "2-3": 0.19973,
+      "3-0": 0.05289,
+      "3-1": 0.10835,
+      "3-2": 0.1433,
+      "advance": 0.30454,
+      "eliminate": 0.69546
     },
     "SINNERS": {
-      "0-3": 0.11476,
-      "1-3": 0.17907,
-      "2-3": 0.18386,
-      "3-0": 0.12021,
-      "3-1": 0.19772,
-      "3-2": 0.20438,
-      "advance": 0.52231,
-      "eliminate": 0.47769
+      "0-3": 0.12413,
+      "1-3": 0.19201,
+      "2-3": 0.18849,
+      "3-0": 0.1102,
+      "3-1": 0.18565,
+      "3-2": 0.19952,
+      "advance": 0.49537,
+      "eliminate": 0.50463
     },
     "Sharks": {
-      "0-3": 0.10379,
-      "1-3": 0.17242,
-      "2-3": 0.17861,
-      "3-0": 0.132,
-      "3-1": 0.20141,
-      "3-2": 0.21177,
-      "advance": 0.54518,
-      "eliminate": 0.45482
+      "0-3": 0.14231,
+      "1-3": 0.20273,
+      "2-3": 0.1873,
+      "3-0": 0.10058,
+      "3-1": 0.17143,
+      "3-2": 0.19565,
+      "advance": 0.46766,
+      "eliminate": 0.53234
     },
     "THUNDER dOWNUNDER": {
-      "0-3": 0.06971,
-      "1-3": 0.12819,
-      "2-3": 0.14354,
-      "3-0": 0.18968,
-      "3-1": 0.24574,
-      "3-2": 0.22314,
-      "advance": 0.65856,
-      "eliminate": 0.34144
+      "0-3": 0.09073,
+      "1-3": 0.16311,
+      "2-3": 0.16641,
+      "3-0": 0.15802,
+      "3-1": 0.2079,
+      "3-2": 0.21383,
+      "advance": 0.57975,
+      "eliminate": 0.42025
     },
     "TYLOO": {
-      "0-3": 0.08467,
-      "1-3": 0.15518,
-      "2-3": 0.17765,
-      "3-0": 0.15631,
-      "3-1": 0.22067,
-      "3-2": 0.20552,
-      "advance": 0.5825,
-      "eliminate": 0.4175
+      "0-3": 0.0792,
+      "1-3": 0.1429,
+      "2-3": 0.16427,
+      "3-0": 0.16981,
+      "3-1": 0.23226,
+      "3-2": 0.21156,
+      "advance": 0.61363,
+      "eliminate": 0.38637
     }
   },
   "teams": 16,

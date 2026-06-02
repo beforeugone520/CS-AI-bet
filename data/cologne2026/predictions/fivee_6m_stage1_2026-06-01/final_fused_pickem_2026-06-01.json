@@ -1,32 +1,15 @@
 {
   "weights": {
-    "experts": 0.4,
-    "market": 0.3,
-    "model": 0.3
+    "experts": 0.3,
+    "market": 0.2,
+    "model": 0.5
   },
   "n_experts": 19,
   "picks": {
     "3-0": [
       {
-        "team": "GamerLegion",
-        "confidence": 0.381,
-        "tier": "Medium",
-        "signals_agree": 2,
-        "expert_votes": {
-          "3-0": 15,
-          "advance": 4,
-          "0-3": 0
-        },
-        "market_win_prob_r1": 0.657,
-        "model": {
-          "3-0": 0.061,
-          "advance": 0.299,
-          "0-3": 0.223
-        }
-      },
-      {
         "team": "MIBR",
-        "confidence": 0.197,
+        "confidence": 0.21,
         "tier": "High",
         "signals_agree": 3,
         "expert_votes": {
@@ -36,16 +19,33 @@
         },
         "market_win_prob_r1": 0.688,
         "model": {
-          "3-0": 0.189,
-          "advance": 0.626,
-          "0-3": 0.067
+          "3-0": 0.218,
+          "advance": 0.668,
+          "0-3": 0.059
+        }
+      },
+      {
+        "team": "GamerLegion",
+        "confidence": 0.34,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 15,
+          "advance": 4,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.657,
+        "model": {
+          "3-0": 0.144,
+          "advance": 0.548,
+          "0-3": 0.102
         }
       }
     ],
     "advance": [
       {
         "team": "BIG",
-        "confidence": 0.812,
+        "confidence": 0.736,
         "tier": "High",
         "signals_agree": 3,
         "expert_votes": {
@@ -55,31 +55,14 @@
         },
         "market_win_prob_r1": 0.541,
         "model": {
-          "3-0": 0.221,
-          "advance": 0.678,
-          "0-3": 0.061
-        }
-      },
-      {
-        "team": "B8",
-        "confidence": 0.728,
-        "tier": "Medium",
-        "signals_agree": 2,
-        "expert_votes": {
-          "3-0": 6,
-          "advance": 12,
-          "0-3": 0
-        },
-        "market_win_prob_r1": 0.572,
-        "model": {
-          "3-0": 0.103,
-          "advance": 0.466,
-          "0-3": 0.14
+          "3-0": 0.195,
+          "advance": 0.656,
+          "0-3": 0.069
         }
       },
       {
         "team": "BetBoom",
-        "confidence": 0.73,
+        "confidence": 0.705,
         "tier": "Medium",
         "signals_agree": 2,
         "expert_votes": {
@@ -89,31 +72,31 @@
         },
         "market_win_prob_r1": 0.688,
         "model": {
-          "3-0": 0.062,
-          "advance": 0.309,
-          "0-3": 0.212
+          "3-0": 0.143,
+          "advance": 0.536,
+          "0-3": 0.101
         }
       },
       {
-        "team": "M80",
-        "confidence": 0.636,
+        "team": "B8",
+        "confidence": 0.666,
         "tier": "Medium",
         "signals_agree": 2,
         "expert_votes": {
-          "3-0": 0,
-          "advance": 14,
+          "3-0": 6,
+          "advance": 12,
           "0-3": 0
         },
-        "market_win_prob_r1": 0.609,
+        "market_win_prob_r1": 0.572,
         "model": {
-          "3-0": 0.096,
-          "advance": 0.485,
-          "0-3": 0.138
+          "3-0": 0.122,
+          "advance": 0.535,
+          "0-3": 0.114
         }
       },
       {
         "team": "HEROIC",
-        "confidence": 0.664,
+        "confidence": 0.653,
         "tier": "Medium",
         "signals_agree": 2,
         "expert_votes": {
@@ -123,52 +106,69 @@
         },
         "market_win_prob_r1": 0.632,
         "model": {
-          "3-0": 0.066,
-          "advance": 0.301,
-          "0-3": 0.197
+          "3-0": 0.132,
+          "advance": 0.517,
+          "0-3": 0.105
         }
       },
       {
-        "team": "SINNERS",
-        "confidence": 0.455,
+        "team": "M80",
+        "confidence": 0.593,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 14,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.609,
+        "model": {
+          "3-0": 0.105,
+          "advance": 0.501,
+          "0-3": 0.126
+        }
+      },
+      {
+        "team": "TYLOO",
+        "confidence": 0.471,
         "tier": "Low",
         "signals_agree": 1,
         "expert_votes": {
-          "3-0": 0,
-          "advance": 7,
+          "3-0": 1,
+          "advance": 4,
           "0-3": 1
         },
-        "market_win_prob_r1": 0.572,
+        "market_win_prob_r1": 0.428,
         "model": {
-          "3-0": 0.12,
-          "advance": 0.522,
-          "0-3": 0.115
+          "3-0": 0.17,
+          "advance": 0.614,
+          "0-3": 0.079
         }
       }
     ],
     "0-3": [
       {
-        "team": "THUNDER dOWNUNDER",
-        "confidence": 0.622,
-        "tier": "Medium",
-        "signals_agree": 2,
+        "team": "NRG",
+        "confidence": 0.311,
+        "tier": "High",
+        "signals_agree": 3,
         "expert_votes": {
           "3-0": 0,
-          "advance": 0,
-          "0-3": 11
+          "advance": 3,
+          "0-3": 4
         },
-        "market_win_prob_r1": 0.312,
+        "market_win_prob_r1": 0.343,
         "model": {
-          "3-0": 0.19,
-          "advance": 0.659,
-          "0-3": 0.07
+          "3-0": 0.053,
+          "advance": 0.305,
+          "0-3": 0.232
         }
       },
       {
         "team": "Gaimin Gladiators",
-        "confidence": 0.528,
-        "tier": "Medium",
-        "signals_agree": 2,
+        "confidence": 0.359,
+        "tier": "High",
+        "signals_agree": 3,
         "expert_votes": {
           "3-0": 0,
           "advance": 2,
@@ -176,23 +176,12 @@
         },
         "market_win_prob_r1": 0.312,
         "model": {
-          "3-0": 0.149,
-          "advance": 0.583,
-          "0-3": 0.082
+          "3-0": 0.069,
+          "advance": 0.342,
+          "0-3": 0.19
         }
       }
     ]
   },
-  "swing_slots": {
-    "advance #6": {
-      "primary": "SINNERS",
-      "alternative": "Liquid",
-      "fused_margin": 0.0079
-    },
-    "0-3 #2": {
-      "primary": "Gaimin Gladiators",
-      "alternative": "NRG",
-      "fused_margin": 0.0366
-    }
-  }
+  "swing_slots": {}
 }
