@@ -45,5 +45,21 @@ class CalibrationTableTests(unittest.TestCase):
         self.assertGreater(table["ece"], 0.3)
 
 
+class ProbabilityCalibratorTests(unittest.TestCase):
+    def test_platt_calibrator_shifts_systematically_low_probabilities_up(self):
+        from cs2pickem.calibration import ProbabilityCalibrator
+        from cs2pickem.evaluation import log_loss
+
+        labels = [0, 0, 1, 1]
+        probabilities = [0.2, 0.2, 0.2, 0.2]
+
+        calibrator = ProbabilityCalibrator(epochs=160, learning_rate=0.4).fit(probabilities, labels)
+        calibrated = calibrator.transform(probabilities)
+
+        self.assertGreater(calibrated[0], 0.35)
+        self.assertLess(log_loss(labels, calibrated), log_loss(labels, probabilities))
+        self.assertEqual(calibrator.report()["basis"], "platt_logistic")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,9 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
+from tests.test_forecast import history_rows
+from tests.test_pickem import profiles, team_rows
+
 
 class PickemBacktestTests(unittest.TestCase):
     def test_evaluate_pickem_result_scores_categories_and_pass_threshold(self):
@@ -184,6 +187,114 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["pass_rate"], 0.5)
         self.assertTrue(report["meets_pass_rate_target"])
         self.assertEqual(report["case_reports"][0]["pickems_path"], case_a_pickems)
+
+    def test_replay_pickem_backtest_suite_trains_generates_and_scores_pickems(self):
+        from cs2pickem.backtest import replay_pickem_backtest_suite
+
+        cases = [
+            {
+                "name": "replay-major-a",
+                "history": history_rows(),
+                "teams": team_rows(),
+                "profiles": profiles(),
+                "results": [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 0, "losses": 3},
+                    {"team": "Charlie", "wins": 1, "losses": 3},
+                    {"team": "Delta", "wins": 3, "losses": 1},
+                ],
+                "reference_date": "2026-05-31",
+                "simulations": 20,
+                "seed": 5,
+                "top_k": 6,
+                "epochs": 3,
+                "slots": {"3-0": 1, "advance": 2, "0-3": 1},
+            }
+        ]
+
+        report = replay_pickem_backtest_suite(cases, pass_threshold=0, pass_rate_target=1.0)
+
+        self.assertEqual(report["cases"], 1)
+        self.assertEqual(report["passed_cases"], 1)
+        self.assertTrue(report["meets_pass_rate_target"])
+        case_report = report["case_reports"][0]
+        self.assertEqual(case_report["name"], "replay-major-a")
+        self.assertIn("generated_pickems", case_report)
+        self.assertEqual(case_report["generated_summary"]["trained_matches"], 8)
+        self.assertEqual(case_report["generated_summary"]["simulations"], 20)
+        self.assertIn("score_report", case_report)
+
+    def test_replay_pickem_suite_cli_reads_paths_and_writes_report(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            suite_path = os.path.join(tmpdir, "replay-suite.json")
+            history_path = os.path.join(tmpdir, "history.csv")
+            teams_path = os.path.join(tmpdir, "teams.csv")
+            results_path = os.path.join(tmpdir, "results.csv")
+            profiles_path = os.path.join(tmpdir, "profiles.json")
+            output_path = os.path.join(tmpdir, "replay-report.json")
+            write_matches_csv(history_path, history_rows())
+            write_matches_csv(teams_path, team_rows())
+            write_matches_csv(
+                results_path,
+                [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 0, "losses": 3},
+                    {"team": "Charlie", "wins": 1, "losses": 3},
+                    {"team": "Delta", "wins": 3, "losses": 1},
+                ],
+            )
+            with open(profiles_path, "w", encoding="utf-8") as handle:
+                json.dump(profiles(), handle)
+            with open(suite_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "cases": [
+                            {
+                                "name": "replay-major-a",
+                                "history_path": history_path,
+                                "teams_path": teams_path,
+                                "profiles_path": profiles_path,
+                                "results_path": results_path,
+                                "reference_date": "2026-05-31",
+                                "slots": {"3-0": 1, "advance": 2, "0-3": 1},
+                            }
+                        ]
+                    },
+                    handle,
+                )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "replay-pickem-suite",
+                "--suite",
+                suite_path,
+                "--pass-threshold",
+                "0",
+                "--pass-rate-target",
+                "1.0",
+                "--simulations",
+                "20",
+                "--top-k",
+                "6",
+                "--epochs",
+                "3",
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["cases"], 1)
+        self.assertEqual(report["case_reports"][0]["history_path"], history_path)
 
 
 if __name__ == "__main__":

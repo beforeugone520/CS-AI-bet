@@ -3,13 +3,15 @@ from __future__ import annotations
 from datetime import date
 from typing import Callable, Dict, List, Sequence, Tuple
 
+from .calibration import ProbabilityCalibrator
 from .cleaning import clean_matches
 from .data import read_matches_csv, write_json, write_matches_csv
 from .enrichment import build_team_profiles, enrich_match_history
-from .evaluation import accuracy, auc, log_loss, profit_loss
+from .evaluation import accuracy, auc, brier_score, calibration_table, log_loss, profit_loss
 from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .models import default_ensemble, model_hyperparameters
+from .reliability import UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
 from .selection import FeatureSelector
 from .splitting import time_series_date_split, time_series_folds, time_series_split
 from .strategy import choose_pickems
@@ -57,12 +59,13 @@ def train_evaluate(
     validation_end_date: str | None = None,
 ) -> Dict[str, object]:
     cleaned = sorted(clean_matches(rows, reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
+    cleaned, _, feature_preparation = prepare_reliability_features(cleaned)
     if bool(train_end_date) != bool(validation_end_date):
         raise ValueError("both train_end_date and validation_end_date must be provided for calendar split")
 
     split_strategy = "date_boundaries" if train_end_date and validation_end_date else "ratio"
     if len(cleaned) < 6 and split_strategy != "date_boundaries":
-        return _train_evaluate_in_sample(cleaned, epochs=epochs, top_k=top_k, max_age_days=max_age_days)
+        return _train_evaluate_in_sample(cleaned, epochs=epochs, top_k=top_k, max_age_days=max_age_days, feature_preparation=feature_preparation)
 
     if split_strategy == "date_boundaries":
         _validate_calendar_boundaries(str(train_end_date), str(validation_end_date))
@@ -96,6 +99,7 @@ def train_evaluate(
         "feature_names": prepared["feature_names"],
         "selected_feature_names": prepared["selected_feature_names"],
         "feature_importance": prepared["feature_importance"],
+        "feature_preparation": feature_preparation,
         "imbalance": prepared["imbalance"],
         "ensemble_weights": ensemble_weights,
         "model_hyperparameters": model_hyperparameters(epochs=epochs),
@@ -113,6 +117,14 @@ def train_evaluate(
             "validation": _metric_summary(validation_y, validation_probabilities, split.validation),
             "test": _metric_summary(test_y, test_probabilities, split.test),
         },
+        "probability_calibration": _probability_calibration_report(
+            validation_y,
+            validation_probabilities,
+            split.validation,
+            test_y,
+            test_probabilities,
+            split.test,
+        ),
         "segment_metrics": _segment_metrics(primary_labels, primary_probabilities, primary_rows),
         "cv_metrics": _cross_validate(cleaned, cv_folds=cv_folds, top_k=top_k, epochs=epochs),
         "model_comparison": _model_comparison(
@@ -188,10 +200,20 @@ def enrich_matches_file(input_path: str, output_path: str, profiles_path: str | 
     }
 
 
-def _train_evaluate_in_sample(cleaned: List[dict], epochs: int, top_k: int, max_age_days: int) -> Dict[str, object]:
+def _train_evaluate_in_sample(
+    cleaned: List[dict],
+    epochs: int,
+    top_k: int,
+    max_age_days: int,
+    feature_preparation: Dict[str, object] | None = None,
+) -> Dict[str, object]:
+    feature_preparation = feature_preparation or {
+        "elo": {"basis": "not_applied", "rows": len(cleaned), "teams": 0},
+        "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+    }
     builder = FeatureBuilder()
     dataset = builder.fit_transform(cleaned)
-    selector = FeatureSelector(top_k=top_k)
+    selector = FeatureSelector(top_k=top_k, excluded_feature_names=feature_preparation["excluded_feature_names"])
     selected = selector.fit_transform(dataset.rows, dataset.labels, dataset.feature_names)
     rebalanced = rebalance_training_data(selected.rows, dataset.labels)
     model = default_ensemble(seed=19, epochs=epochs).fit(rebalanced.rows, rebalanced.labels, sample_weights=rebalanced.sample_weights)
@@ -207,6 +229,7 @@ def _train_evaluate_in_sample(cleaned: List[dict], epochs: int, top_k: int, max_
         "feature_names": dataset.feature_names,
         "selected_feature_names": selected.feature_names,
         "feature_importance": selector.importance_scores,
+        "feature_preparation": feature_preparation,
         "imbalance": rebalanced.report,
         "ensemble_weights": ensemble_weights,
         "model_hyperparameters": model_hyperparameters(epochs=epochs),
@@ -218,6 +241,14 @@ def _train_evaluate_in_sample(cleaned: List[dict], epochs: int, top_k: int, max_
         },
         "metrics": _metric_summary(dataset.labels, probabilities, dataset.raw_rows),
         "holdout_metrics": {"validation": _metric_summary([], [], []), "test": _metric_summary([], [], [])},
+        "probability_calibration": {
+            "basis": "no_holdout_rows",
+            "validation_count": 0,
+            "test_count": 0,
+            "raw_test_metrics": {},
+            "calibrated_test_metrics": {},
+            "calibrator": {},
+        },
         "segment_metrics": _segment_metrics(dataset.labels, probabilities, dataset.raw_rows),
         "cv_metrics": [],
         "model_comparison": _model_comparison(
@@ -236,7 +267,7 @@ def _train_evaluate_in_sample(cleaned: List[dict], epochs: int, top_k: int, max_
 def _prepare_time_split(train_rows: List[dict], eval_groups: Sequence[List[dict]], top_k: int) -> Dict[str, object]:
     builder = FeatureBuilder()
     train_dataset = builder.fit_transform(train_rows)
-    selector = FeatureSelector(top_k=top_k)
+    selector = FeatureSelector(top_k=top_k, excluded_feature_names=UNSTABLE_IDENTITY_FEATURES)
     selected_train = selector.fit_transform(train_dataset.rows, train_dataset.labels, train_dataset.feature_names)
     rebalanced = rebalance_training_data(selected_train.rows, train_dataset.labels)
     selected_eval_rows = []
@@ -353,11 +384,44 @@ def _validation_tuned_weights(
 
 def _metric_summary(labels: Sequence[int], probabilities: Sequence[float], rows: Sequence[dict]) -> Dict[str, float]:
     odds = [_picked_odds(row, probability) for row, probability in zip(rows, probabilities)]
+    calibration = calibration_table(labels, probabilities) if labels else {"ece": 0.0}
     return {
         "accuracy": accuracy(labels, probabilities),
         "auc": auc(labels, probabilities),
         "log_loss": log_loss(labels, probabilities),
+        "brier_score": brier_score(labels, probabilities),
+        "ece": float(calibration["ece"]),
         "profit_loss": profit_loss(labels, probabilities, odds),
+    }
+
+
+def _probability_calibration_report(
+    validation_y: Sequence[int],
+    validation_probabilities: Sequence[float],
+    validation_rows: Sequence[dict],
+    test_y: Sequence[int],
+    test_probabilities: Sequence[float],
+    test_rows: Sequence[dict],
+) -> Dict[str, object]:
+    if not validation_y or not validation_probabilities or not test_y or not test_probabilities:
+        return {
+            "basis": "insufficient_validation_or_test_rows",
+            "validation_count": len(validation_y),
+            "test_count": len(test_y),
+            "raw_test_metrics": _metric_summary(test_y, test_probabilities, test_rows),
+            "calibrated_test_metrics": _metric_summary(test_y, test_probabilities, test_rows),
+            "calibrator": {},
+        }
+    calibrator = ProbabilityCalibrator().fit(validation_probabilities, validation_y)
+    calibrated_test_probabilities = calibrator.transform(test_probabilities)
+    return {
+        "basis": "validation_platt_logistic",
+        "validation_count": len(validation_y),
+        "test_count": len(test_y),
+        "validation_metrics": _metric_summary(validation_y, validation_probabilities, validation_rows),
+        "raw_test_metrics": _metric_summary(test_y, test_probabilities, test_rows),
+        "calibrated_test_metrics": _metric_summary(test_y, calibrated_test_probabilities, test_rows),
+        "calibrator": calibrator.report(),
     }
 
 

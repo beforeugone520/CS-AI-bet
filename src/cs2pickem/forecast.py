@@ -4,8 +4,9 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from .bp import merge_bp_into_fixtures
 from .data import read_matches_csv
+from .odds import market_probability_from_row
 from .predictor import MatchPredictor
-from .strategy import adjust_probability_with_market, single_match_pick
+from .strategy import adjust_probability_toward_market_probability, single_match_pick
 
 
 def forecast_fixtures(
@@ -35,13 +36,13 @@ def forecast_fixtures(
     predictions = []
     for fixture in fixtures:
         raw_probability, map_details = predictor.predict_with_maps(fixture, profiles)
-        market_adjustment_applied = _has_real_odds(fixture)
+        market_signal = market_probability_from_row(fixture)
+        market_adjustment_applied = bool(market_signal and not market_signal.get("proxy"))
         adjusted = raw_probability
         if market_adjustment_applied:
-            adjusted = adjust_probability_with_market(
+            adjusted = adjust_probability_toward_market_probability(
                 raw_probability,
-                odds_team1=_num(fixture.get("odds_team1"), 2.0),
-                odds_team2=_num(fixture.get("odds_team2"), 2.0),
+                market_probability=_num(market_signal.get("probability_team1"), 0.5),
             )
         pick = single_match_pick(adjusted, str(fixture.get("team1")), str(fixture.get("team2")))
         confidence_margin = abs(adjusted - 0.5)
@@ -56,6 +57,7 @@ def forecast_fixtures(
                 "model_probability_team1": raw_probability,
                 "adjusted_probability_team1": adjusted,
                 "market_adjustment_applied": market_adjustment_applied,
+                "market_signal": market_signal or {},
                 "pick": pick,
                 "confidence_margin": confidence_margin,
                 "low_confidence": pick == "avoid",
@@ -73,6 +75,8 @@ def forecast_fixtures(
         "imbalance": predictor.imbalance_report,
         "ensemble_weights": predictor.ensemble_weights,
         "model_hyperparameters": predictor.model_hyperparameters,
+        "probability_calibration": predictor.calibration_report,
+        "feature_preparation": predictor.feature_preparation,
         "bp_report": bp_report,
         "predictions": predictions,
         "decision_summary": _decision_summary(predictions),
@@ -113,11 +117,6 @@ def _num(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
-
-
-def _has_real_odds(row: Mapping[str, Any]) -> bool:
-    return row.get("odds_team1") not in (None, "") and row.get("odds_team2") not in (None, "")
-
 
 def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int]:
     materialized = list(predictions)

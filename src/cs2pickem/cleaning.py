@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
-from statistics import mean, pstdev
+import math
 from typing import Any, Dict, Iterable, List, Optional
 
 
@@ -67,7 +67,7 @@ def clean_matches(
             copied["h2h_team1_winrate"] = 0.5
         candidates.append(copied)
 
-    return [row for row in candidates if not _is_statistical_outlier(row, candidates)]
+    return _filter_statistical_outliers(candidates)
 
 
 def _is_secondary_team(row: Dict[str, Any], prefix: str) -> bool:
@@ -92,19 +92,42 @@ def normalize_tier(value: Any) -> str:
     return str(value).strip().upper()
 
 
-def _is_statistical_outlier(row: Dict[str, Any], population: List[Dict[str, Any]]) -> bool:
+def _filter_statistical_outliers(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    stats = _population_stats(rows)
+    return [row for row in rows if not _is_statistical_outlier(row, stats)]
+
+
+def _population_stats(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    stats: Dict[str, Dict[str, float]] = {}
     for field in OUTLIER_FIELDS:
-        values = [_to_float(candidate.get(field)) for candidate in population if candidate is not row]
+        values = [_to_float(row.get(field)) for row in rows]
         values = [value for value in values if value is not None]
-        if len(values) < 3:
-            continue
-        sigma = pstdev(values)
-        if sigma == 0:
-            continue
+        stats[field] = {
+            "count": float(len(values)),
+            "sum": sum(values),
+            "sum_sq": sum(value * value for value in values),
+        }
+    return stats
+
+
+def _is_statistical_outlier(row: Dict[str, Any], stats: Dict[str, Dict[str, float]]) -> bool:
+    for field in OUTLIER_FIELDS:
         value = _to_float(row.get(field))
         if value is None:
             continue
-        if abs(value - mean(values)) > 3 * sigma:
+        field_stats = stats.get(field, {})
+        count = int(field_stats.get("count", 0.0))
+        count_without_row = count - 1
+        if count_without_row < 3:
+            continue
+        total = field_stats.get("sum", 0.0) - value
+        total_sq = field_stats.get("sum_sq", 0.0) - value * value
+        center = total / count_without_row
+        variance = max(0.0, total_sq / count_without_row - center * center)
+        sigma = math.sqrt(variance)
+        if sigma == 0:
+            continue
+        if abs(value - center) > 3 * sigma:
             return True
     return False
 

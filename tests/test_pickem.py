@@ -68,7 +68,8 @@ class PickemTests(unittest.TestCase):
         self.assertTrue(0.0 <= report["sample_match_probabilities"]["Alpha__Bravo__bo1"] <= 1.0)
         self.assertIn("sample_match_details", report)
         details = report["sample_match_details"]["Alpha__Bravo__bo1"]
-        self.assertEqual(set(details["model_probabilities_team1"]), {"logistic", "random_forest", "xgboost", "neural_network"})
+        self.assertEqual(details["model_weights"]["neural_network"], 0.0)
+        self.assertEqual(set(details["model_probabilities_team1"]), {"logistic", "random_forest", "xgboost"})
         self.assertIn("adjusted_probability_team1", details)
         self.assertFalse(details["market_adjustment_applied"])
         self.assertAlmostEqual(details["adjusted_probability_team1"], details["model_probability_team1"])
@@ -184,6 +185,125 @@ class PickemTests(unittest.TestCase):
         self.assertTrue(details["market_adjustment_applied"])
         self.assertLess(details["adjusted_probability_team1"], details["model_probability_team1"])
         self.assertGreaterEqual(report["market_adjustment_summary"]["adjusted_matchups"], 1)
+        self.assertIn("Alpha__Bravo__bo1", report["market_adjustment_summary"]["adjusted_matchup_keys"])
+
+    def test_model_driven_pickem_uses_explicit_market_probability_but_only_reports_poll_proxy(self):
+        from cs2pickem.pickem import model_driven_pickems
+
+        explicit_report = model_driven_pickems(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "market_probability_team1": 0.2,
+                    "market_signal_source": "closing_consensus",
+                }
+            ],
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=20,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+        proxy_report = model_driven_pickems(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "hltv_poll_team1": 80,
+                    "hltv_poll_team2": 20,
+                    "market_proxy_source": "hltv_fan_poll_not_odds",
+                }
+            ],
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=20,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+
+        explicit_details = explicit_report["sample_match_details"]["Alpha__Bravo__bo1"]
+        proxy_details = proxy_report["sample_match_details"]["Alpha__Bravo__bo1"]
+
+        self.assertTrue(explicit_details["market_adjustment_applied"])
+        self.assertEqual(explicit_details["market_signal"]["basis"], "explicit_market_probability")
+        self.assertEqual(explicit_details["market_signal"]["source"], "closing_consensus")
+        self.assertLess(explicit_details["adjusted_probability_team1"], explicit_details["model_probability_team1"])
+        self.assertFalse(proxy_details["market_adjustment_applied"])
+        self.assertEqual(proxy_details["market_signal"]["basis"], "poll_proxy")
+        self.assertTrue(proxy_details["market_signal"]["proxy"])
+        self.assertAlmostEqual(proxy_details["adjusted_probability_team1"], proxy_details["model_probability_team1"])
+        self.assertGreaterEqual(proxy_report["market_adjustment_summary"]["signal_counts"]["poll_proxy"], 1)
+        self.assertGreaterEqual(proxy_report["market_adjustment_summary"]["proxy_signal_matchups"], 1)
+
+    def test_model_driven_pickem_uses_preaveraged_real_odds_probability_without_decimal_odds(self):
+        from cs2pickem.pickem import model_driven_pickems
+
+        report = model_driven_pickems(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "market_probability_team1": 0.2,
+                    "market_signal_basis": "real_odds",
+                    "market_signal_proxy": "False",
+                    "market_signal_source": "odds_provider_average",
+                }
+            ],
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=20,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+
+        details = report["sample_match_details"]["Alpha__Bravo__bo1"]
+
+        self.assertTrue(details["market_adjustment_applied"])
+        self.assertEqual(details["market_signal"]["basis"], "real_odds")
+        self.assertEqual(details["market_signal"]["source"], "odds_provider_average")
+        self.assertFalse(details["market_signal"]["proxy"])
+        self.assertLess(details["adjusted_probability_team1"], details["model_probability_team1"])
+
+    def test_model_driven_pickem_propagates_opening_market_strength_to_unpriced_swiss_matchups(self):
+        from cs2pickem.pickem import model_driven_pickems
+
+        report = model_driven_pickems(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            fixture_rows=[
+                {"date": "2026-06-01", "team1": "Alpha", "team2": "Delta", "odds_team1": 1.2, "odds_team2": 4.6},
+                {"date": "2026-06-01", "team1": "Bravo", "team2": "Charlie", "odds_team1": 2.9, "odds_team2": 1.45},
+            ],
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=20,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+
+        details = report["sample_match_details"]["Alpha__Bravo__bo1"]
+
+        self.assertTrue(details["market_adjustment_applied"])
+        self.assertEqual(details["market_adjustment_source"], "team_market_strength")
+        self.assertGreater(details["adjusted_probability_team1"], details["model_probability_team1"])
         self.assertIn("Alpha__Bravo__bo1", report["market_adjustment_summary"]["adjusted_matchup_keys"])
 
     def test_model_driven_pickem_swaps_reversed_fixture_level_odds(self):

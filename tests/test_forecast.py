@@ -120,10 +120,32 @@ class ForecastTests(unittest.TestCase):
             report["decision_summary"]["actionable_picks"] + report["decision_summary"]["low_confidence_avoids"],
             1,
         )
-        self.assertEqual(set(prediction["model_probabilities_team1"]), {"logistic", "random_forest", "xgboost", "neural_network"})
+        self.assertEqual(prediction["model_weights"]["neural_network"], 0.0)
+        self.assertEqual(set(prediction["model_probabilities_team1"]), {"logistic", "random_forest", "xgboost"})
         self.assertEqual(set(prediction["weighted_model_contributions_team1"]), set(prediction["model_probabilities_team1"]))
         self.assertAlmostEqual(sum(prediction["model_weights"].values()), 1.0)
         self.assertAlmostEqual(sum(prediction["weighted_model_contributions_team1"].values()), prediction["model_probability_team1"])
+        self.assertEqual(report["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
+        self.assertGreater(prediction["team1_elo"], prediction["team2_elo"])
+
+    def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
+        from cs2pickem.predictor import MatchPredictor
+
+        predictor = MatchPredictor.train(history_rows(), reference_date="2026-05-31", top_k=10, epochs=3)
+        details = predictor.predict_probability_details(
+            {
+                "date": "2026-06-01",
+                "event": "IEM Cologne Major",
+                "event_tier": "S",
+                "team1": "Alpha",
+                "team2": "Bravo",
+                "best_of": 1,
+                "map": "mirage",
+            }
+        )
+
+        self.assertEqual(details["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
+        self.assertGreater(details["team1_elo"], details["team2_elo"])
 
     def test_forecast_file_workflow_reads_csv_and_profiles_json(self):
         from cs2pickem.data import write_matches_csv
@@ -180,6 +202,44 @@ class ForecastTests(unittest.TestCase):
         prediction = report["predictions"][0]
         self.assertFalse(prediction["market_adjustment_applied"])
         self.assertAlmostEqual(prediction["adjusted_probability_team1"], prediction["model_probability_team1"])
+
+    def test_forecast_can_adjust_with_explicit_market_probability_but_not_poll_proxy(self):
+        from cs2pickem.forecast import forecast_fixtures
+
+        base_fixture = {
+            "date": "2026-06-01",
+            "event": "IEM Cologne Major",
+            "event_tier": "S",
+            "status": "scheduled",
+            "team1": "Alpha",
+            "team2": "Bravo",
+            "best_of": 1,
+            "map": "mirage",
+            "team1_rank": 4,
+            "team2_rank": 20,
+            "team1_recent_winrate_10": 0.8,
+            "team2_recent_winrate_10": 0.35,
+        }
+        report = forecast_fixtures(
+            history_rows(),
+            [
+                {**base_fixture, "market_probability_team1": 0.8, "market_signal_source": "book_consensus"},
+                {**base_fixture, "hltv_poll_team1": 80, "hltv_poll_team2": 20, "market_proxy_source": "hltv_fan_poll_not_odds"},
+            ],
+            reference_date="2026-05-31",
+            top_k=6,
+            epochs=3,
+        )
+
+        explicit, proxy = report["predictions"]
+        self.assertTrue(explicit["market_adjustment_applied"])
+        self.assertEqual(explicit["market_signal"]["basis"], "explicit_market_probability")
+        self.assertFalse(explicit["market_signal"]["proxy"])
+        self.assertGreater(explicit["adjusted_probability_team1"], explicit["model_probability_team1"])
+        self.assertFalse(proxy["market_adjustment_applied"])
+        self.assertEqual(proxy["market_signal"]["basis"], "poll_proxy")
+        self.assertTrue(proxy["market_signal"]["proxy"])
+        self.assertEqual(proxy["adjusted_probability_team1"], proxy["model_probability_team1"])
 
     def test_forecast_file_applies_bp_intel_before_prediction(self):
         from cs2pickem.data import write_matches_csv

@@ -5,8 +5,9 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, Mapping, Optional
 
 from .data import read_matches_csv, read_teams_csv
+from .odds import market_probability_from_row
 from .predictor import MatchPredictor
-from .strategy import adjust_probability_with_market, choose_pickems, describe_pickem_risk, describe_pickems
+from .strategy import adjust_probability_toward_market_probability, choose_pickems, describe_pickem_risk, describe_pickems
 from .swiss import TeamSeed, simulate_swiss
 
 
@@ -28,7 +29,10 @@ def model_driven_pickems(
     teams_data = {str(row["team"]): dict(row) for row in team_rows}
     teams = [TeamSeed(name, int(row.get("seed", index + 1))) for index, (name, row) in enumerate(teams_data.items())]
     teams.sort(key=lambda team: team.seed)
-    fixture_odds = _fixture_odds_lookup(fixture_rows or [])
+    materialized_fixtures = [dict(row) for row in (fixture_rows or [])]
+    fixture_odds = _fixture_odds_lookup(materialized_fixtures)
+    fixture_market_signals = _fixture_market_signal_lookup(materialized_fixtures)
+    team_market_strengths = _team_market_strength_lookup(materialized_fixtures)
     predictor = MatchPredictor.train(
         history_rows,
         reference_date=reference_date,
@@ -47,14 +51,16 @@ def model_driven_pickems(
         if key not in probability_cache:
             fixture = _fixture_from_team_rows(teams_data[team_a.name], teams_data[team_b.name], best_of=best_of)
             _apply_fixture_odds(fixture, fixture_odds)
+            _apply_fixture_market_signal(fixture, fixture_market_signals)
+            _apply_team_market_strength(fixture, team_market_strengths)
             model_probability, details = predictor.predict_with_maps(fixture, profiles)
-            market_adjustment_applied = bool(fixture.get("market_odds_available"))
+            market_signal = market_probability_from_row(fixture)
+            market_adjustment_applied = bool(market_signal and not market_signal.get("proxy"))
             adjusted_probability = model_probability
             if market_adjustment_applied:
-                adjusted_probability = adjust_probability_with_market(
+                adjusted_probability = adjust_probability_toward_market_probability(
                     model_probability,
-                    odds_team1=_num(fixture.get("odds_team1"), 2.0),
-                    odds_team2=_num(fixture.get("odds_team2"), 2.0),
+                    market_probability=_num(market_signal.get("probability_team1"), 0.5),
                 )
             probability_cache[key] = adjusted_probability
             detail_cache[key] = {
@@ -62,6 +68,9 @@ def model_driven_pickems(
                 "model_probability_team1": model_probability,
                 "adjusted_probability_team1": adjusted_probability,
                 "market_adjustment_applied": market_adjustment_applied,
+                "market_adjustment_source": fixture.get("market_adjustment_source") or ((market_signal or {}).get("source")),
+                "market_probability_team1": (market_signal or {}).get("probability_team1"),
+                "market_signal": market_signal or {},
             }
         return probability_cache[key]
 
@@ -82,6 +91,8 @@ def model_driven_pickems(
         "imbalance": predictor.imbalance_report,
         "ensemble_weights": predictor.ensemble_weights,
         "model_hyperparameters": predictor.model_hyperparameters,
+        "probability_calibration": predictor.calibration_report,
+        "feature_preparation": predictor.feature_preparation,
         "stage_strategy": _stage_strategy(stage),
         "team_probabilities": simulation.team_probabilities,
         "pickems": pickems,
@@ -129,7 +140,7 @@ def model_driven_pickems_file(
 
 def _fixture_from_team_rows(team1: Mapping[str, Any], team2: Mapping[str, Any], best_of: int) -> Dict[str, Any]:
     market_odds_available = team1.get("odds") not in (None, "") and team2.get("odds") not in (None, "")
-    return {
+    fixture = {
         "date": "prediction",
         "event": "IEM Cologne Major",
         "event_tier": "S",
@@ -161,10 +172,20 @@ def _fixture_from_team_rows(team1: Mapping[str, Any], team2: Mapping[str, Any], 
         "team1_star_rating": team1.get("star_rating", team1.get("rating", 1.0)),
         "team2_star_rating": team2.get("star_rating", team2.get("rating", 1.0)),
         "h2h_team1_winrate": 0.5,
-        "odds_team1": team1.get("odds", 2.0),
-        "odds_team2": team2.get("odds", 2.0),
         "market_odds_available": int(market_odds_available),
+        "market_adjustment_source": "team_seed_odds" if market_odds_available else None,
     }
+    if market_odds_available:
+        fixture.update(
+            {
+                "odds_team1": team1.get("odds"),
+                "odds_team2": team2.get("odds"),
+                "market_signal_source": "team_seed_odds",
+                "market_signal_basis": "real_odds",
+                "market_signal_proxy": False,
+            }
+        )
+    return fixture
 
 
 def _sample_probabilities(cache: Dict[str, float], teams: list[TeamSeed], predictor) -> Dict[str, float]:
@@ -181,11 +202,28 @@ def _sample_details(cache: Dict[str, Dict[str, object]], sample_probabilities: M
 
 def _market_adjustment_summary(cache: Mapping[str, Mapping[str, object]]) -> Dict[str, object]:
     adjusted = sorted(key for key, details in cache.items() if details.get("market_adjustment_applied"))
+    by_source: Dict[str, int] = defaultdict(int)
+    signal_counts: Dict[str, int] = defaultdict(int)
+    signal_matchups = 0
+    proxy_signal_matchups = 0
+    for details in cache.values():
+        market_signal = details.get("market_signal")
+        if isinstance(market_signal, Mapping) and market_signal.get("basis"):
+            signal_matchups += 1
+            signal_counts[str(market_signal.get("basis"))] += 1
+            if market_signal.get("proxy"):
+                proxy_signal_matchups += 1
+        if details.get("market_adjustment_applied"):
+            by_source[str(details.get("market_adjustment_source") or "unknown")] += 1
     return {
         "cached_matchups": len(cache),
         "adjusted_matchups": len(adjusted),
         "unadjusted_matchups": len(cache) - len(adjusted),
         "adjusted_matchup_keys": adjusted,
+        "adjusted_matchups_by_source": dict(sorted(by_source.items())),
+        "signal_matchups": signal_matchups,
+        "proxy_signal_matchups": proxy_signal_matchups,
+        "signal_counts": dict(sorted(signal_counts.items())),
     }
 
 
@@ -216,6 +254,66 @@ def _fixture_odds_lookup(rows: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[st
     }
 
 
+def _fixture_market_signal_lookup(rows: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    signals_by_pair: Dict[str, list[Dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        signal = market_probability_from_row(dict(row))
+        has_decimal_odds = row.get("odds_team1") not in (None, "") and row.get("odds_team2") not in (None, "")
+        if not signal or (signal.get("basis") == "real_odds" and has_decimal_odds):
+            continue
+        team1 = str(row.get("team1", ""))
+        team2 = str(row.get("team2", ""))
+        if not team1 or not team2:
+            continue
+        canonical_team1, _ = _canonical_pair(team1, team2)
+        probability = _num(signal.get("probability_team1"), 0.5)
+        canonical_probability = probability if _team_key(team1) == _team_key(canonical_team1) else 1.0 - probability
+        signals_by_pair[_pair_key(team1, team2)].append(
+            {
+                "market_probability_team1": max(0.0, min(1.0, canonical_probability)),
+                "market_signal_source": str(signal.get("source") or "market_signal"),
+                "market_signal_basis": str(signal.get("basis") or "explicit_market_probability"),
+                "market_signal_proxy": bool(signal.get("proxy")),
+            }
+        )
+
+    output: Dict[str, Dict[str, Any]] = {}
+    for key, values in signals_by_pair.items():
+        if not values:
+            continue
+        best_priority = min(_market_signal_priority(value["market_signal_basis"]) for value in values)
+        preferred = [value for value in values if _market_signal_priority(value["market_signal_basis"]) == best_priority]
+        output[key] = {
+            "market_probability_team1": sum(row["market_probability_team1"] for row in preferred) / len(preferred),
+            "market_signal_source": ",".join(sorted({str(row["market_signal_source"]) for row in preferred})),
+            "market_signal_basis": preferred[0]["market_signal_basis"] if preferred else "explicit_market_probability",
+            "market_signal_proxy": all(bool(row["market_signal_proxy"]) for row in preferred),
+        }
+    return output
+
+
+def _team_market_strength_lookup(rows: Iterable[Mapping[str, Any]]) -> Dict[str, float]:
+    strengths: Dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        if row.get("odds_team1") in (None, "") or row.get("odds_team2") in (None, ""):
+            continue
+        team1 = str(row.get("team1", ""))
+        team2 = str(row.get("team2", ""))
+        if not team1 or not team2:
+            continue
+        probability_team1, probability_team2 = _implied_market_pair(
+            _num(row.get("odds_team1"), 2.0),
+            _num(row.get("odds_team2"), 2.0),
+        )
+        strengths[team1].append(probability_team1)
+        strengths[team2].append(probability_team2)
+    return {
+        team: sum(values) / len(values)
+        for team, values in strengths.items()
+        if values
+    }
+
+
 def _apply_fixture_odds(fixture: Dict[str, Any], fixture_odds: Mapping[str, Mapping[str, float]]) -> None:
     pair_key = _pair_key(fixture.get("team1", ""), fixture.get("team2", ""))
     odds = fixture_odds.get(pair_key)
@@ -229,6 +327,55 @@ def _apply_fixture_odds(fixture: Dict[str, Any], fixture_odds: Mapping[str, Mapp
         fixture["odds_team1"] = odds["odds_team2"]
         fixture["odds_team2"] = odds["odds_team1"]
     fixture["market_odds_available"] = 1
+    fixture["market_adjustment_source"] = "fixture_odds"
+    fixture["market_signal_source"] = "fixture_odds"
+    fixture["market_signal_basis"] = "real_odds"
+    fixture["market_signal_proxy"] = False
+
+
+def _apply_fixture_market_signal(fixture: Dict[str, Any], fixture_signals: Mapping[str, Mapping[str, Any]]) -> None:
+    if fixture.get("market_odds_available"):
+        return
+    pair_key = _pair_key(fixture.get("team1", ""), fixture.get("team2", ""))
+    signal = fixture_signals.get(pair_key)
+    if not signal:
+        return
+    canonical_team1, _ = _canonical_pair(fixture["team1"], fixture["team2"])
+    probability = _num(signal.get("market_probability_team1"), 0.5)
+    if _team_key(fixture["team1"]) != _team_key(canonical_team1):
+        probability = 1.0 - probability
+    proxy = bool(signal.get("market_signal_proxy"))
+    source = str(signal.get("market_signal_source") or "fixture_market_signal")
+    fixture["market_probability_team1"] = max(0.0, min(1.0, probability))
+    fixture["market_signal_source"] = source
+    fixture["market_signal_basis"] = signal.get("market_signal_basis") or "explicit_market_probability"
+    fixture["market_signal_proxy"] = proxy
+    if proxy:
+        fixture["market_proxy_source"] = source
+        fixture["market_odds_available"] = 0
+    else:
+        fixture["market_odds_available"] = 1
+        fixture["market_adjustment_source"] = source
+
+
+def _apply_team_market_strength(fixture: Dict[str, Any], strengths: Mapping[str, float]) -> None:
+    if fixture.get("market_odds_available") or fixture.get("market_signal_basis"):
+        return
+    team1 = str(fixture.get("team1", ""))
+    team2 = str(fixture.get("team2", ""))
+    if team1 not in strengths or team2 not in strengths:
+        return
+    left = max(0.001, min(0.999, float(strengths[team1])))
+    right = max(0.001, min(0.999, float(strengths[team2])))
+    total = left + right
+    if total <= 0:
+        return
+    fixture["market_probability_team1"] = left / total
+    fixture["market_odds_available"] = 1
+    fixture["market_adjustment_source"] = "team_market_strength"
+    fixture["market_signal_source"] = "team_market_strength"
+    fixture["market_signal_basis"] = "team_market_strength"
+    fixture["market_signal_proxy"] = False
 
 
 def _pair_key(team1: Any, team2: Any) -> str:
@@ -244,6 +391,26 @@ def _canonical_pair(team1: Any, team2: Any) -> tuple[str, str]:
 
 def _team_key(value: Any) -> str:
     return str(value).strip().lower()
+
+
+def _implied_market_pair(odds_team1: float, odds_team2: float) -> tuple[float, float]:
+    inv1 = 1.0 / odds_team1 if odds_team1 > 0 else 0.5
+    inv2 = 1.0 / odds_team2 if odds_team2 > 0 else 0.5
+    total = inv1 + inv2
+    if total == 0:
+        return 0.5, 0.5
+    return inv1 / total, inv2 / total
+
+
+def _market_signal_priority(basis: Any) -> int:
+    normalized = str(basis)
+    if normalized == "real_odds":
+        return 0
+    if normalized == "explicit_market_probability":
+        return 1
+    if normalized == "poll_proxy":
+        return 2
+    return 3
 
 
 def _stage_strategy(stage: str) -> Dict[str, str]:

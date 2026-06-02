@@ -19,12 +19,11 @@ rows = list(csv.DictReader(open(CORPUS)))
 rows = [r for r in rows if r.get("date") and r.get("winner") and r.get("team1") and r.get("team2")]
 rows.sort(key=lambda r: r["date"])
 
-# Leakage-free pre-match Elo over the full corpus (tier-weighted: Major/S move more).
-per_match, final_elo = compute_elo_ratings(
+# Final ratings are written for seeding upcoming fixtures. The actual with/without
+# training comparison below lets MatchPredictor inject Elo only for the with_elo arm,
+# so no_elo remains a true neutralized control after auto-Elo became the default.
+_, final_elo = compute_elo_ratings(
     rows, base=1500.0, k=24.0, tier_k={"S": 32.0, "A": 20.0, "B": 14.0, "C": 10.0})
-for r, e in zip(rows, per_match):
-    r["team1_elo"] = e["team1_elo_pre"]
-    r["team2_elo"] = e["team2_elo_pre"]
 
 cut = int(len(rows) * 0.8)
 train, test = rows[:cut], rows[cut:]
@@ -50,7 +49,8 @@ for name, with_elo in [("no_elo", False), ("with_elo", True)]:
             r["team1_elo"] = 1500.0
             r["team2_elo"] = 1500.0
     predictor = MatchPredictor.train(tr, reference_date=split_date, top_k=25,
-                                     max_age_days=400, ensemble_weights=WEIGHTS)
+                                     max_age_days=400, ensemble_weights=WEIGHTS,
+                                     inject_elo=with_elo)
     elo_selected = "elo_diff" in predictor.selected_feature_names
     probs = [max(1e-6, min(1 - 1e-6, predictor.predict_with_maps(r, None)[0])) for r in te]
     m = metrics(name, probs)

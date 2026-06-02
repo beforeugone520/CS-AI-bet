@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Mapping, Optional
 
+from .calibration import ProbabilityCalibrator
 from .cleaning import clean_matches
 from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .maps import average_unknown_map_prediction
 from .models import default_ensemble, model_hyperparameters
+from .reliability import UNSTABLE_IDENTITY_FEATURES, apply_final_elo_to_match, prepare_reliability_features
 from .selection import FeatureSelector
 
 
@@ -24,6 +26,10 @@ class MatchPredictor:
         imbalance_report: Dict[str, object] | None = None,
         ensemble_weights: Dict[str, float] | None = None,
         hyperparameters: Dict[str, object] | None = None,
+        calibrator: ProbabilityCalibrator | None = None,
+        calibration_report: Dict[str, object] | None = None,
+        team_elo_ratings: Mapping[str, float] | None = None,
+        feature_preparation: Dict[str, object] | None = None,
     ) -> None:
         self.builder = builder
         self.selector = selector
@@ -33,6 +39,13 @@ class MatchPredictor:
         self.imbalance_report = imbalance_report or {}
         self.ensemble_weights = ensemble_weights or dict(getattr(model, "weights", {}))
         self.model_hyperparameters = hyperparameters or {}
+        self.calibrator = calibrator
+        self.calibration_report = calibration_report or {"basis": "not_applied", "calibration_count": 0}
+        self.team_elo_ratings = dict(team_elo_ratings or {})
+        self.feature_preparation = feature_preparation or {
+            "elo": {"basis": "not_applied", "rows": trained_matches, "teams": 0},
+            "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+        }
 
     @classmethod
     def train(
@@ -44,14 +57,24 @@ class MatchPredictor:
         seed: int = 53,
         max_age_days: int = 90,
         ensemble_weights: Dict[str, float] | None = None,
+        calibration_ratio: float = 0.15,
+        minimum_calibration_rows: int = 30,
+        inject_elo: bool = True,
     ) -> "MatchPredictor":
         cleaned_history = sorted(clean_matches([dict(row) for row in history_rows], reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
+        prepared_history, final_elo, feature_preparation = prepare_reliability_features(cleaned_history, inject_elo=inject_elo)
+        model_rows, calibration_rows = _model_calibration_split(
+            prepared_history,
+            calibration_ratio=calibration_ratio,
+            minimum_calibration_rows=minimum_calibration_rows,
+        )
         builder = FeatureBuilder()
-        dataset = builder.fit_transform(cleaned_history)
-        selector = FeatureSelector(top_k=top_k)
+        dataset = builder.fit_transform(model_rows)
+        selector = FeatureSelector(top_k=top_k, excluded_feature_names=feature_preparation["excluded_feature_names"])
         selected = selector.fit_transform(dataset.rows, dataset.labels, dataset.feature_names)
         rebalanced = rebalance_training_data(selected.rows, dataset.labels)
         model = default_ensemble(seed=seed, epochs=epochs, weights=ensemble_weights).fit(rebalanced.rows, rebalanced.labels, sample_weights=rebalanced.sample_weights)
+        calibrator, calibration_report = _fit_holdout_calibrator(builder, selector, model, calibration_rows)
         return cls(
             builder,
             selector,
@@ -61,15 +84,21 @@ class MatchPredictor:
             rebalanced.report,
             ensemble_weights=dict(model.weights),
             hyperparameters=model_hyperparameters(epochs=epochs),
+            calibrator=calibrator,
+            calibration_report=calibration_report,
+            team_elo_ratings=final_elo,
+            feature_preparation=feature_preparation,
         )
 
     def predict_probability(self, row: Mapping[str, Any]) -> float:
         return self.predict_probability_details(row)["model_probability_team1"]
 
     def predict_probability_details(self, row: Mapping[str, Any]) -> Dict[str, object]:
-        transformed = self.builder.transform([dict(row)])
+        prepared_row = apply_final_elo_to_match(row, self.team_elo_ratings)
+        transformed = self.builder.transform([prepared_row])
         selected_rows = self.selector.transform(transformed).rows
-        probability = self.model.predict_proba(selected_rows)[0]
+        raw_probability = self.model.predict_proba(selected_rows)[0]
+        probability = self.calibrator.transform_one(raw_probability) if self.calibrator is not None else raw_probability
         components = {}
         if hasattr(self.model, "predict_components"):
             raw_components = self.model.predict_components(selected_rows)
@@ -78,9 +107,14 @@ class MatchPredictor:
         contributions = {name: weights.get(name, 0.0) * probability for name, probability in components.items()}
         return {
             "model_probability_team1": probability,
+            "uncalibrated_model_probability_team1": raw_probability,
             "model_probabilities_team1": components,
             "model_weights": weights,
             "weighted_model_contributions_team1": contributions,
+            "probability_calibration": self.calibration_report,
+            "feature_preparation": self.feature_preparation,
+            "team1_elo": prepared_row.get("team1_elo"),
+            "team2_elo": prepared_row.get("team2_elo"),
         }
 
     def predict_with_maps(
@@ -111,12 +145,18 @@ class MatchPredictor:
         team2_profile: Mapping[str, Any],
     ) -> Dict[str, object]:
         if not candidate_maps:
+            base_details = self.predict_probability_details(row)
             return {
                 "model_probabilities_team1": {},
                 "model_weights": dict(getattr(self.model, "weights", {})),
                 "weighted_model_contributions_team1": {},
+                "probability_calibration": self.calibration_report,
+                "feature_preparation": self.feature_preparation,
+                "team1_elo": base_details.get("team1_elo"),
+                "team2_elo": base_details.get("team2_elo"),
             }
         component_totals: Dict[str, float] = {}
+        base_details = self.predict_probability_details(row)
         for map_name in candidate_maps:
             map_row = dict(row)
             map_row["map"] = map_name
@@ -132,7 +172,43 @@ class MatchPredictor:
             "model_probabilities_team1": components,
             "model_weights": weights,
             "weighted_model_contributions_team1": contributions,
+            "probability_calibration": self.calibration_report,
+            "feature_preparation": self.feature_preparation,
+            "team1_elo": base_details.get("team1_elo"),
+            "team2_elo": base_details.get("team2_elo"),
         }
+
+
+def _model_calibration_split(
+    rows: list[dict],
+    calibration_ratio: float,
+    minimum_calibration_rows: int,
+) -> tuple[list[dict], list[dict]]:
+    if len(rows) < max(1, minimum_calibration_rows) * 3:
+        return rows, []
+    calibration_count = max(minimum_calibration_rows, int(len(rows) * max(0.0, calibration_ratio)))
+    calibration_count = min(calibration_count, len(rows) // 3)
+    if calibration_count <= 0:
+        return rows, []
+    return rows[:-calibration_count], rows[-calibration_count:]
+
+
+def _fit_holdout_calibrator(
+    builder: FeatureBuilder,
+    selector: FeatureSelector,
+    model: object,
+    calibration_rows: list[dict],
+) -> tuple[ProbabilityCalibrator | None, Dict[str, object]]:
+    if not calibration_rows:
+        return None, {"basis": "not_applied", "calibration_count": 0}
+    transformed = builder.transform(calibration_rows)
+    selected_rows = selector.transform(transformed).rows
+    labels = [1 if row.get("winner") == row.get("team1") else 0 for row in calibration_rows]
+    probabilities = model.predict_proba(selected_rows)
+    calibrator = ProbabilityCalibrator().fit(probabilities, labels)
+    report = calibrator.report()
+    report.update({"basis": "holdout_platt_logistic", "calibration_count": len(calibration_rows)})
+    return calibrator, report
 
 
 def _map_winrate(profile: Mapping[str, Any], map_name: str) -> float:

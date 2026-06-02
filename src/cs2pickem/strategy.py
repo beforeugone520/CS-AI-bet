@@ -13,6 +13,14 @@ def adjust_probability_with_market(
     max_adjustment: float = 0.03,
 ) -> float:
     market_probability = _market_probability(odds_team1, odds_team2)
+    return adjust_probability_toward_market_probability(model_probability, market_probability, max_adjustment=max_adjustment)
+
+
+def adjust_probability_toward_market_probability(
+    model_probability: float,
+    market_probability: float,
+    max_adjustment: float = 0.03,
+) -> float:
     delta = market_probability - model_probability
     capped_delta = max(-max_adjustment, min(max_adjustment, delta))
     return _clip(model_probability + capped_delta)

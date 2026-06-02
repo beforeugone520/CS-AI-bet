@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Sequence
 
 
-DEFAULT_MODEL_WEIGHTS = {"logistic": 0.20, "random_forest": 0.30, "xgboost": 0.35, "neural_network": 0.15}
+DEFAULT_MODEL_WEIGHTS = {"logistic": 0.20, "random_forest": 0.30, "xgboost": 0.35, "neural_network": 0.0}
 
 
 def model_hyperparameters(epochs: int = 50) -> Dict[str, object]:

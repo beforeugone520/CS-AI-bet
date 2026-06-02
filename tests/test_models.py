@@ -75,6 +75,16 @@ class ModelHyperparameterTests(unittest.TestCase):
         )
         self.assertTrue(model.accelerated_requested)
 
+    def test_default_ensemble_uses_no_nn_weights_after_historical_holdout(self):
+        from cs2pickem.models import default_ensemble
+
+        model = default_ensemble(seed=7, epochs=2)
+
+        self.assertEqual(model.weights["neural_network"], 0.0)
+        self.assertAlmostEqual(model.weights["logistic"], 0.20 / 0.85)
+        self.assertAlmostEqual(model.weights["random_forest"], 0.30 / 0.85)
+        self.assertAlmostEqual(model.weights["xgboost"], 0.35 / 0.85)
+
     def test_default_ensemble_uses_accelerated_backends_when_imports_are_available(self):
         from cs2pickem import models
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from .backtest import backtest_pickem_file, backtest_pickem_suite_file
+from .backtest import backtest_pickem_file, backtest_pickem_suite_file, replay_pickem_backtest_suite_file
 from .bp import merge_bp_file
 from .data import read_matches_csv, read_teams_csv, write_json
 from .export import build_pickem_answer_sheet_file
@@ -14,6 +14,7 @@ from .pickem import model_driven_pickems_file
 from .pipeline import enrich_matches_file, run_demo, simulate_from_team_rows, train_evaluate
 from .players import merge_player_stats_file
 from .readiness import DEFAULT_PICKEM_SLOTS, audit_readiness_file
+from .tuning import optimize_match_predictions
 from .update import (
     daily_update_from_config,
     update_dataset_from_html,
@@ -44,6 +45,22 @@ def main() -> int:
     train_parser.add_argument("--train-end-date", help="optional calendar split boundary, e.g. 2026-04-30")
     train_parser.add_argument("--validation-end-date", help="optional calendar split boundary, e.g. 2026-05-15")
     train_parser.add_argument("--output", help="optional JSON output path")
+    tune_parser = subparsers.add_parser("optimize-matches", help="replay historical matches and tune model configuration on a validation split")
+    tune_parser.add_argument("--matches", required=True, help="historical enriched/training match CSV")
+    tune_parser.add_argument("--reference-date", required=True, help="YYYY-MM-DD date for training freshness filtering")
+    tune_parser.add_argument("--train-ratio", type=float, default=0.8, help="chronological training split ratio")
+    tune_parser.add_argument("--validation-ratio", type=float, default=0.1, help="chronological validation split ratio")
+    tune_parser.add_argument("--max-age-days", type=int, default=400, help="freshness window for historical replay rows")
+    tune_parser.add_argument("--top-k-values", default="12,18,25", help="comma-separated selected-feature counts to search")
+    tune_parser.add_argument("--epochs-values", default="8", help="comma-separated training epoch counts to search")
+    tune_parser.add_argument("--candidates", default="fast_logistic,random_forest,no_nn", help="comma-separated candidate presets: fast_logistic,logistic,random_forest,xgboost,default,no_nn,tree_blend")
+    tune_parser.add_argument("--seed", type=int, default=29)
+    tune_parser.add_argument("--no-calibration", action="store_true", help="disable validation-fitted probability calibration for test metrics")
+    tune_parser.add_argument("--rolling-folds", type=int, default=3, help="number of chronological rolling validation folds to score each candidate")
+    tune_parser.add_argument("--market-weight", type=float, default=0.30, help="market probability weight for historical model+market fusion diagnostics")
+    tune_parser.add_argument("--probability-objective", default="log_loss", choices=["accuracy", "log_loss", "brier_score", "ece"], help="objective used to choose raw vs calibrated test probabilities")
+    tune_parser.add_argument("--elo-modes", default="with", help="comma-separated Elo feature modes to compare: with,without")
+    tune_parser.add_argument("--output", help="optional JSON output path")
     simulate_parser = subparsers.add_parser("simulate", help="simulate Swiss from a team CSV")
     simulate_parser.add_argument("--teams", required=True, help="CSV with team,seed,strength columns")
     simulate_parser.add_argument("--simulations", type=int, default=100000)
@@ -77,6 +94,15 @@ def main() -> int:
     backtest_suite_parser.add_argument("--pass-threshold", type=int, default=5, help="minimum correct picks considered a case pass")
     backtest_suite_parser.add_argument("--pass-rate-target", type=float, default=0.38, help="historical suite pass-rate target")
     backtest_suite_parser.add_argument("--output", help="optional JSON output path")
+    replay_suite_parser = subparsers.add_parser("replay-pickem-suite", help="retrain, regenerate, and score historical Pick'em replay cases")
+    replay_suite_parser.add_argument("--suite", required=True, help="JSON list or {cases: [...]} with history/teams/results paths or inline rows")
+    replay_suite_parser.add_argument("--pass-threshold", type=int, default=5, help="minimum correct picks considered a case pass")
+    replay_suite_parser.add_argument("--pass-rate-target", type=float, default=0.38, help="historical replay pass-rate target")
+    replay_suite_parser.add_argument("--simulations", type=int, default=100000, help="default Swiss simulations per replay case")
+    replay_suite_parser.add_argument("--top-k", type=int, default=25, help="default selected feature count per replay case")
+    replay_suite_parser.add_argument("--epochs", type=int, default=50, help="default training epochs per replay case")
+    replay_suite_parser.add_argument("--max-age-days", type=int, default=90, help="default freshness window per replay case")
+    replay_suite_parser.add_argument("--output", help="optional JSON output path")
     enrich_parser = subparsers.add_parser("enrich", help="build rolling training features from raw match CSV")
     enrich_parser.add_argument("--matches", required=True, help="raw chronological or unsorted match CSV")
     enrich_parser.add_argument("--output", required=True, help="path for enriched match CSV")
@@ -253,6 +279,24 @@ def main() -> int:
             validation_end_date=args.validation_end_date,
         )
         return _emit(report, args.output)
+    if args.command == "optimize-matches":
+        report = optimize_match_predictions(
+            read_matches_csv(args.matches),
+            reference_date=args.reference_date,
+            train_ratio=args.train_ratio,
+            validation_ratio=args.validation_ratio,
+            max_age_days=args.max_age_days,
+            top_k_values=_parse_int_list(args.top_k_values),
+            epochs_values=_parse_int_list(args.epochs_values),
+            candidate_names=_parse_str_list(args.candidates),
+            seed=args.seed,
+            calibrate=not args.no_calibration,
+            rolling_folds=args.rolling_folds,
+            market_weight=args.market_weight,
+            probability_objective=args.probability_objective,
+            elo_modes=_parse_str_list(args.elo_modes),
+        )
+        return _emit(report, args.output)
     if args.command == "simulate":
         report = simulate_from_team_rows(read_teams_csv(args.teams), simulations=args.simulations, seed=args.seed)
         return _emit(report, args.output)
@@ -293,6 +337,18 @@ def main() -> int:
             output_path=None,
             pass_threshold=args.pass_threshold,
             pass_rate_target=args.pass_rate_target,
+        )
+        return _emit(report, args.output)
+    if args.command == "replay-pickem-suite":
+        report = replay_pickem_backtest_suite_file(
+            suite_path=args.suite,
+            output_path=None,
+            pass_threshold=args.pass_threshold,
+            pass_rate_target=args.pass_rate_target,
+            simulations=args.simulations,
+            top_k=args.top_k,
+            epochs=args.epochs,
+            max_age_days=args.max_age_days,
         )
         return _emit(report, args.output)
     if args.command == "enrich":
@@ -535,6 +591,14 @@ def _emit(payload: object, output_path: str | None) -> int:
         return 0
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def _parse_int_list(value: str) -> list[int]:
+    return [int(item.strip()) for item in str(value).split(",") if item.strip()]
+
+
+def _parse_str_list(value: str) -> list[str]:
+    return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
 if __name__ == "__main__":

@@ -197,6 +197,28 @@ class TrainingEvaluationTests(unittest.TestCase):
         self.assertAlmostEqual(sum(tuning["weights"].values()), 1.0)
         self.assertTrue(all(value > 0 for value in tuning["weights"].values()))
 
+    def test_train_evaluate_reports_validation_calibrated_test_metrics(self):
+        from cs2pickem.pipeline import train_evaluate
+
+        report = train_evaluate(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            epochs=3,
+            top_k=8,
+            cv_folds=3,
+            train_ratio=0.6,
+            validation_ratio=0.2,
+        )
+
+        calibration = report["probability_calibration"]
+        self.assertEqual(calibration["basis"], "validation_platt_logistic")
+        self.assertEqual(calibration["validation_count"], 2)
+        self.assertEqual(calibration["test_count"], 3)
+        self.assertIn("raw_test_metrics", calibration)
+        self.assertIn("calibrated_test_metrics", calibration)
+        self.assertIn("brier_score", calibration["calibrated_test_metrics"])
+        self.assertIn("ece", calibration["calibrated_test_metrics"])
+
     def test_train_evaluate_reports_objective_model_hyperparameters(self):
         from cs2pickem.pipeline import train_evaluate
 

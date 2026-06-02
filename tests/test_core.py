@@ -328,10 +328,11 @@ class CoreWorkflowTests(unittest.TestCase):
         self.assertEqual(len(probabilities), 2)
         self.assertTrue(all(0.0 <= p <= 1.0 for p in probabilities))
         self.assertAlmostEqual(sum(model.weights.values()), 1.0)
-        self.assertEqual(set(component_probabilities), {"logistic", "random_forest", "xgboost", "neural_network"})
+        self.assertEqual(model.weights["neural_network"], 0.0)
+        self.assertEqual(set(component_probabilities), {"logistic", "random_forest", "xgboost"})
         self.assertTrue(all(len(values) == len(probabilities) for values in component_probabilities.values()))
         for row_index, probability in enumerate(probabilities):
-            blended = sum(model.weights[name] * component_probabilities[name][row_index] for name in model.weights)
+            blended = sum(model.weights[name] * component_probabilities[name][row_index] for name in component_probabilities)
             self.assertAlmostEqual(probability, blended)
 
     def test_swiss_simulation_returns_pickem_relevant_distributions(self):

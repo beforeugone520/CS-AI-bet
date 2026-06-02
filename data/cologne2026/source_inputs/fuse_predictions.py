@@ -33,8 +33,8 @@ M30 = {t: model[t]["3-0"] for t in TEAMS}
 M03 = {t: model[t]["0-3"] for t in TEAMS}
 MQ  = {t: model[t]["advance"] for t in TEAMS}   # advance = qualify (incl 3-0)
 
-# ---- 4. Fuse. Weights: experts 0.40, market 0.30, model 0.30 ----
-WE, WK, WM = 0.40, 0.30, 0.30
+# ---- 4. Fuse. Weights: model-led, with experts/market as softer outside signals ----
+WE, WK, WM = 0.30, 0.20, 0.50
 def mm(d, keys):  # min-max normalize within candidate set
     vals = [d[k] for k in keys]
     lo, hi = min(vals), max(vals)
@@ -74,8 +74,8 @@ def agreement(team, cat):
 def conf(team, cat):
     a = agreement(team, cat)
     if cat == "3-0":  base = (WE*E30[team] + WM*M30[team] + WK*max(0,(S[team]-0.5)))
-    elif cat == "0-3": base = E03[team]*0.6 + (1-S[team])*0.4
-    else: base = EQ[team]*0.5 + MQ[team]*0.3 + S[team]*0.2
+    elif cat == "0-3": base = WE*E03[team] + WM*M03[team] + WK*(1-S[team])
+    else: base = WE*EQ[team] + WM*MQ[team] + WK*S[team]
     tier = ["Low", "Low", "Medium", "High"][a]
     return round(base, 3), a, tier
 

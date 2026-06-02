@@ -20,10 +20,12 @@ class FeatureSelector:
         variance_threshold: float = 0.01,
         correlation_threshold: float = 0.8,
         top_k: int = 25,
+        excluded_feature_names: Sequence[str] | None = None,
     ) -> None:
         self.variance_threshold = variance_threshold
         self.correlation_threshold = correlation_threshold
         self.top_k = top_k
+        self.excluded_feature_names = set(excluded_feature_names or [])
         self.importance_scores: Dict[str, float] = {}
         self.selected_indexes: List[int] = []
         self.selected_feature_names: List[str] = []
@@ -35,7 +37,7 @@ class FeatureSelector:
             self.importance_scores = {}
             return self
 
-        surviving = self._variance_filter(rows)
+        surviving = self._excluded_feature_filter(feature_names, self._variance_filter(rows))
         surviving = self._correlation_filter(rows, surviving)
         label_values = [float(label) for label in labels]
         self.importance_scores = {
@@ -65,6 +67,11 @@ class FeatureSelector:
             for index in range(width)
             if _variance(_column(rows, index)) >= self.variance_threshold
         ]
+
+    def _excluded_feature_filter(self, feature_names: Sequence[str], indexes: Sequence[int]) -> List[int]:
+        if not self.excluded_feature_names:
+            return list(indexes)
+        return [index for index in indexes if feature_names[index] not in self.excluded_feature_names]
 
     def _correlation_filter(self, rows: Sequence[Sequence[float]], indexes: Sequence[int]) -> List[int]:
         kept: List[int] = []
