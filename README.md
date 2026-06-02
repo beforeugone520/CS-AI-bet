@@ -2,6 +2,8 @@
 
 # CS2 Major Pick'em 机器学习预测系统
 
+<img src="docs/images/banner.png" width="900" />
+
 **离线可运行的 CS2 Major Pick'em 全链路预测工具**
 数据清洗 → 无泄漏特征 → Elo/校准 → 融合模型 → 市场信号审计 → 瑞士轮蒙特卡洛 → Pick'em 策略
 
