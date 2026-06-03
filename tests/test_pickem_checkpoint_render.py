@@ -43,6 +43,10 @@ class PickemCheckpointRenderTests(unittest.TestCase):
             svg = output_path.read_text(encoding="utf-8")
             for team in teams:
                 self.assertIn(team, svg)
+            for required in ["2-0", "1-1", "0-2", "Control Zone", "Live Line", "Elimination Edge"]:
+                self.assertIn(required, svg)
+            for required in ["on track", "live", "broken / risk"]:
+                self.assertIn(required, svg)
 
 
 if __name__ == "__main__":

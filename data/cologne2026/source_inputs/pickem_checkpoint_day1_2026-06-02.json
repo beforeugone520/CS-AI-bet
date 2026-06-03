@@ -3,95 +3,106 @@
   "subtitle": "Pick'em Day 1 checkpoint after two Swiss rounds",
   "date": "2026-06-02",
   "source_note": "Snapshot only · no newer results implied",
-  "badge": "MODEL / MARKET / EXPERT FUSION",
-  "legend": "Green = on track · Yellow = live risk · Red = slot broken or severe risk",
-  "lanes": [
+  "badge": "SWISS RECORD BOARD",
+  "footer": "Pick'em slots shown as compact tags: 3-0, ADV, 0-3",
+  "summary": [
     {
-      "title": "3-0 PICKS",
-      "subtitle": "Perfect-run slots",
+      "value": "5",
+      "label": "on track",
+      "tone": "good"
+    },
+    {
+      "value": "1",
+      "label": "live",
+      "tone": "warn"
+    },
+    {
+      "value": "4",
+      "label": "broken / risk",
+      "tone": "bad"
+    }
+  ],
+  "columns": [
+    {
+      "record": "2-0",
+      "title": "Control Zone",
+      "subtitle": "One win from safer ground",
+      "tone": "good",
       "cards": [
         {
           "team": "GamerLegion",
-          "record": "2-0",
-          "label": "LIVE",
-          "status": "Still on 3-0 track",
-          "score": "ON",
+          "slot": "3-0",
+          "status": "Still on perfect-run track",
           "tone": "good"
         },
         {
-          "team": "MIBR",
-          "record": "1-1",
-          "label": "OUT",
-          "status": "3-0 slot invalid",
-          "score": "OFF",
-          "tone": "bad"
-        }
-      ]
-    },
-    {
-      "title": "ADVANCE PICKS",
-      "subtitle": "Six-team advance pool",
-      "cards": [
-        {
           "team": "BetBoom",
-          "record": "2-0",
-          "label": "STRONG",
-          "status": "Near conversion",
+          "slot": "ADV",
+          "status": "Advance pick converting early",
           "tone": "good"
         },
         {
           "team": "B8",
-          "record": "2-0",
-          "label": "STRONG",
-          "status": "Near conversion",
+          "slot": "ADV",
+          "status": "Advance pick converting early",
           "tone": "good"
         },
         {
           "team": "M80",
-          "record": "2-0",
-          "label": "STRONG",
-          "status": "Near conversion",
+          "slot": "ADV",
+          "status": "Advance pick converting early",
           "tone": "good"
-        },
+        }
+      ]
+    },
+    {
+      "record": "1-1",
+      "title": "Live Line",
+      "subtitle": "Slots diverge under pressure",
+      "tone": "warn",
+      "cards": [
         {
-          "team": "BIG",
-          "record": "1-1",
-          "label": "LIVE",
-          "status": "Still possible",
-          "tone": "warn"
-        },
-        {
-          "team": "HEROIC",
-          "record": "0-2",
-          "label": "RISK",
-          "status": "Elimination match",
+          "team": "MIBR",
+          "slot": "3-0",
+          "status": "Perfect-run slot broken",
           "tone": "bad"
         },
         {
-          "team": "TYLOO",
-          "record": "0-2",
-          "label": "RISK",
-          "status": "Elimination match",
+          "team": "BIG",
+          "slot": "ADV",
+          "status": "Advance route still open",
+          "tone": "warn"
+        },
+        {
+          "team": "NRG",
+          "slot": "0-3",
+          "status": "0-3 slot broken",
           "tone": "bad"
         }
       ]
     },
     {
-      "title": "0-3 PICKS",
-      "subtitle": "Elimination slots",
+      "record": "0-2",
+      "title": "Elimination Edge",
+      "subtitle": "Survival match next",
+      "tone": "bad",
       "cards": [
         {
           "team": "Gaimin Gladiators",
-          "record": "0-2",
-          "label": "ON",
-          "status": "Still on 0-3 track",
+          "slot": "0-3",
+          "status": "Still on elimination track",
           "tone": "good"
         },
         {
-          "team": "NRG",
-          "record": "1-1",
-          "label": "OUT",
-          "status": "0-3 slot invalid",
+          "team": "HEROIC",
+          "slot": "ADV",
+          "status": "Advance pick in danger",
+          "tone": "bad"
+        },
+        {
+          "team": "TYLOO",
+          "slot": "ADV",
+          "status": "Advance pick in danger",
           "tone": "bad"
         }
       ]

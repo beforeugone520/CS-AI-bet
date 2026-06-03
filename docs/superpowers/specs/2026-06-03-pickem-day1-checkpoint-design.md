@@ -18,13 +18,14 @@ Do not fetch or imply newer match results in this graphic.
 
 Create `docs/images/pickem-day1-checkpoint.svg` as a self-contained SVG.
 
-Visual thesis: a restrained dark esports tactical board with crisp blue rails, compact status blocks, and green/yellow/red semantic highlights.
+Visual thesis: a restrained dark esports Swiss record board with crisp blue rails, compact status blocks, and green/yellow/red semantic highlights.
 
 The SVG should use:
 
 - A dark navy background.
-- Three horizontal lanes: `3-0 PICKS`, `ADVANCE PICKS`, and `0-3 PICKS`.
-- Compact team blocks showing team name, Day 1 record, and a short status label.
+- Three vertical Swiss record columns: `2-0`, `1-1`, and `0-2`.
+- A compact KPI strip showing on-track, live, and broken/risk counts.
+- Compact team blocks showing team name, Pick'em slot tag, and a short status label.
 - Green for on-track or strongly favorable picks.
 - Yellow for still-live but risky picks.
 - Red for picks whose original slot is already invalid or severely off track.
@@ -43,5 +44,6 @@ Before commit and push:
 - Confirm the SVG parses as XML.
 - Confirm the README references the correct relative path.
 - Inspect the rendered SVG locally for text overlap and visual hierarchy.
-- Confirm `git status` only includes the intended spec, SVG, and README edits.
+- Confirm the data-driven renderer output matches `docs/images/pickem-day1-checkpoint.svg`.
+- Confirm `git status` only includes the intended data, renderer, SVG, test, and documentation edits.
 - Commit the changes and push to `origin/main`.

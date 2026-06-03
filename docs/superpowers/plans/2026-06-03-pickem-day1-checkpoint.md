@@ -4,16 +4,22 @@
 
 **Goal:** Add a README-ready SVG that summarizes the IEM Cologne 2026 Stage 1 Pick'em Day 1 checkpoint.
 
-**Architecture:** This is a static documentation feature. The SVG is a self-contained asset in `docs/images/`, and `README.md` embeds it near the current Pick'em answer table so readers can scan prediction status before the poster images.
+**Architecture:** This is a data-driven documentation feature. A JSON checkpoint file stores the Day 1 Swiss record state, a standard-library Python script renders a self-contained SVG in `docs/images/`, and `README.md` embeds the SVG near the current Pick'em answer table so readers can scan prediction status before the poster images.
 
-**Tech Stack:** Markdown, inline SVG, shell XML validation, Git.
+**Tech Stack:** Markdown, JSON, Python standard library, inline SVG, shell XML validation, Git.
 
 ---
 
 ## File Structure
 
 - Create: `docs/images/pickem-day1-checkpoint.svg`
-  - Self-contained dark esports status board with three prediction lanes.
+  - Self-contained dark esports Swiss record board with three record columns.
+- Create: `data/cologne2026/source_inputs/pickem_checkpoint_day1_2026-06-02.json`
+  - Structured Day 1 checkpoint data.
+- Create: `scripts/render_pickem_checkpoint.py`
+  - Standard-library renderer that writes the README SVG from the JSON input.
+- Create: `tests/test_pickem_checkpoint_render.py`
+  - Focused test that verifies the renderer emits valid SVG containing all checkpoint teams.
 - Modify: `README.md`
   - Insert a short section and image embed after the final fused answer table.
 - Modify: `docs/superpowers/plans/2026-06-03-pickem-day1-checkpoint.md`
@@ -31,12 +37,12 @@ Create a 1200x720 SVG with this content:
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
   <title id="title">IEM Cologne 2026 Stage 1 Pick'em Day 1 checkpoint</title>
-  <desc id="desc">A dark esports status board showing 3-0 picks, advance picks, and 0-3 picks after two Swiss rounds on 2026-06-02.</desc>
-  <!-- Static shapes and text implement the checkpoint board. -->
+  <desc id="desc">A Swiss record board showing Pick'em status after two Swiss rounds on 2026-06-02.</desc>
+  <!-- Data-driven shapes and text implement the checkpoint board. -->
 </svg>
 ```
 
-The final file must include team blocks for GamerLegion, MIBR, BetBoom, B8, M80, BIG, HEROIC, TYLOO, Gaimin Gladiators, and NRG.
+The final file must include Swiss record columns for `2-0`, `1-1`, and `0-2`, plus team blocks for GamerLegion, MIBR, BetBoom, B8, M80, BIG, HEROIC, TYLOO, Gaimin Gladiators, and NRG.
 
 - [x] **Step 2: Validate SVG XML**
 
