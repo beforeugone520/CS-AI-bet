@@ -1,0 +1,100 @@
+{
+  "title": "IEM Cologne 2026 Stage 1",
+  "subtitle": "Pick'em Day 1 checkpoint after two Swiss rounds",
+  "date": "2026-06-02",
+  "source_note": "Snapshot only · no newer results implied",
+  "badge": "MODEL / MARKET / EXPERT FUSION",
+  "legend": "Green = on track · Yellow = live risk · Red = slot broken or severe risk",
+  "lanes": [
+    {
+      "title": "3-0 PICKS",
+      "subtitle": "Perfect-run slots",
+      "cards": [
+        {
+          "team": "GamerLegion",
+          "record": "2-0",
+          "label": "LIVE",
+          "status": "Still on 3-0 track",
+          "score": "ON",
+          "tone": "good"
+        },
+        {
+          "team": "MIBR",
+          "record": "1-1",
+          "label": "OUT",
+          "status": "3-0 slot invalid",
+          "score": "OFF",
+          "tone": "bad"
+        }
+      ]
+    },
+    {
+      "title": "ADVANCE PICKS",
+      "subtitle": "Six-team advance pool",
+      "cards": [
+        {
+          "team": "BetBoom",
+          "record": "2-0",
+          "label": "STRONG",
+          "status": "Near conversion",
+          "tone": "good"
+        },
+        {
+          "team": "B8",
+          "record": "2-0",
+          "label": "STRONG",
+          "status": "Near conversion",
+          "tone": "good"
+        },
+        {
+          "team": "M80",
+          "record": "2-0",
+          "label": "STRONG",
+          "status": "Near conversion",
+          "tone": "good"
+        },
+        {
+          "team": "BIG",
+          "record": "1-1",
+          "label": "LIVE",
+          "status": "Still possible",
+          "tone": "warn"
+        },
+        {
+          "team": "HEROIC",
+          "record": "0-2",
+          "label": "RISK",
+          "status": "Elimination match",
+          "tone": "bad"
+        },
+        {
+          "team": "TYLOO",
+          "record": "0-2",
+          "label": "RISK",
+          "status": "Elimination match",
+          "tone": "bad"
+        }
+      ]
+    },
+    {
+      "title": "0-3 PICKS",
+      "subtitle": "Elimination slots",
+      "cards": [
+        {
+          "team": "Gaimin Gladiators",
+          "record": "0-2",
+          "label": "ON",
+          "status": "Still on 0-3 track",
+          "tone": "good"
+        },
+        {
+          "team": "NRG",
+          "record": "1-1",
+          "label": "OUT",
+          "status": "0-3 slot invalid",
+          "tone": "bad"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
-  <title id="title">IEM Cologne 2026 Stage 1 Pick'em Day 1 checkpoint</title>
+  <title id="title">IEM Cologne 2026 Stage 1 Pick&apos;em Day 1 checkpoint</title>
   <desc id="desc">A dark esports status board showing 3-0 picks, advance picks, and 0-3 picks after two Swiss rounds on 2026-06-02.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -20,11 +20,10 @@
     </filter>
     <style>
       .bg { fill: url(#bg); }
-      .panel { fill: #101b2d; stroke: #1d3458; stroke-width: 1.2; }
       .lane-title { fill: #dce9ff; font: 700 25px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .lane-sub { fill: #8ea6ca; font: 500 14px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .meta { fill: #8ea6ca; font: 500 15px Arial, Helvetica, sans-serif; letter-spacing: 0; }
-      .team { fill: #f4f8ff; font: 700 22px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .team { fill: #f4f8ff; font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: 0; }
       .record { fill: #d5e3f8; font: 700 18px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .status { fill: #d5e3f8; font: 700 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .note { fill: #9db0cd; font: 500 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
@@ -38,7 +37,6 @@
       .good-fill { fill: #1e7e3a; }
       .warn-fill { fill: #8f721e; }
       .bad-fill { fill: #8d2d36; }
-      .muted-fill { fill: #1d2a42; }
       .tick { fill: #0d1728; font: 800 14px Arial, Helvetica, sans-serif; letter-spacing: 0; }
     </style>
   </defs>
@@ -48,7 +46,7 @@
   <path d="M72 128H1128M72 306H1128M72 508H1128" class="lane-line"/>
 
   <text x="72" y="80" fill="#f4f8ff" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800">IEM Cologne 2026 Stage 1</text>
-  <text x="72" y="108" class="meta">Pick'em Day 1 checkpoint after two Swiss rounds · 2026-06-02</text>
+  <text x="72" y="108" class="meta">Pick&#x27;em Day 1 checkpoint after two Swiss rounds · 2026-06-02</text>
   <text x="1128" y="86" text-anchor="end" fill="#43a5ff" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800">MODEL / MARKET / EXPERT FUSION</text>
   <text x="1128" y="110" text-anchor="end" class="meta">Snapshot only · no newer results implied</text>
 
@@ -59,20 +57,20 @@
   <g transform="translate(272 148)">
     <rect class="card good" x="0" y="0" width="310" height="92" rx="8"/>
     <rect class="good-fill" x="0" y="0" width="82" height="92" rx="8"/>
-    <text x="41" y="38" text-anchor="middle" class="tick">2-0</text>
-    <text x="41" y="60" text-anchor="middle" class="label">LIVE</text>
-    <text x="104" y="37" class="team">GamerLegion</text>
-    <text x="104" y="65" class="status">Still on 3-0 track</text>
+    <text x="41" y="35" text-anchor="middle" class="tick">2-0</text>
+    <text x="41" y="55" text-anchor="middle" class="label">LIVE</text>
+    <text x="104" y="34" class="team" font-size="22">GamerLegion</text>
+    <text x="104" y="61" class="status">Still on 3-0 track</text>
     <text x="286" y="37" text-anchor="end" class="record">ON</text>
   </g>
 
   <g transform="translate(626 148)">
     <rect class="card bad" x="0" y="0" width="310" height="92" rx="8"/>
     <rect class="bad-fill" x="0" y="0" width="82" height="92" rx="8"/>
-    <text x="41" y="38" text-anchor="middle" class="tick">1-1</text>
-    <text x="41" y="60" text-anchor="middle" class="label">OUT</text>
-    <text x="104" y="37" class="team">MIBR</text>
-    <text x="104" y="65" class="status">3-0 slot invalid</text>
+    <text x="41" y="35" text-anchor="middle" class="tick">1-1</text>
+    <text x="41" y="55" text-anchor="middle" class="label">OUT</text>
+    <text x="104" y="34" class="team" font-size="22">MIBR</text>
+    <text x="104" y="61" class="status">3-0 slot invalid</text>
     <text x="286" y="37" text-anchor="end" class="record">OFF</text>
   </g>
 
@@ -85,8 +83,9 @@
     <rect class="good-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">2-0</text>
     <text x="33" y="55" text-anchor="middle" class="label">STRONG</text>
-    <text x="85" y="34" class="team">BetBoom</text>
-    <text x="85" y="61" class="status">Near conversion</text>
+    <text x="88" y="34" class="team" font-size="22">BetBoom</text>
+    <text x="88" y="61" class="status">Near conversion</text>
+    
   </g>
 
   <g transform="translate(542 318)">
@@ -94,8 +93,9 @@
     <rect class="good-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">2-0</text>
     <text x="33" y="55" text-anchor="middle" class="label">STRONG</text>
-    <text x="85" y="34" class="team">B8</text>
-    <text x="85" y="61" class="status">Near conversion</text>
+    <text x="88" y="34" class="team" font-size="22">B8</text>
+    <text x="88" y="61" class="status">Near conversion</text>
+    
   </g>
 
   <g transform="translate(812 318)">
@@ -103,8 +103,9 @@
     <rect class="good-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">2-0</text>
     <text x="33" y="55" text-anchor="middle" class="label">STRONG</text>
-    <text x="85" y="34" class="team">M80</text>
-    <text x="85" y="61" class="status">Near conversion</text>
+    <text x="88" y="34" class="team" font-size="22">M80</text>
+    <text x="88" y="61" class="status">Near conversion</text>
+    
   </g>
 
   <g transform="translate(272 416)">
@@ -112,8 +113,9 @@
     <rect class="warn-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">1-1</text>
     <text x="33" y="55" text-anchor="middle" class="label">LIVE</text>
-    <text x="85" y="34" class="team">BIG</text>
-    <text x="85" y="61" class="status">Still possible</text>
+    <text x="88" y="34" class="team" font-size="22">BIG</text>
+    <text x="88" y="61" class="status">Still possible</text>
+    
   </g>
 
   <g transform="translate(542 416)">
@@ -121,8 +123,9 @@
     <rect class="bad-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">0-2</text>
     <text x="33" y="55" text-anchor="middle" class="label">RISK</text>
-    <text x="85" y="34" class="team">HEROIC</text>
-    <text x="85" y="61" class="status">Elimination match</text>
+    <text x="88" y="34" class="team" font-size="22">HEROIC</text>
+    <text x="88" y="61" class="status">Elimination match</text>
+    
   </g>
 
   <g transform="translate(812 416)">
@@ -130,8 +133,9 @@
     <rect class="bad-fill" x="0" y="0" width="66" height="82" rx="8"/>
     <text x="33" y="35" text-anchor="middle" class="tick">0-2</text>
     <text x="33" y="55" text-anchor="middle" class="label">RISK</text>
-    <text x="85" y="34" class="team">TYLOO</text>
-    <text x="85" y="61" class="status">Elimination match</text>
+    <text x="88" y="34" class="team" font-size="22">TYLOO</text>
+    <text x="88" y="61" class="status">Elimination match</text>
+    
   </g>
 
   <circle cx="72" cy="508" r="5" class="lane-dot"/>
@@ -143,8 +147,9 @@
     <rect class="good-fill" x="0" y="0" width="82" height="72" rx="8"/>
     <text x="41" y="31" text-anchor="middle" class="tick">0-2</text>
     <text x="41" y="51" text-anchor="middle" class="label">ON</text>
-    <text x="104" y="31" class="team">Gaimin Gladiators</text>
+    <text x="104" y="31" class="team" font-size="20">Gaimin Gladiators</text>
     <text x="104" y="56" class="status">Still on 0-3 track</text>
+    
   </g>
 
   <g transform="translate(626 580)">
@@ -152,8 +157,9 @@
     <rect class="bad-fill" x="0" y="0" width="82" height="72" rx="8"/>
     <text x="41" y="31" text-anchor="middle" class="tick">1-1</text>
     <text x="41" y="51" text-anchor="middle" class="label">OUT</text>
-    <text x="104" y="31" class="team">NRG</text>
+    <text x="104" y="31" class="team" font-size="22">NRG</text>
     <text x="104" y="56" class="status">0-3 slot invalid</text>
+    
   </g>
 
   <text x="1128" y="696" text-anchor="end" class="note">Green = on track · Yellow = live risk · Red = slot broken or severe risk</text>
