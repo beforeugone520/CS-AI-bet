@@ -315,6 +315,14 @@ CS-AI-bet/
 | `晋级` | BIG, BetBoom, B8, HEROIC, M80, TYLOO |
 | `0-3` | NRG, Gaimin Gladiators |
 
+### Day 1 Pick'em 状态图
+
+<div align="center">
+
+<img src="docs/images/pickem-day1-checkpoint.svg" width="900" alt="IEM Cologne 2026 Stage 1 Pick'em Day 1 checkpoint" />
+
+</div>
+
 ### 预测海报（统一电竞风格）
 
 > 由 Codex + Claude Code 制作；队标为各战队官方 logo，仅用于结果可视化展示。
