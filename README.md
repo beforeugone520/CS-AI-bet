@@ -339,6 +339,53 @@ CS-AI-bet/
 
 > 这些是赛前快照，不是长期训练数据，也不替代赛前最新抓取、赔率与选手状态更新。
 
+## Day 1 真实赛果对照（2026-06-02）
+
+2026-06-02 IEM Cologne 2026 Stage 1 首日开打，瑞士轮前两轮共 16 场 BO1 全部结束。下面用昨日真实赛果回测上文的赛前预测。赛果以 [Liquipedia](https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne/Stage_1) 为准，并经 [dfrag.gg](https://dfrag.gg/counterstrike/news/iem-cologne-major-2026-schedule-results-streams-standings/) / [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 赛后 recap 交叉核对——逐场比分两源一致；战绩分组按 16 队瑞士轮规则确定性推导（已修正个别媒体的 standings 笔误）。
+
+### 首轮 8 场：单场预测 vs 真实
+
+逐场对应 `forecast_report.json` 的赛前 fixtures 预测（调整后胜率为含真实赔率的融合值）。
+
+| 对阵 | 模型 Pick（adj. 胜率） | 真实结果（比分·地图） | 命中 |
+| --- | --- | --- | --- |
+| M80 vs Lynn Vision | **M80**（60.9%） | M80 13–8（Inferno） | ✅ |
+| SINNERS vs FlyQuest | SINNERS（53.6%） | FlyQuest 16–14（Ancient·OT） | ❌ |
+| B8 vs TYLOO | *avoid*（低置信，微偏 B8 50.9%） | B8 13–6（Mirage） | ➖ 规避（方向偏 B8，与赛果一致） |
+| MIBR vs THUNDERdOWNUNDER | MIBR（53.0%） | THUNDERdOWNUNDER 13–6（Inferno） | ❌ 爆冷 |
+| GamerLegion vs NRG | **GamerLegion**（57.1%） | GamerLegion 13–10（Inferno） | ✅ |
+| HEROIC vs Sharks | HEROIC（55.6%） | Sharks 13–10（Nuke） | ❌ 爆冷 |
+| BetBoom vs Gaimin Gladiators | **BetBoom**（55.5%） | BetBoom 13–4（Dust II） | ✅ |
+| BIG vs Liquid | BIG（66.6%） | Liquid 13–10（Nuke） | ❌ 爆冷 |
+
+- 有效下注 7 场（B8/TYLOO 已按低置信规避）命中 **3/7 ≈ 43%**：M80、GamerLegion、BetBoom 命中；SINNERS、MIBR、HEROIC、BIG 失误。计入规避局的方向判断则为 4/8 = 50%。
+- 失误集中在“模型 + 市场都看好的传统强队”：MIBR、HEROIC、BIG 三支被看好的队首轮全部被 THUNDERdOWNUNDER、Sharks、Liquid 爆冷，连模型最自信的一场（BIG 66.6%）也翻车。这与本项目既有判断一致——模型尚未达到可靠门槛，对强队赔率高度敏感，最终选择仍主要由专家/市场融合托底。
+
+### 两轮后战绩与 Pick'em 槽位校验
+
+首日两轮结束后（瑞士轮规则推导）：
+
+- **2-0**：B8、GamerLegion、M80、BetBoom
+- **1-1**：THUNDERdOWNUNDER、FlyQuest、Sharks、Liquid、Lynn Vision、MIBR、NRG、BIG
+- **0-2**：HEROIC、TYLOO、SINNERS、Gaimin Gladiators
+
+对照赛前最终融合答案单：
+
+| 预测槽位 | 队伍 | Day 1 战绩 | 早期校验 |
+| --- | --- | --- | --- |
+| `3-0` | GamerLegion | 2-0 | ✅ 仍在 3-0 轨道 |
+| `3-0` | MIBR | 1-1 | ❌ 3-0 已无可能（首轮被 TDU 爆冷） |
+| `晋级` | BetBoom | 2-0 | ✅ 晋级在望 |
+| `晋级` | B8 | 2-0 | ✅ 晋级在望 |
+| `晋级` | M80 | 2-0 | ✅ 晋级在望 |
+| `晋级` | BIG | 1-1 | 🟡 仍有机会，需再下一城 |
+| `晋级` | HEROIC | 0-2 | ❌ 两连败，濒临淘汰 |
+| `晋级` | TYLOO | 0-2 | ❌ 两连败，濒临淘汰 |
+| `0-3` | Gaimin Gladiators | 0-2 | ✅ 走在 0-3 轨道 |
+| `0-3` | NRG | 1-1 | ❌ 0-3 已无可能（次轮胜 SINNERS） |
+
+小结：晋级组 6 支里 3 支（BetBoom / B8 / M80）开局 2-0 强势兑现，BIG 尚存机会，HEROIC / TYLOO 两连败濒危；3-0 组 GamerLegion 在轨、MIBR 出局；0-3 组 Gaimin 在轨、NRG 偏离。最终 `3-0 / 晋级 / 0-3` 仍需 Round 3-5（6-03 起）决出，本节为中途快照，会随赛程推进刷新。
+
 ## 设计原则
 
 - **离线优先**：核心链路不伪造实时 HLTV 结果、赔率或选手状态；赛前需先采集干净数据再训练/模拟。
