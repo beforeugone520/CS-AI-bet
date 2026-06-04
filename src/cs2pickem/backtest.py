@@ -102,6 +102,7 @@ def evaluate_pickem_checkpoint(
                 "status": status,
             }
             pick_report.update(_checkpoint_detail_fields(detail_lookup.get((category, _team_key(team)), {})))
+            pick_report.update(_checkpoint_pressure_fields(category, status, row))
             pick_reports.append(pick_report)
     return {
         "summary": summary,
@@ -584,6 +585,12 @@ def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict
     materialized = list(picks)
     for category in PICKEM_CATEGORIES:
         category_rows = [row for row in materialized if row.get("category") == category]
+        alive_rows = [row for row in category_rows if row.get("status") == "alive"]
+        pressure_rows = [
+            row
+            for row in alive_rows
+            if bool(row.get("next_match_can_lock")) or bool(row.get("next_match_can_break"))
+        ]
         status_risk_rows = [row for row in category_rows if _truthy(row.get("player_status_risk"))]
         non_status_risk_rows = [row for row in category_rows if not _truthy(row.get("player_status_risk"))]
         broken_status_risk = sum(1 for pick in status_risk_rows if pick.get("status") == "broken")
@@ -608,6 +615,14 @@ def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict
                 if non_status_risk_rows
                 else None
             ),
+            "alive_next_match_can_lock": sum(1 for pick in alive_rows if pick.get("next_match_can_lock")),
+            "alive_next_match_can_break": sum(1 for pick in alive_rows if pick.get("next_match_can_break")),
+            "alive_pressure_picks": len(pressure_rows),
+            "alive_status_risk_pressure_picks": sum(
+                1
+                for pick in pressure_rows
+                if _truthy(pick.get("player_status_risk"))
+            ),
         }
         for status in ("locked", "alive", "broken", "missing"):
             status_rows = [pick for pick in category_rows if pick.get("status") == status]
@@ -615,6 +630,59 @@ def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict
             row[f"{status}_avg_confidence"] = _checkpoint_avg_confidence(status_rows)
         diagnostics[category] = row
     return diagnostics
+
+
+def _checkpoint_pressure_fields(
+    category: str,
+    status: str,
+    row: Mapping[str, Any] | None,
+) -> Dict[str, object]:
+    if row is None:
+        return {
+            "wins_to_lock": None,
+            "losses_to_lock": None,
+            "losses_to_break": None,
+            "wins_to_break": None,
+            "next_match_can_lock": False,
+            "next_match_can_break": False,
+        }
+    wins = _int(row.get("wins"))
+    losses = _int(row.get("losses"))
+    if category == "3-0":
+        return {
+            "wins_to_lock": max(0, 3 - wins),
+            "losses_to_lock": None,
+            "losses_to_break": max(0, 1 - losses),
+            "wins_to_break": None,
+            "next_match_can_lock": status == "alive" and wins == 2,
+            "next_match_can_break": status == "alive" and losses == 0,
+        }
+    if category == "advance":
+        return {
+            "wins_to_lock": max(0, 3 - wins),
+            "losses_to_lock": None,
+            "losses_to_break": max(0, 3 - losses),
+            "wins_to_break": None,
+            "next_match_can_lock": status == "alive" and wins == 2,
+            "next_match_can_break": status == "alive" and losses == 2,
+        }
+    if category == "0-3":
+        return {
+            "wins_to_lock": None,
+            "losses_to_lock": max(0, 3 - losses),
+            "losses_to_break": None,
+            "wins_to_break": max(0, 1 - wins),
+            "next_match_can_lock": status == "alive" and losses == 2,
+            "next_match_can_break": status == "alive" and wins == 0,
+        }
+    return {
+        "wins_to_lock": None,
+        "losses_to_lock": None,
+        "losses_to_break": None,
+        "wins_to_break": None,
+        "next_match_can_lock": False,
+        "next_match_can_break": False,
+    }
 
 
 def _checkpoint_avg_confidence(rows: Iterable[Mapping[str, Any]]) -> float | None:

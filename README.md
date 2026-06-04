@@ -173,7 +173,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli pipeline \
 | `backtest-forecast` | 单场 forecast 报告 vs 实际赛果 CSV，输出有效下注命中率、方向命中率、低置信规避、市场修正、favorite upset 和 player form 诊断 |
 | `standings-from-results` | 从逐场赛果 CSV 自动推导 Swiss `team,wins,losses,status` standings，减少手写战绩表错误 |
 | `backtest-pickem` | Pick'em 报告 vs 最终 Swiss standings，计算命中数与是否达 pass threshold |
-| `checkpoint-pickem` | Pick'em 报告 vs 当前 Swiss standings，输出每个槽位 locked / alive / broken、状态/槽位 confidence 诊断，中途复盘不冒充最终打分 |
+| `checkpoint-pickem` | Pick'em 报告 vs 当前 Swiss standings，输出每个槽位 locked / alive / broken、下一场锁定/破损压力、状态/槽位 confidence 诊断，中途复盘不冒充最终打分 |
 | `backtest-pickem-suite` | 多场 Major 的 suite 级通过率汇总（默认目标 38%） |
 | `replay-pickem-suite` | 重新训练、生成并评分历史 Pick'em replay cases，避免只测静态旧报告 |
 
@@ -437,7 +437,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 - 策略取舍：新增 `policy_tradeoff_summary` 后，原始 Day 1 回测会把 5% margin 标为可升级候选：准确率 +17.1 个百分点、总命中不降、覆盖从 7 个 actionable 降到 5 个。到了 5%+player form 版本，最高准确率候选虽然能到 **2/3 ≈ 67%**，但总命中从 3 降到 2、覆盖再降 **40%**，因此机器建议为 `keep_current_policy / accuracy_gain_reduces_total_correct`。这条诊断专门防止只看百分比、忽略总命中数和覆盖率。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`；重打标版本已从 player-form fixtures 补齐 8 场 form diff。新增的 `player_form_policy_candidates` 显示，如果把所有低样本反向 form 都拿来规避，可以避开 3 个错向但会误伤 2 个对向；从 0.2 样本置信门槛开始又只误伤不避错。因此当前继续保留 `--player-form-counter-min-confidence 0.4`，等更多真实赛果补足样本后再让 player form 自动改判。
 - player status 边界：新增 `--avoid-player-status-risk` 和 `player_status_policy_candidates` 后，回测会把被选中一侧的 `picked_player_sample_confidence` / `picked_substitute_flag` 单独落盘。Day 1 用 `player_status_min_confidence=0.4`、`player_status_min_margin=0.06` 会额外规避 HEROIC 错单和 BetBoom 对单，actionable 从 5 降到 3，命中为 **2/3 ≈ 67%**；如果把状态 margin 提到 0.08，又会误伤 GamerLegion 和 BetBoom 两个对单。因此选手状态现在只作为低覆盖审查信号，不替换 5%+player form 默认策略。`pickem --fixtures` 现在会把 fixture 里的 `player_sample_confidence/substitute_flag/player_form_score/player_form_trend` 回填到 team risk features，`pickem_risk_details` 也会逐队输出这些字段；`checkpoint-pickem` 会在报告带这些 risk details 时保留状态字段，并按槽位输出 `player_status_risk_picks / broken_player_status_risk / player_status_risk_broken_rate`，方便把最终 standings 的槽位失误归因到状态风险。
-- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，并新增 `category_diagnostics`：`3-0` 为 **0 locked / 0 alive / 2 broken**，`advance` 为 **2 locked / 4 alive / 0 broken**，`0-3` 为 **1 locked / 0 alive / 1 broken**。这说明当前最需要调低的是极端槽位的 BO1/短期状态方差权重，而不是晋级槽主体选择。
+- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，并新增 `category_diagnostics`：`3-0` 为 **0 locked / 0 alive / 2 broken**，`advance` 为 **2 locked / 4 alive / 0 broken**，`0-3` 为 **1 locked / 0 alive / 1 broken**。Round 4 前 `advance` 的 4 个 alive 都是高压位：BIG/M80 `next_match_can_lock=true`，HEROIC/TYLOO `next_match_can_break=true`。这说明当前最需要调低的是极端槽位的 BO1/短期状态方差权重，同时继续盯住晋级槽里 1-2 队伍的临界淘汰风险。
 - Pick'em 策略更新：`3-0` 槽位现在对低样本/替补的 `player_availability_multiplier` 比普通 advance 更保守，因为 3-0 要求连续三场无失误，短期阵容波动的代价高于“最终晋级”。这不会把低样本简单视为反向信号：当前 B8/BetBoom 这两个真实 3-0 同样存在低样本状态，因此状态项只降极端槽位的过度自信，不直接替代模型/市场/地图池判断。
 - 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果、地图池、短期 player form、替补和样本不足惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
 

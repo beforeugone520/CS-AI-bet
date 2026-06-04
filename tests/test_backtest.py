@@ -339,6 +339,64 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(categories["advance"]["alive"], 1)
         self.assertEqual(categories["0-3"]["locked"], 1)
 
+    def test_evaluate_pickem_checkpoint_reports_alive_slot_pressure(self):
+        from cs2pickem.backtest import evaluate_pickem_checkpoint
+
+        report = evaluate_pickem_checkpoint(
+            {
+                "3-0": ["Alpha", "Bravo"],
+                "advance": ["Charlie", "Delta", "Echo"],
+                "0-3": ["Foxtrot", "Golf"],
+            },
+            [
+                {"team": "Alpha", "wins": 2, "losses": 0},
+                {"team": "Bravo", "wins": 2, "losses": 1},
+                {"team": "Charlie", "wins": 2, "losses": 1},
+                {"team": "Delta", "wins": 1, "losses": 2},
+                {"team": "Echo", "wins": 3, "losses": 1},
+                {"team": "Foxtrot", "wins": 0, "losses": 2},
+                {"team": "Golf", "wins": 1, "losses": 2},
+            ],
+            pick_details={
+                ("3-0", "alpha"): {"player_status_risk": True},
+                ("advance", "delta"): {"player_status_risk": True},
+                ("0-3", "foxtrot"): {"player_status_risk": True},
+            },
+        )
+
+        picks = {(row["category"], row["team"]): row for row in report["picks"]}
+        alpha = picks[("3-0", "Alpha")]
+        self.assertEqual(alpha["wins_to_lock"], 1)
+        self.assertEqual(alpha["losses_to_break"], 1)
+        self.assertTrue(alpha["next_match_can_lock"])
+        self.assertTrue(alpha["next_match_can_break"])
+
+        charlie = picks[("advance", "Charlie")]
+        self.assertEqual(charlie["wins_to_lock"], 1)
+        self.assertEqual(charlie["losses_to_break"], 2)
+        self.assertTrue(charlie["next_match_can_lock"])
+        self.assertFalse(charlie["next_match_can_break"])
+
+        delta = picks[("advance", "Delta")]
+        self.assertEqual(delta["wins_to_lock"], 2)
+        self.assertEqual(delta["losses_to_break"], 1)
+        self.assertFalse(delta["next_match_can_lock"])
+        self.assertTrue(delta["next_match_can_break"])
+
+        foxtrot = picks[("0-3", "Foxtrot")]
+        self.assertEqual(foxtrot["losses_to_lock"], 1)
+        self.assertEqual(foxtrot["wins_to_break"], 1)
+        self.assertTrue(foxtrot["next_match_can_lock"])
+        self.assertTrue(foxtrot["next_match_can_break"])
+
+        categories = report["category_diagnostics"]
+        self.assertEqual(categories["3-0"]["alive_pressure_picks"], 1)
+        self.assertEqual(categories["3-0"]["alive_status_risk_pressure_picks"], 1)
+        self.assertEqual(categories["advance"]["alive_next_match_can_lock"], 1)
+        self.assertEqual(categories["advance"]["alive_next_match_can_break"], 1)
+        self.assertEqual(categories["advance"]["alive_status_risk_pressure_picks"], 1)
+        self.assertEqual(categories["0-3"]["alive_pressure_picks"], 1)
+
     def test_standings_from_results_cli_derives_current_swiss_records(self):
         from cs2pickem.cli import main
         from cs2pickem.data import read_matches_csv, write_matches_csv
