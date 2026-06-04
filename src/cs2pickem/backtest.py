@@ -11,6 +11,7 @@ from .pickem import model_driven_pickems
 PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
 PLAYER_FORM_COUNTER_CONFIDENCE_CANDIDATES = (0.0, 0.2, 0.4, 0.6, 0.8)
 FAVORITE_UPSET_MIN_PROBABILITY = 0.55
+MARKET_FAVORITE_FORM_COUNTER_PROBABILITY_CANDIDATES = (0.55, 0.60, 0.65, 0.70)
 
 
 def evaluate_pickem_result(
@@ -820,6 +821,9 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
         ),
         "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
         "player_form_policy_candidates": _player_form_policy_candidates(materialized),
+        "market_favorite_player_form_policy_candidates": (
+            _market_favorite_player_form_policy_candidates(materialized)
+        ),
     }
 
 
@@ -921,6 +925,54 @@ def _player_form_policy_candidate(
         "missed_actionable": len(selected) - correct,
         "actionable_accuracy": correct / len(selected) if selected else 0.0,
         "coverage": len(selected) / len(materialized) if materialized else 0.0,
+        "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
+        "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
+    }
+
+
+def _market_favorite_player_form_policy_candidates(rows: Iterable[Mapping[str, Any]]) -> List[Dict[str, object]]:
+    materialized = list(rows)
+    return [
+        _market_favorite_player_form_policy_candidate(materialized, min_probability)
+        for min_probability in MARKET_FAVORITE_FORM_COUNTER_PROBABILITY_CANDIDATES
+    ]
+
+
+def _market_favorite_player_form_policy_candidate(
+    rows: Iterable[Mapping[str, Any]],
+    min_probability: float,
+) -> Dict[str, object]:
+    materialized = list(rows)
+    avoided_indexes = set()
+    counter_signal_matches = 0
+    current_actionable = [row for row in materialized if row.get("actionable")]
+    for index, row in enumerate(materialized):
+        if not row.get("actionable"):
+            continue
+        if _float(row.get("market_favorite_probability"), 0.0) < min_probability:
+            continue
+        if _team_key(row.get("directional_pick")) != _team_key(row.get("market_favorite")):
+            continue
+        if row.get("player_form_directional_score") is None:
+            continue
+        if _float(row.get("player_form_directional_score"), 0.0) < 0:
+            counter_signal_matches += 1
+            avoided_indexes.add(index)
+    selected = [
+        row
+        for index, row in enumerate(materialized)
+        if row.get("actionable") and index not in avoided_indexes
+    ]
+    avoided = [row for index, row in enumerate(materialized) if index in avoided_indexes]
+    correct = sum(1 for row in selected if row.get("directional_correct"))
+    return {
+        "market_favorite_min_probability": min_probability,
+        "counter_signal_matches": counter_signal_matches,
+        "actionable_picks": len(selected),
+        "correct_actionable": correct,
+        "missed_actionable": len(selected) - correct,
+        "actionable_accuracy": correct / len(selected) if selected else 0.0,
+        "coverage": len(selected) / len(current_actionable) if current_actionable else 0.0,
         "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
         "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
     }

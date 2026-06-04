@@ -280,6 +280,74 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["predictions"][1]["player_form_summary"]["diff"]["score"], -0.08)
         self.assertEqual(report["predictions"][2]["pick"], "Echo")
 
+    def test_apply_forecast_policy_can_avoid_market_favorite_with_counter_player_form(self):
+        from cs2pickem.forecast import apply_forecast_policy
+
+        report = apply_forecast_policy(
+            {
+                "predictions": [
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Alpha",
+                        "team2": "Bravo",
+                        "adjusted_probability_team1": 0.62,
+                        "market_signal": {"probability_team1": 0.62, "basis": "real_odds"},
+                        "pick": "Alpha",
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Charlie",
+                        "team2": "Delta",
+                        "adjusted_probability_team1": 0.62,
+                        "market_signal": {"probability_team1": 0.58, "basis": "real_odds"},
+                        "pick": "Charlie",
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Echo",
+                        "team2": "Foxtrot",
+                        "adjusted_probability_team1": 0.62,
+                        "market_signal": {"probability_team1": 0.62, "basis": "real_odds"},
+                        "pick": "Echo",
+                    },
+                ]
+            },
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "team1_player_form_score": -0.04,
+                    "team2_player_form_score": 0.04,
+                },
+                {
+                    "date": "2026-06-01",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "team1_player_form_score": -0.04,
+                    "team2_player_form_score": 0.04,
+                },
+                {
+                    "date": "2026-06-01",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "team1_player_form_score": 0.04,
+                    "team2_player_form_score": -0.04,
+                },
+            ],
+            minimum_margin=0.05,
+            avoid_market_favorite_player_form_counter_signal=True,
+            market_favorite_counter_min_probability=0.6,
+        )
+
+        self.assertTrue(report["decision_policy"]["avoid_market_favorite_player_form_counter_signal"])
+        self.assertEqual(report["decision_policy"]["market_favorite_counter_min_probability"], 0.6)
+        self.assertEqual(report["decision_summary"]["market_favorite_player_form_counter_signal_avoids"], 1)
+        self.assertEqual(report["predictions"][0]["pick"], "avoid")
+        self.assertEqual(report["predictions"][0]["avoid_reason"], "market_favorite_player_form_counter_signal")
+        self.assertEqual(report["predictions"][1]["pick"], "Charlie")
+        self.assertEqual(report["predictions"][2]["pick"], "Echo")
+
     def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
         from cs2pickem.predictor import MatchPredictor
 

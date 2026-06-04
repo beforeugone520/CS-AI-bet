@@ -1,9 +1,9 @@
 {
-  "actionable_accuracy": 0.42857142857142855,
-  "actionable_picks": 7,
-  "avoid_directional_correct": 1,
-  "avoid_picks": 1,
-  "correct_actionable": 3,
+  "actionable_accuracy": 0.6666666666666666,
+  "actionable_picks": 3,
+  "avoid_directional_correct": 2,
+  "avoid_picks": 5,
+  "correct_actionable": 2,
   "directional_accuracy": 0.5,
   "directional_correct": 4,
   "favorite_upset_diagnostics": {
@@ -19,7 +19,7 @@
         "market_favorite_probability": 0.6315312594382362,
         "model_favorite": "HEROIC",
         "model_favorite_probability": 0.5258435942585502,
-        "player_form_directional_score": null,
+        "player_form_directional_score": -0.02572499999999993,
         "player_form_sample_confidence": 0.0,
         "team1": "HEROIC",
         "team2": "Sharks",
@@ -33,14 +33,14 @@
         "market_favorite_probability": 0.5407914020517831,
         "model_favorite": "BIG",
         "model_favorite_probability": 0.6961735450748551,
-        "player_form_directional_score": null,
-        "player_form_sample_confidence": 0.0,
+        "player_form_directional_score": 0.16049999999999998,
+        "player_form_sample_confidence": 0.2,
         "team1": "BIG",
         "team2": "Liquid",
         "winner": "Liquid"
       }
     ],
-    "favorite_losses_with_player_form_counter_signal": 0,
+    "favorite_losses_with_player_form_counter_signal": 1,
     "market_favorite_loss_examples": [
       {
         "date": "2026-06-02",
@@ -50,7 +50,7 @@
         "market_favorite_probability": 0.5721476510067114,
         "model_favorite": "SINNERS",
         "model_favorite_probability": 0.5061497527629691,
-        "player_form_directional_score": null,
+        "player_form_directional_score": -0.009554999999999952,
         "player_form_sample_confidence": 0.0,
         "team1": "SINNERS",
         "team2": "FlyQuest",
@@ -64,7 +64,7 @@
         "market_favorite_probability": 0.6875,
         "model_favorite": "MIBR",
         "model_favorite_probability": 0.5004311085426512,
-        "player_form_directional_score": null,
+        "player_form_directional_score": -0.023085000000000022,
         "player_form_sample_confidence": 0.0,
         "team1": "MIBR",
         "team2": "THUNDER dOWNUNDER",
@@ -78,7 +78,7 @@
         "market_favorite_probability": 0.6315312594382362,
         "model_favorite": "HEROIC",
         "model_favorite_probability": 0.5258435942585502,
-        "player_form_directional_score": null,
+        "player_form_directional_score": -0.02572499999999993,
         "player_form_sample_confidence": 0.0,
         "team1": "HEROIC",
         "team2": "Sharks",
@@ -96,18 +96,18 @@
     "model_market_agree_favorites": 1
   },
   "forecast_predictions": 8,
-  "forecast_report_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_report.json",
-  "low_confidence_avoids": 1,
+  "forecast_report_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_market_form_counter_2026-06-04.json",
+  "low_confidence_avoids": 3,
   "market_adjusted_matches": 8,
   "matched": 8,
   "matches": [
     {
-      "actionable": true,
+      "actionable": false,
       "adjusted_favorite": "M80",
       "adjusted_favorite_probability": 0.6090534979423868,
       "adjusted_probability_team1": 0.6090534979423868,
       "confidence_margin": 0.10905349794238683,
-      "correct": true,
+      "correct": null,
       "date": "2026-06-02",
       "directional_correct": true,
       "directional_pick": "M80",
@@ -120,10 +120,14 @@
       "model_favorite": "M80",
       "model_favorite_probability": 0.5936511640012212,
       "model_probability_team1": 0.5936511640012212,
-      "pick": "M80",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
-      "player_form_sample_confidence": 0.0,
+      "pick": "avoid",
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": -0.13839999999999994,
+        "trend": 0.0
+      },
+      "player_form_directional_score": -0.13839999999999994,
+      "player_form_sample_confidence": 0.2,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-8",
@@ -132,16 +136,16 @@
       "winner": "M80"
     },
     {
-      "actionable": true,
+      "actionable": false,
       "adjusted_favorite": "SINNERS",
       "adjusted_favorite_probability": 0.5361497527629692,
       "adjusted_probability_team1": 0.5361497527629692,
       "confidence_margin": 0.03614975276296917,
-      "correct": false,
+      "correct": null,
       "date": "2026-06-02",
       "directional_correct": false,
       "directional_pick": "SINNERS",
-      "low_confidence": false,
+      "low_confidence": true,
       "map": "Ancient",
       "market_adjustment_applied": true,
       "market_favorite": "SINNERS",
@@ -150,9 +154,13 @@
       "model_favorite": "SINNERS",
       "model_favorite_probability": 0.5061497527629691,
       "model_probability_team1": 0.5061497527629691,
-      "pick": "SINNERS",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "pick": "avoid",
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": -0.009554999999999952,
+        "trend": 0.0
+      },
+      "player_form_directional_score": -0.009554999999999952,
       "player_form_sample_confidence": 0.0,
       "result_note": "OT",
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -181,8 +189,12 @@
       "model_favorite_probability": 0.5206214463534402,
       "model_probability_team1": 0.4793785536465598,
       "pick": "avoid",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": -0.056850000000000005,
+        "trend": 0.0
+      },
+      "player_form_directional_score": -0.056850000000000005,
       "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -192,16 +204,16 @@
       "winner": "B8"
     },
     {
-      "actionable": true,
+      "actionable": false,
       "adjusted_favorite": "MIBR",
       "adjusted_favorite_probability": 0.5304311085426512,
       "adjusted_probability_team1": 0.5304311085426512,
       "confidence_margin": 0.030431108542651186,
-      "correct": false,
+      "correct": null,
       "date": "2026-06-02",
       "directional_correct": false,
       "directional_pick": "MIBR",
-      "low_confidence": false,
+      "low_confidence": true,
       "map": "Inferno",
       "market_adjustment_applied": true,
       "market_favorite": "MIBR",
@@ -210,9 +222,13 @@
       "model_favorite": "MIBR",
       "model_favorite_probability": 0.5004311085426512,
       "model_probability_team1": 0.5004311085426512,
-      "pick": "MIBR",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "pick": "avoid",
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": -0.023085000000000022,
+        "trend": 0.0
+      },
+      "player_form_directional_score": -0.023085000000000022,
       "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -241,8 +257,12 @@
       "model_favorite_probability": 0.5408035407014219,
       "model_probability_team1": 0.5408035407014219,
       "pick": "GamerLegion",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": 0.0263250000000001,
+        "trend": 0.0
+      },
+      "player_form_directional_score": 0.0263250000000001,
       "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -252,12 +272,12 @@
       "winner": "GamerLegion"
     },
     {
-      "actionable": true,
+      "actionable": false,
       "adjusted_favorite": "HEROIC",
       "adjusted_favorite_probability": 0.5558435942585502,
       "adjusted_probability_team1": 0.5558435942585502,
       "confidence_margin": 0.05584359425855023,
-      "correct": false,
+      "correct": null,
       "date": "2026-06-02",
       "directional_correct": false,
       "directional_pick": "HEROIC",
@@ -270,9 +290,13 @@
       "model_favorite": "HEROIC",
       "model_favorite_probability": 0.5258435942585502,
       "model_probability_team1": 0.5258435942585502,
-      "pick": "HEROIC",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "pick": "avoid",
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": -0.02572499999999993,
+        "trend": 0.0
+      },
+      "player_form_directional_score": -0.02572499999999993,
       "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -301,8 +325,12 @@
       "model_favorite_probability": 0.5251116729484506,
       "model_probability_team1": 0.5251116729484506,
       "pick": "BetBoom",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": 0.04140000000000007,
+        "trend": 0.0
+      },
+      "player_form_directional_score": 0.04140000000000007,
       "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
@@ -331,9 +359,13 @@
       "model_favorite_probability": 0.6961735450748551,
       "model_probability_team1": 0.6961735450748551,
       "pick": "BIG",
-      "player_form_diff": {},
-      "player_form_directional_score": null,
-      "player_form_sample_confidence": 0.0,
+      "player_form_diff": {
+        "sample_confidence": 0.0,
+        "score": 0.16049999999999998,
+        "trend": 0.0
+      },
+      "player_form_directional_score": 0.16049999999999998,
+      "player_form_sample_confidence": 0.2,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-10",
@@ -342,98 +374,98 @@
       "winner": "Liquid"
     }
   ],
-  "missed_actionable": 4,
+  "missed_actionable": 1,
   "model_upsets": 4,
   "player_form_diagnostics": {
-    "available_matches": 0,
-    "correct_actionable_avg_score_diff": null,
-    "directional_correct_avg_score_diff": null,
-    "directional_missed_avg_sample_confidence_diff": null,
-    "directional_missed_avg_score_diff": null,
-    "directional_missed_avg_trend_diff": null,
-    "missed_actionable_avg_score_diff": null
+    "available_matches": 8,
+    "correct_actionable_avg_score_diff": 0.03386250000000009,
+    "directional_correct_avg_score_diff": -0.031881249999999944,
+    "directional_missed_avg_sample_confidence_diff": 0.0,
+    "directional_missed_avg_score_diff": 0.025533750000000018,
+    "directional_missed_avg_trend_diff": 0.0,
+    "missed_actionable_avg_score_diff": 0.16049999999999998
   },
   "policy_diagnostics": {
     "current_policy": {
-      "actionable_accuracy": 0.42857142857142855,
-      "actionable_picks": 7,
-      "correct_actionable": 3
+      "actionable_accuracy": 0.6666666666666666,
+      "actionable_picks": 3,
+      "correct_actionable": 2
     },
     "market_favorite_player_form_policy_candidates": [
       {
-        "actionable_accuracy": 0.42857142857142855,
-        "actionable_picks": 7,
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
         "avoided_losses": 0,
         "avoided_wins": 0,
-        "correct_actionable": 3,
+        "correct_actionable": 2,
         "counter_signal_matches": 0,
         "coverage": 1.0,
         "market_favorite_min_probability": 0.55,
-        "missed_actionable": 4
+        "missed_actionable": 1
       },
       {
-        "actionable_accuracy": 0.42857142857142855,
-        "actionable_picks": 7,
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
         "avoided_losses": 0,
         "avoided_wins": 0,
-        "correct_actionable": 3,
+        "correct_actionable": 2,
         "counter_signal_matches": 0,
         "coverage": 1.0,
         "market_favorite_min_probability": 0.6,
-        "missed_actionable": 4
+        "missed_actionable": 1
       },
       {
-        "actionable_accuracy": 0.42857142857142855,
-        "actionable_picks": 7,
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
         "avoided_losses": 0,
         "avoided_wins": 0,
-        "correct_actionable": 3,
+        "correct_actionable": 2,
         "counter_signal_matches": 0,
         "coverage": 1.0,
         "market_favorite_min_probability": 0.65,
-        "missed_actionable": 4
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 2,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "market_favorite_min_probability": 0.7,
+        "missed_actionable": 1
+      }
+    ],
+    "player_form_counter_signal": {
+      "aligned_loss_rate": 0.3333333333333333,
+      "aligned_losses": 1,
+      "aligned_matches": 3,
+      "available_matches": 8,
+      "counter_signal_loss_rate": 0.6,
+      "counter_signal_losses": 3,
+      "counter_signal_matches": 5
+    },
+    "player_form_policy_candidates": [
+      {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 3,
+        "avoided_wins": 2,
+        "correct_actionable": 2,
+        "counter_signal_matches": 5,
+        "coverage": 0.375,
+        "missed_actionable": 1,
+        "player_form_counter_min_confidence": 0.0
       },
       {
         "actionable_accuracy": 0.42857142857142855,
         "actionable_picks": 7,
         "avoided_losses": 0,
-        "avoided_wins": 0,
+        "avoided_wins": 1,
         "correct_actionable": 3,
-        "counter_signal_matches": 0,
-        "coverage": 1.0,
-        "market_favorite_min_probability": 0.7,
-        "missed_actionable": 4
-      }
-    ],
-    "player_form_counter_signal": {
-      "aligned_loss_rate": 0.0,
-      "aligned_losses": 0,
-      "aligned_matches": 0,
-      "available_matches": 0,
-      "counter_signal_loss_rate": 0.0,
-      "counter_signal_losses": 0,
-      "counter_signal_matches": 0
-    },
-    "player_form_policy_candidates": [
-      {
-        "actionable_accuracy": 0.5,
-        "actionable_picks": 8,
-        "avoided_losses": 0,
-        "avoided_wins": 0,
-        "correct_actionable": 4,
-        "counter_signal_matches": 0,
-        "coverage": 1.0,
-        "missed_actionable": 4,
-        "player_form_counter_min_confidence": 0.0
-      },
-      {
-        "actionable_accuracy": 0.5,
-        "actionable_picks": 8,
-        "avoided_losses": 0,
-        "avoided_wins": 0,
-        "correct_actionable": 4,
-        "counter_signal_matches": 0,
-        "coverage": 1.0,
+        "counter_signal_matches": 1,
+        "coverage": 0.875,
         "missed_actionable": 4,
         "player_form_counter_min_confidence": 0.2
       },

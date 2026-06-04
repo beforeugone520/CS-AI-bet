@@ -552,6 +552,75 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(diagnostics["market_favorite_loss_examples"][0]["favorite"], "Alpha")
         self.assertEqual(diagnostics["market_favorite_loss_examples"][0]["winner"], "Bravo")
 
+    def test_evaluate_forecast_result_reports_market_favorite_player_form_policy_candidates(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.66,
+                    "market_signal": {"probability_team1": 0.66, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.08}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.62,
+                    "market_signal": {"probability_team1": 0.62, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.04}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.64,
+                    "market_signal": {"probability_team1": 0.64, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": 0.05}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Golf",
+                    "team2": "Hotel",
+                    "pick": "Golf",
+                    "adjusted_probability_team1": 0.52,
+                    "market_signal": {"probability_team1": 0.52, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.03}},
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+                {"date": "2026-06-02", "team1": "Golf", "team2": "Hotel", "winner": "Hotel"},
+            ],
+        )
+
+        self.assertIn(
+            "market_favorite_player_form_policy_candidates",
+            report["policy_diagnostics"],
+        )
+        candidates = {
+            row["market_favorite_min_probability"]: row
+            for row in report["policy_diagnostics"]["market_favorite_player_form_policy_candidates"]
+        }
+        self.assertEqual(candidates[0.55]["counter_signal_matches"], 2)
+        self.assertEqual(candidates[0.55]["avoided_losses"], 1)
+        self.assertEqual(candidates[0.55]["avoided_wins"], 1)
+        self.assertEqual(candidates[0.55]["actionable_picks"], 2)
+        self.assertEqual(candidates[0.55]["correct_actionable"], 1)
+        self.assertAlmostEqual(candidates[0.55]["actionable_accuracy"], 0.5)
+        self.assertEqual(candidates[0.65]["counter_signal_matches"], 1)
+        self.assertEqual(candidates[0.65]["avoided_losses"], 1)
+        self.assertEqual(candidates[0.65]["avoided_wins"], 0)
+        self.assertAlmostEqual(candidates[0.65]["actionable_accuracy"], 2 / 3)
+
     def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

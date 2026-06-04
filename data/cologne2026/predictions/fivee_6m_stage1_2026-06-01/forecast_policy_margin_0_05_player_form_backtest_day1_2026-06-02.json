@@ -391,6 +391,52 @@
       "actionable_picks": 5,
       "correct_actionable": 3
     },
+    "market_favorite_player_form_policy_candidates": [
+      {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 1,
+        "avoided_wins": 1,
+        "correct_actionable": 2,
+        "counter_signal_matches": 2,
+        "coverage": 0.6,
+        "market_favorite_min_probability": 0.55,
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 1,
+        "avoided_wins": 1,
+        "correct_actionable": 2,
+        "counter_signal_matches": 2,
+        "coverage": 0.6,
+        "market_favorite_min_probability": 0.6,
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.6,
+        "actionable_picks": 5,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 3,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "market_favorite_min_probability": 0.65,
+        "missed_actionable": 2
+      },
+      {
+        "actionable_accuracy": 0.6,
+        "actionable_picks": 5,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 3,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "market_favorite_min_probability": 0.7,
+        "missed_actionable": 2
+      }
+    ],
     "player_form_counter_signal": {
       "aligned_loss_rate": 0.3333333333333333,
       "aligned_losses": 1,

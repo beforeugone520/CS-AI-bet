@@ -147,6 +147,8 @@ def main() -> int:
     forecast_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
     forecast_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
     forecast_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
+    forecast_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
+    forecast_parser.add_argument("--market-favorite-counter-min-probability", type=float, default=0.6, help="minimum real market favorite probability required for market-favorite player form avoidance")
     forecast_parser.add_argument("--output", help="optional JSON output path")
     apply_forecast_policy_parser = subparsers.add_parser("apply-forecast-policy", help="apply single-match decision policy to an existing forecast report without retraining")
     apply_forecast_policy_parser.add_argument("--forecast-report", required=True, help="JSON output from forecast command")
@@ -154,6 +156,8 @@ def main() -> int:
     apply_forecast_policy_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
     apply_forecast_policy_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
     apply_forecast_policy_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
+    apply_forecast_policy_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
+    apply_forecast_policy_parser.add_argument("--market-favorite-counter-min-probability", type=float, default=0.6, help="minimum real market favorite probability required for market-favorite player form avoidance")
     apply_forecast_policy_parser.add_argument("--output", help="optional JSON output path")
     odds_parser = subparsers.add_parser("merge-odds", help="merge multi-provider decimal odds into match/fixture CSV")
     odds_parser.add_argument("--matches", required=True, help="match or fixture CSV")
@@ -427,6 +431,8 @@ def main() -> int:
             minimum_margin=args.minimum_margin,
             avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
+            avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
+            market_favorite_counter_min_probability=args.market_favorite_counter_min_probability,
         )
         return _emit(report, args.output)
     if args.command == "apply-forecast-policy":
@@ -437,6 +443,8 @@ def main() -> int:
             minimum_margin=args.minimum_margin,
             avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
+            avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
+            market_favorite_counter_min_probability=args.market_favorite_counter_min_probability,
         )
         return _emit(report, args.output)
     if args.command == "merge-odds":
