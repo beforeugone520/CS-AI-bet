@@ -9,7 +9,7 @@ from pathlib import Path
 class PickemCheckpointRenderTests(unittest.TestCase):
     def test_renderer_outputs_valid_svg_with_checkpoint_teams(self):
         repo = Path(__file__).resolve().parents[1]
-        data_path = repo / "data/cologne2026/source_inputs/pickem_checkpoint_day1_2026-06-02.json"
+        data_path = repo / "data/cologne2026/source_inputs/pickem_checkpoint_round3_2026-06-04.json"
         script_path = repo / "scripts/render_pickem_checkpoint.py"
         teams = [
             "GamerLegion",
@@ -22,6 +22,7 @@ class PickemCheckpointRenderTests(unittest.TestCase):
             "TYLOO",
             "Gaimin Gladiators",
             "NRG",
+            "SINNERS",
         ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -43,9 +44,9 @@ class PickemCheckpointRenderTests(unittest.TestCase):
             svg = output_path.read_text(encoding="utf-8")
             for team in teams:
                 self.assertIn(team, svg)
-            for required in ["2-0", "1-1", "0-2", "Control Zone", "Live Line", "Elimination Edge"]:
+            for required in ["3-0", "2-1", "1-2", "0-3", "Stage 2", "Qualifying BO3", "Elimination BO3"]:
                 self.assertIn(required, svg)
-            for required in ["on track", "live", "broken / risk"]:
+            for required in ["locked / hit", "alive", "slot broken"]:
                 self.assertIn(required, svg)
 
 

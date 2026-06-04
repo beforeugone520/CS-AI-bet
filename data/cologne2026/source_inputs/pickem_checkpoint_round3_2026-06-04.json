@@ -1,0 +1,125 @@
+{
+  "title": "IEM Cologne 2026 Stage 1",
+  "subtitle": "Round 3 complete · Round 4 schedule watch",
+  "date": "2026-06-04",
+  "source_note": "Round 3 results locked · Round 4 BO3s next",
+  "badge": "SWISS ROUND 4 WATCH",
+  "footer": "Round 4: 2-1 winners advance; 1-2 losers are eliminated",
+  "summary": [
+    {
+      "value": "3",
+      "label": "locked / hit",
+      "tone": "good"
+    },
+    {
+      "value": "4",
+      "label": "alive",
+      "tone": "warn"
+    },
+    {
+      "value": "3",
+      "label": "slot broken",
+      "tone": "bad"
+    }
+  ],
+  "columns": [
+    {
+      "record": "3-0",
+      "title": "Stage 2",
+      "subtitle": "ADV picks banked",
+      "tone": "good",
+      "cards": [
+        {
+          "team": "BetBoom",
+          "slot": "ADV",
+          "status": "Beat GamerLegion",
+          "tone": "good"
+        },
+        {
+          "team": "B8",
+          "slot": "ADV",
+          "status": "Beat M80",
+          "tone": "good"
+        }
+      ]
+    },
+    {
+      "record": "2-1",
+      "title": "Qualifying BO3",
+      "subtitle": "Winner advances",
+      "tone": "warn",
+      "cards": [
+        {
+          "team": "M80",
+          "slot": "ADV",
+          "status": "vs NRG",
+          "tone": "warn"
+        },
+        {
+          "team": "BIG",
+          "slot": "ADV",
+          "status": "vs GamerLegion",
+          "tone": "warn"
+        },
+        {
+          "team": "GamerLegion",
+          "slot": "3-0",
+          "status": "3-0 broken",
+          "tone": "bad"
+        },
+        {
+          "team": "MIBR",
+          "slot": "3-0",
+          "status": "3-0 broken",
+          "tone": "bad"
+        },
+        {
+          "team": "NRG",
+          "slot": "0-3",
+          "status": "0-3 broken",
+          "tone": "bad"
+        }
+      ]
+    },
+    {
+      "record": "1-2",
+      "title": "Elimination BO3",
+      "subtitle": "Lose and out",
+      "tone": "bad",
+      "cards": [
+        {
+          "team": "TYLOO",
+          "slot": "ADV",
+          "status": "vs Sharks",
+          "tone": "warn"
+        },
+        {
+          "team": "HEROIC",
+          "slot": "ADV",
+          "status": "vs Liquid",
+          "tone": "warn"
+        }
+      ]
+    },
+    {
+      "record": "0-3",
+      "title": "Eliminated",
+      "subtitle": "One hit, one non-pick",
+      "tone": "bad",
+      "cards": [
+        {
+          "team": "Gaimin Gladiators",
+          "slot": "0-3",
+          "status": "0-3 pick hit",
+          "tone": "good"
+        },
+        {
+          "team": "SINNERS",
+          "slot": "-",
+          "status": "Non-pick eliminated",
+          "tone": "muted"
+        }
+      ]
+    }
+  ]
+}

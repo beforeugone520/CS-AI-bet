@@ -12,13 +12,13 @@ from typing import Any
 
 WIDTH = 1200
 HEIGHT = 720
-COLUMN_X = [68, 426, 784]
+COLUMN_MARGIN = 44
+COLUMN_GAP = 16
 COLUMN_Y = 188
-COLUMN_W = 348
 COLUMN_H = 500
-CARD_H = 76
-CARD_GAP = 16
-CARD_START_Y = 318
+CARD_H = 62
+CARD_GAP = 10
+CARD_START_Y = 316
 TONE = {
     "good": {
         "stroke": "#34d66d",
@@ -37,6 +37,12 @@ TONE = {
         "fill": "#96313b",
         "soft": "#351920",
         "text": "#ffd5d9",
+    },
+    "muted": {
+        "stroke": "#50627e",
+        "fill": "#39465d",
+        "soft": "#1c2536",
+        "text": "#d6deeb",
     },
 }
 
@@ -59,12 +65,12 @@ def style_block() -> str:
       .title { fill: #f4f8ff; font: 800 35px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .subtitle { fill: #9fb4d2; font: 500 15px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .badge { fill: #43a5ff; font: 800 19px Arial, Helvetica, sans-serif; letter-spacing: 0; }
-      .record { fill: #f4f8ff; font: 900 48px Arial, Helvetica, sans-serif; letter-spacing: 0; }
-      .column-title { fill: #dce9ff; font: 800 20px Arial, Helvetica, sans-serif; letter-spacing: 0; }
-      .column-sub { fill: #8ea6ca; font: 500 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .record { fill: #f4f8ff; font: 900 42px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .column-title { fill: #dce9ff; font: 800 18px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .column-sub { fill: #8ea6ca; font: 500 12px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .team { fill: #f4f8ff; font-family: Arial, Helvetica, sans-serif; font-weight: 800; letter-spacing: 0; }
-      .status { fill: #aebfda; font: 600 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
-      .slot { fill: #08111f; font: 900 12px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .status { fill: #aebfda; font: 600 11px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .slot { fill: #08111f; font: 900 11px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .metric-value { fill: #f4f8ff; font: 900 23px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .metric-label { fill: #aebfda; font: 700 12px Arial, Helvetica, sans-serif; letter-spacing: 0; }
       .footer { fill: #9fb4d2; font: 600 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
@@ -84,35 +90,44 @@ def metric_svg(metric: dict[str, Any], x: int) -> str:
 def card_svg(card: dict[str, Any], x: int, y: int, width: int) -> str:
     tone_name = str(card.get("tone", "good"))
     team = str(card["team"])
-    team_font = 19 if len(team) > 15 else 21
-    tag_w = 48 if len(str(card["slot"])) <= 3 else 56
+    team_font = 15 if len(team) > 15 else 17
+    tag_w = 42 if len(str(card["slot"])) <= 3 else 50
     return f'''  <g transform="translate({x} {y})">
     <rect x="0" y="0" width="{width}" height="{CARD_H}" rx="8" fill="#172338" stroke="{tone(tone_name, "stroke")}" stroke-width="1.8"/>
     <rect x="0" y="0" width="7" height="{CARD_H}" rx="3.5" fill="{tone(tone_name, "stroke")}"/>
-    <rect x="18" y="18" width="{tag_w}" height="28" rx="6" fill="{tone(tone_name, "fill")}"/>
-    <text x="{18 + tag_w / 2:.0f}" y="37" text-anchor="middle" class="slot">{text(card["slot"])}</text>
-    <text x="{36 + tag_w}" y="31" class="team" font-size="{team_font}">{text(team)}</text>
-    <text x="{36 + tag_w}" y="55" class="status">{text(card["status"])}</text>
+    <rect x="16" y="15" width="{tag_w}" height="26" rx="6" fill="{tone(tone_name, "fill")}"/>
+    <text x="{16 + tag_w / 2:.0f}" y="33" text-anchor="middle" class="slot">{text(card["slot"])}</text>
+    <text x="{30 + tag_w}" y="28" class="team" font-size="{team_font}">{text(team)}</text>
+    <text x="{30 + tag_w}" y="49" class="status">{text(card["status"])}</text>
   </g>'''
 
 
-def column_svg(column: dict[str, Any], index: int) -> str:
-    x = COLUMN_X[index]
+def column_width(total_columns: int) -> int:
+    return int((WIDTH - 2 * COLUMN_MARGIN - (total_columns - 1) * COLUMN_GAP) / total_columns)
+
+
+def column_x(index: int, total_columns: int) -> int:
+    return COLUMN_MARGIN + index * (column_width(total_columns) + COLUMN_GAP)
+
+
+def column_svg(column: dict[str, Any], index: int, total_columns: int) -> str:
+    x = column_x(index, total_columns)
+    column_w = column_width(total_columns)
     tone_name = str(column.get("tone", "good"))
     lines = [
         f'  <g transform="translate({x} {COLUMN_Y})">',
-        f'    <rect class="column-glow" x="0" y="0" width="{COLUMN_W}" height="{COLUMN_H}" rx="14" fill="{tone(tone_name, "stroke")}"/>',
-        f'    <rect class="column" x="0" y="0" width="{COLUMN_W}" height="{COLUMN_H}" rx="14" stroke="{tone(tone_name, "stroke")}"/>',
-        f'    <rect x="20" y="22" width="88" height="70" rx="10" fill="{tone(tone_name, "fill")}"/>',
-        f'    <text x="64" y="69" text-anchor="middle" class="record">{text(column["record"])}</text>',
-        f'    <text x="126" y="45" class="column-title">{text(column["title"])}</text>',
-        f'    <text x="126" y="70" class="column-sub">{text(column["subtitle"])}</text>',
-        f'    <line x1="22" y1="116" x2="{COLUMN_W - 22}" y2="116" class="rail"/>',
+        f'    <rect class="column-glow" x="0" y="0" width="{column_w}" height="{COLUMN_H}" rx="14" fill="{tone(tone_name, "stroke")}"/>',
+        f'    <rect class="column" x="0" y="0" width="{column_w}" height="{COLUMN_H}" rx="14" stroke="{tone(tone_name, "stroke")}"/>',
+        f'    <rect x="18" y="22" width="78" height="66" rx="10" fill="{tone(tone_name, "fill")}"/>',
+        f'    <text x="57" y="66" text-anchor="middle" class="record">{text(column["record"])}</text>',
+        f'    <text x="112" y="45" class="column-title">{text(column["title"])}</text>',
+        f'    <text x="112" y="70" class="column-sub">{text(column["subtitle"])}</text>',
+        f'    <line x1="20" y1="116" x2="{column_w - 20}" y2="116" class="rail"/>',
         "  </g>",
         "",
     ]
-    card_x = x + 24
-    card_w = COLUMN_W - 48
+    card_x = x + 18
+    card_w = column_w - 36
     for card_index, card in enumerate(column["cards"]):
         y = CARD_START_Y + card_index * (CARD_H + CARD_GAP)
         lines.append(card_svg(card, card_x, y, card_w))
@@ -122,6 +137,7 @@ def column_svg(column: dict[str, Any], index: int) -> str:
 
 def render_svg(data: dict[str, Any]) -> str:
     metric_x = [72, 236, 400]
+    columns = data["columns"]
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">',
         f'  <title id="title">{text(data["title"])} Pick&apos;em Day 1 checkpoint</title>',
@@ -151,8 +167,8 @@ def render_svg(data: dict[str, Any]) -> str:
     for metric, x in zip(data.get("summary", []), metric_x):
         lines.append(metric_svg(metric, x))
         lines.append("")
-    for index, column in enumerate(data["columns"]):
-        lines.append(column_svg(column, index))
+    for index, column in enumerate(columns):
+        lines.append(column_svg(column, index, len(columns)))
     lines.append(f'  <text x="1128" y="700" text-anchor="end" class="footer">{text(data["footer"])}</text>')
     lines.append("</svg>")
     return "\n".join(lines)
