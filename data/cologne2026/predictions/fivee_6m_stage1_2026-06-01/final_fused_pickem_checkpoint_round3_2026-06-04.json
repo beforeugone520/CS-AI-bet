@@ -3,76 +3,234 @@
   "picks": [
     {
       "category": "3-0",
+      "confidence": 0.21,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 4,
+        "advance": 13
+      },
       "losses": 1,
+      "market_win_prob_r1": 0.688,
+      "model": {
+        "0-3": 0.059,
+        "3-0": 0.218,
+        "advance": 0.668
+      },
+      "signals_agree": 3,
       "status": "broken",
       "team": "MIBR",
+      "tier": "High",
       "wins": 2
     },
     {
       "category": "3-0",
+      "confidence": 0.34,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 15,
+        "advance": 4
+      },
       "losses": 1,
+      "market_win_prob_r1": 0.657,
+      "model": {
+        "0-3": 0.102,
+        "3-0": 0.144,
+        "advance": 0.548
+      },
+      "signals_agree": 2,
       "status": "broken",
       "team": "GamerLegion",
+      "tier": "Medium",
       "wins": 2
     },
     {
       "category": "advance",
+      "confidence": 0.736,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 2,
+        "advance": 17
+      },
       "losses": 1,
+      "market_win_prob_r1": 0.541,
+      "model": {
+        "0-3": 0.069,
+        "3-0": 0.195,
+        "advance": 0.656
+      },
+      "signals_agree": 3,
       "status": "alive",
       "team": "BIG",
+      "tier": "High",
       "wins": 2
     },
     {
       "category": "advance",
+      "confidence": 0.705,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 7,
+        "advance": 12
+      },
       "losses": 0,
+      "market_win_prob_r1": 0.688,
+      "model": {
+        "0-3": 0.101,
+        "3-0": 0.143,
+        "advance": 0.536
+      },
+      "signals_agree": 2,
       "status": "locked",
       "team": "BetBoom",
+      "tier": "Medium",
       "wins": 3
     },
     {
       "category": "advance",
+      "confidence": 0.666,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 6,
+        "advance": 12
+      },
       "losses": 0,
+      "market_win_prob_r1": 0.572,
+      "model": {
+        "0-3": 0.114,
+        "3-0": 0.122,
+        "advance": 0.535
+      },
+      "signals_agree": 2,
       "status": "locked",
       "team": "B8",
+      "tier": "Medium",
       "wins": 3
     },
     {
       "category": "advance",
+      "confidence": 0.653,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 2,
+        "advance": 15
+      },
       "losses": 2,
+      "market_win_prob_r1": 0.632,
+      "model": {
+        "0-3": 0.105,
+        "3-0": 0.132,
+        "advance": 0.517
+      },
+      "signals_agree": 2,
       "status": "alive",
       "team": "HEROIC",
+      "tier": "Medium",
       "wins": 1
     },
     {
       "category": "advance",
+      "confidence": 0.593,
+      "expert_votes": {
+        "0-3": 0,
+        "3-0": 0,
+        "advance": 14
+      },
       "losses": 1,
+      "market_win_prob_r1": 0.609,
+      "model": {
+        "0-3": 0.126,
+        "3-0": 0.105,
+        "advance": 0.501
+      },
+      "signals_agree": 2,
       "status": "alive",
       "team": "M80",
+      "tier": "Medium",
       "wins": 2
     },
     {
       "category": "advance",
+      "confidence": 0.471,
+      "expert_votes": {
+        "0-3": 1,
+        "3-0": 1,
+        "advance": 4
+      },
       "losses": 2,
+      "market_win_prob_r1": 0.428,
+      "model": {
+        "0-3": 0.079,
+        "3-0": 0.17,
+        "advance": 0.614
+      },
+      "signals_agree": 1,
       "status": "alive",
       "team": "TYLOO",
+      "tier": "Low",
       "wins": 1
     },
     {
       "category": "0-3",
+      "confidence": 0.311,
+      "expert_votes": {
+        "0-3": 4,
+        "3-0": 0,
+        "advance": 3
+      },
       "losses": 1,
+      "market_win_prob_r1": 0.343,
+      "model": {
+        "0-3": 0.232,
+        "3-0": 0.053,
+        "advance": 0.305
+      },
+      "signals_agree": 3,
       "status": "broken",
       "team": "NRG",
+      "tier": "High",
       "wins": 2
     },
     {
       "category": "0-3",
+      "confidence": 0.359,
+      "expert_votes": {
+        "0-3": 8,
+        "3-0": 0,
+        "advance": 2
+      },
       "losses": 3,
+      "market_win_prob_r1": 0.312,
+      "model": {
+        "0-3": 0.19,
+        "3-0": 0.069,
+        "advance": 0.342
+      },
+      "signals_agree": 3,
       "status": "locked",
       "team": "Gaimin Gladiators",
+      "tier": "High",
       "wins": 0
     }
   ],
   "standings_path": "data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv",
+  "status_diagnostics": {
+    "alive": {
+      "avg_confidence": 0.61325,
+      "picks": 4
+    },
+    "broken": {
+      "avg_confidence": 0.287,
+      "picks": 3
+    },
+    "locked": {
+      "avg_confidence": 0.5766666666666667,
+      "picks": 3
+    },
+    "missing": {
+      "avg_confidence": null,
+      "picks": 0
+    }
+  },
   "summary": {
     "alive": 4,
     "broken": 3,

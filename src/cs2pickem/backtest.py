@@ -78,26 +78,32 @@ def backtest_pickem_file(
 def evaluate_pickem_checkpoint(
     pickems: Mapping[str, Iterable[str]],
     standings_rows: Iterable[Mapping[str, Any]],
+    pick_details: Mapping[tuple[str, str], Mapping[str, Any]] | None = None,
 ) -> Dict[str, object]:
     normalized_pickems = {category: [str(team) for team in teams] for category, teams in pickems.items()}
     standings = {_team_name(row.get("team") or row.get("name") or row.get("team_name")): row for row in standings_rows}
     pick_reports: List[Dict[str, object]] = []
     summary = {"locked": 0, "alive": 0, "broken": 0, "missing": 0}
+    detail_lookup = pick_details or {}
     for category in PICKEM_CATEGORIES:
         for team in normalized_pickems.get(category, []):
             row = standings.get(_team_name(team))
             status = _checkpoint_status(category, row)
             summary[status] += 1
-            pick_reports.append(
-                {
-                    "category": category,
-                    "team": team,
-                    "wins": _int(row.get("wins")) if row else None,
-                    "losses": _int(row.get("losses")) if row else None,
-                    "status": status,
-                }
-            )
-    return {"summary": summary, "picks": pick_reports}
+            pick_report = {
+                "category": category,
+                "team": team,
+                "wins": _int(row.get("wins")) if row else None,
+                "losses": _int(row.get("losses")) if row else None,
+                "status": status,
+            }
+            pick_report.update(_checkpoint_detail_fields(detail_lookup.get((category, _team_key(team)), {})))
+            pick_reports.append(pick_report)
+    return {
+        "summary": summary,
+        "status_diagnostics": _checkpoint_status_diagnostics(pick_reports),
+        "picks": pick_reports,
+    }
 
 
 def checkpoint_pickem_file(
@@ -107,7 +113,11 @@ def checkpoint_pickem_file(
 ) -> Dict[str, object]:
     with open(pickems_path, encoding="utf-8") as handle:
         payload = json.load(handle)
-    report = evaluate_pickem_checkpoint(_extract_pickems(payload), read_matches_csv(standings_path))
+    report = evaluate_pickem_checkpoint(
+        _extract_pickems(payload),
+        read_matches_csv(standings_path),
+        pick_details=_pickem_detail_lookup(payload),
+    )
     report["pickems_path"] = pickems_path
     report["standings_path"] = standings_path
     if output_path:
@@ -504,6 +514,64 @@ def _checkpoint_status(category: str, row: Mapping[str, Any] | None) -> str:
             return "locked"
         return "broken" if wins > 0 else "alive"
     return "missing"
+
+
+def _checkpoint_detail_fields(detail: Mapping[str, Any]) -> Dict[str, object]:
+    allowed = (
+        "confidence",
+        "tier",
+        "signals_agree",
+        "expert_votes",
+        "market_win_prob_r1",
+        "model",
+    )
+    return {key: detail[key] for key in allowed if key in detail}
+
+
+def _checkpoint_status_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, object]]:
+    diagnostics: Dict[str, Dict[str, object]] = {}
+    materialized = list(picks)
+    for status in ("locked", "alive", "broken", "missing"):
+        status_rows = [row for row in materialized if row.get("status") == status]
+        confidence_values = [
+            _float(row.get("confidence"), 0.0)
+            for row in status_rows
+            if row.get("confidence") not in (None, "")
+        ]
+        diagnostics[status] = {
+            "picks": len(status_rows),
+            "avg_confidence": (
+                sum(confidence_values) / len(confidence_values)
+                if confidence_values
+                else None
+            ),
+        }
+    return diagnostics
+
+
+def _pickem_detail_lookup(payload: Any) -> Dict[tuple[str, str], Mapping[str, Any]]:
+    details: Dict[tuple[str, str], Mapping[str, Any]] = {}
+    if not isinstance(payload, Mapping):
+        return details
+    for category, item in _pickem_detail_items(payload):
+        team = _pickem_team(item)
+        if team and isinstance(item, Mapping):
+            details[(category, _team_key(team))] = item
+    return details
+
+
+def _pickem_detail_items(payload: Mapping[str, Any]) -> Iterable[tuple[str, Any]]:
+    raw = payload.get("picks", payload.get("pickems", payload))
+    if isinstance(raw, Mapping):
+        for category in PICKEM_CATEGORIES:
+            for item in _pickem_items(raw.get(category, [])):
+                yield category, item
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, Mapping):
+                category = str(item.get("category") or "").strip()
+                if category in PICKEM_CATEGORIES:
+                    yield category, item
 
 
 def _ensure_record(records: Dict[str, Dict[str, object]], team: str) -> Dict[str, object]:

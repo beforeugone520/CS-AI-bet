@@ -146,6 +146,78 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(statuses[("0-3", "Foxtrot")], "locked")
         self.assertEqual(statuses[("0-3", "Golf")], "alive")
 
+    def test_checkpoint_pickem_cli_keeps_pick_confidence_diagnostics(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pickems_path = os.path.join(tmpdir, "pickems.json")
+            standings_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "checkpoint.json")
+            with open(pickems_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "picks": {
+                            "3-0": [
+                                {
+                                    "team": "Alpha",
+                                    "confidence": 0.8,
+                                    "tier": "High",
+                                    "market_win_prob_r1": 0.66,
+                                    "model": {"3-0": 0.25, "advance": 0.7, "0-3": 0.03},
+                                }
+                            ],
+                            "advance": [
+                                {
+                                    "team": "Bravo",
+                                    "confidence": 0.4,
+                                    "tier": "Low",
+                                    "market_win_prob_r1": 0.51,
+                                    "model": {"3-0": 0.1, "advance": 0.49, "0-3": 0.2},
+                                }
+                            ],
+                            "0-3": [],
+                        }
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                standings_path,
+                [
+                    {"team": "Alpha", "wins": 2, "losses": 1},
+                    {"team": "Bravo", "wins": 3, "losses": 1},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "checkpoint-pickem",
+                "--pickems",
+                pickems_path,
+                "--standings",
+                standings_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        picks = {(row["category"], row["team"]): row for row in report["picks"]}
+        self.assertEqual(picks[("3-0", "Alpha")]["status"], "broken")
+        self.assertEqual(picks[("3-0", "Alpha")]["confidence"], 0.8)
+        self.assertEqual(picks[("3-0", "Alpha")]["tier"], "High")
+        self.assertEqual(picks[("3-0", "Alpha")]["market_win_prob_r1"], 0.66)
+        self.assertEqual(picks[("3-0", "Alpha")]["model"]["advance"], 0.7)
+        self.assertEqual(report["status_diagnostics"]["broken"]["picks"], 1)
+        self.assertEqual(report["status_diagnostics"]["broken"]["avg_confidence"], 0.8)
+        self.assertEqual(report["status_diagnostics"]["locked"]["avg_confidence"], 0.4)
+
     def test_standings_from_results_cli_derives_current_swiss_records(self):
         from cs2pickem.cli import main
         from cs2pickem.data import read_matches_csv, write_matches_csv

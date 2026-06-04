@@ -432,7 +432,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 - 阈值调参：`forecast_backtest_day1_2026-06-02.json` 的 `policy_diagnostics` 显示，把赛前单场 minimum margin 从约 2% 提到 **5%** 后，方向命中可从 **4/8 = 50%** 变成 **3/5 = 60%**，会避开 2 个错单、同时放弃 1 个对单；`forecast_policy_margin_0_05_player_form_backtest_day1_2026-06-02.json` 已按这个策略落盘，实际有效 pick 为 **3/5 = 60%**。
 - 失误结构：MIBR、HEROIC、BIG 三个“模型 + 市场都偏看好”的强队同时爆冷，暴露出 BO1 方差、热门队低估下限、弱队短期状态冲击和选手状态波动没有被充分惩罚。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`；重打标版本已从 player-form fixtures 补齐 8 场 form diff。新增的 `player_form_policy_candidates` 显示，如果把所有低样本反向 form 都拿来规避，可以避开 3 个错向但会误伤 2 个对向；从 0.2 样本置信门槛开始又只误伤不避错。因此当前继续保留 `--player-form-counter-min-confidence 0.4`，等更多真实赛果补足样本后再让 player form 自动改判。
-- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
+- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，可直接复盘高信心 pick 在 locked/alive/broken 三组里的表现。
 - 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果、地图池、短期 player form、替补和样本不足惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
 
 ### 完赛后回测入口
