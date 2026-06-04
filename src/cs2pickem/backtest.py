@@ -9,6 +9,7 @@ from .pickem import model_driven_pickems
 
 
 PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
+PLAYER_FORM_COUNTER_CONFIDENCE_CANDIDATES = (0.0, 0.2, 0.4, 0.6, 0.8)
 
 
 def evaluate_pickem_result(
@@ -101,6 +102,7 @@ def evaluate_forecast_result(
         correct = actionable and _team_key(pick) == _team_key(winner)
         directional_correct = _team_key(directional_pick) == _team_key(winner)
         player_form_diff = _player_form_diff(prediction)
+        player_form_sample_confidence = _player_form_sample_confidence(prediction)
         confidence_margin = _float(prediction.get("confidence_margin"), abs(probability_team1 - 0.5))
         match_reports.append(
             {
@@ -122,6 +124,7 @@ def evaluate_forecast_result(
                 "low_confidence": bool(prediction.get("low_confidence")),
                 "market_adjustment_applied": bool(prediction.get("market_adjustment_applied")),
                 "player_form_diff": player_form_diff,
+                "player_form_sample_confidence": player_form_sample_confidence,
             }
         )
 
@@ -476,6 +479,7 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
             else "insufficient_actionable_sample"
         ),
         "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
+        "player_form_policy_candidates": _player_form_policy_candidates(materialized),
     }
 
 
@@ -542,6 +546,46 @@ def _player_form_counter_signal_risk(rows: Iterable[Mapping[str, Any]]) -> Dict[
     }
 
 
+def _player_form_policy_candidates(rows: Iterable[Mapping[str, Any]]) -> List[Dict[str, object]]:
+    materialized = list(rows)
+    return [
+        _player_form_policy_candidate(materialized, min_confidence)
+        for min_confidence in PLAYER_FORM_COUNTER_CONFIDENCE_CANDIDATES
+    ]
+
+
+def _player_form_policy_candidate(
+    rows: Iterable[Mapping[str, Any]],
+    min_confidence: float,
+) -> Dict[str, object]:
+    materialized = list(rows)
+    avoided_indexes = set()
+    counter_signal_matches = 0
+    for index, row in enumerate(materialized):
+        diff = row.get("player_form_diff")
+        if not isinstance(diff, Mapping) or not diff:
+            continue
+        if _float(row.get("player_form_sample_confidence"), 0.0) < min_confidence:
+            continue
+        if _directional_player_form_score(row, diff) < 0:
+            counter_signal_matches += 1
+            avoided_indexes.add(index)
+    selected = [row for index, row in enumerate(materialized) if index not in avoided_indexes]
+    avoided = [row for index, row in enumerate(materialized) if index in avoided_indexes]
+    correct = sum(1 for row in selected if row.get("directional_correct"))
+    return {
+        "player_form_counter_min_confidence": min_confidence,
+        "counter_signal_matches": counter_signal_matches,
+        "actionable_picks": len(selected),
+        "correct_actionable": correct,
+        "missed_actionable": len(selected) - correct,
+        "actionable_accuracy": correct / len(selected) if selected else 0.0,
+        "coverage": len(selected) / len(materialized) if materialized else 0.0,
+        "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
+        "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
+    }
+
+
 def _directional_player_form_score(row: Mapping[str, Any], diff: Mapping[str, Any]) -> float:
     score = _float(diff.get("score"), 0.0)
     if _team_key(row.get("directional_pick")) == _team_key(row.get("team2")):
@@ -570,6 +614,23 @@ def _player_form_diff(prediction: Mapping[str, Any]) -> Dict[str, float]:
         "trend": _float(diff.get("trend"), 0.0),
         "sample_confidence": _float(diff.get("sample_confidence"), 0.0),
     }
+
+
+def _player_form_sample_confidence(prediction: Mapping[str, Any]) -> float:
+    summary = prediction.get("player_form_summary")
+    if not isinstance(summary, Mapping):
+        return 0.0
+    team1 = summary.get("team1")
+    team2 = summary.get("team2")
+    if isinstance(team1, Mapping) and isinstance(team2, Mapping):
+        return min(
+            _float(team1.get("sample_confidence"), 0.0),
+            _float(team2.get("sample_confidence"), 0.0),
+        )
+    diff = summary.get("diff")
+    if isinstance(diff, Mapping):
+        return abs(_float(diff.get("sample_confidence"), 0.0))
+    return 0.0
 
 
 def _extract_pickems(payload: Any) -> Dict[str, List[str]]:

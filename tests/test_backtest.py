@@ -211,6 +211,67 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(risk["aligned_matches"], 1)
         self.assertEqual(risk["aligned_losses"], 0)
 
+    def test_evaluate_forecast_result_reports_player_form_policy_candidates(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.62,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.7},
+                        "team2": {"sample_confidence": 0.6},
+                        "diff": {"score": -0.05},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.61,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.2},
+                        "team2": {"sample_confidence": 0.2},
+                        "diff": {"score": -0.04},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.59,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.8},
+                        "team2": {"sample_confidence": 0.7},
+                        "diff": {"score": 0.06},
+                    },
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+            ],
+        )
+
+        candidates = {
+            row["player_form_counter_min_confidence"]: row
+            for row in report["policy_diagnostics"]["player_form_policy_candidates"]
+        }
+        self.assertEqual(candidates[0.4]["avoided_losses"], 1)
+        self.assertEqual(candidates[0.4]["avoided_wins"], 0)
+        self.assertEqual(candidates[0.4]["actionable_picks"], 2)
+        self.assertEqual(candidates[0.4]["correct_actionable"], 2)
+        self.assertAlmostEqual(candidates[0.4]["actionable_accuracy"], 1.0)
+        self.assertEqual(candidates[0.8]["counter_signal_matches"], 0)
+        self.assertEqual(candidates[0.8]["actionable_picks"], 3)
+
     def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

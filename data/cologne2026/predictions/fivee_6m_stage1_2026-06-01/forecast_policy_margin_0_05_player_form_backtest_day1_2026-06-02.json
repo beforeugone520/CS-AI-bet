@@ -29,6 +29,7 @@
         "score": -0.13839999999999994,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.2,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-8",
@@ -53,6 +54,7 @@
         "score": -0.009554999999999952,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": "OT",
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "16-14",
@@ -77,6 +79,7 @@
         "score": -0.056850000000000005,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-6",
@@ -101,6 +104,7 @@
         "score": -0.023085000000000022,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-6",
@@ -125,6 +129,7 @@
         "score": 0.0263250000000001,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-10",
@@ -149,6 +154,7 @@
         "score": -0.02572499999999993,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-10",
@@ -173,6 +179,7 @@
         "score": 0.04140000000000007,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.0,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-4",
@@ -197,6 +204,7 @@
         "score": 0.16049999999999998,
         "trend": 0.0
       },
+      "player_form_sample_confidence": 0.2,
       "result_note": null,
       "result_source": "Liquipedia+dfrag+esports.gg",
       "score": "13-10",
@@ -231,6 +239,63 @@
       "counter_signal_losses": 3,
       "counter_signal_matches": 5
     },
+    "player_form_policy_candidates": [
+      {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 3,
+        "avoided_wins": 2,
+        "correct_actionable": 2,
+        "counter_signal_matches": 5,
+        "coverage": 0.375,
+        "missed_actionable": 1,
+        "player_form_counter_min_confidence": 0.0
+      },
+      {
+        "actionable_accuracy": 0.42857142857142855,
+        "actionable_picks": 7,
+        "avoided_losses": 0,
+        "avoided_wins": 1,
+        "correct_actionable": 3,
+        "counter_signal_matches": 1,
+        "coverage": 0.875,
+        "missed_actionable": 4,
+        "player_form_counter_min_confidence": 0.2
+      },
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 8,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 4,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "missed_actionable": 4,
+        "player_form_counter_min_confidence": 0.4
+      },
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 8,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 4,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "missed_actionable": 4,
+        "player_form_counter_min_confidence": 0.6
+      },
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 8,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 4,
+        "counter_signal_matches": 0,
+        "coverage": 1.0,
+        "missed_actionable": 4,
+        "player_form_counter_min_confidence": 0.8
+      }
+    ],
     "recommendation_basis": "highest_accuracy_with_minimum_two_picks",
     "recommended_minimum_margin": 0.05,
     "threshold_candidates": [
