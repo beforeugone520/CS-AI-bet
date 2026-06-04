@@ -19,6 +19,8 @@ def forecast_fixtures(
     bp_rows: Optional[Iterable[Mapping[str, Any]]] = None,
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
+    minimum_margin: float = 0.02,
+    avoid_player_form_counter_signal: bool = False,
 ) -> Dict[str, object]:
     fixtures = [dict(row) for row in fixture_rows]
     bp_report = None
@@ -44,8 +46,23 @@ def forecast_fixtures(
                 raw_probability,
                 market_probability=_num(market_signal.get("probability_team1"), 0.5),
             )
-        pick = single_match_pick(adjusted, str(fixture.get("team1")), str(fixture.get("team2")))
         confidence_margin = abs(adjusted - 0.5)
+        player_form_summary = _player_form_summary(fixture)
+        pick = single_match_pick(
+            adjusted,
+            str(fixture.get("team1")),
+            str(fixture.get("team2")),
+            minimum_margin=minimum_margin,
+            player_form_score_diff=_num(player_form_summary.get("diff", {}).get("score"), 0.0),
+            avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        )
+        avoid_reason = _avoid_reason(
+            pick=pick,
+            adjusted_probability_team1=adjusted,
+            minimum_margin=minimum_margin,
+            player_form_summary=player_form_summary,
+            avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        )
         predictions.append(
             {
                 "date": fixture.get("date"),
@@ -59,9 +76,10 @@ def forecast_fixtures(
                 "market_adjustment_applied": market_adjustment_applied,
                 "market_signal": market_signal or {},
                 "pick": pick,
+                "avoid_reason": avoid_reason,
                 "confidence_margin": confidence_margin,
-                "low_confidence": pick == "avoid",
-                "player_form_summary": _player_form_summary(fixture),
+                "low_confidence": avoid_reason == "low_confidence",
+                "player_form_summary": player_form_summary,
                 "bp_applied": fixture.get("bp_applied", 0),
                 "bp_source": fixture.get("bp_source"),
                 "bp_confidence": fixture.get("bp_confidence"),
@@ -78,6 +96,10 @@ def forecast_fixtures(
         "model_hyperparameters": predictor.model_hyperparameters,
         "probability_calibration": predictor.calibration_report,
         "feature_preparation": predictor.feature_preparation,
+        "decision_policy": {
+            "minimum_margin": minimum_margin,
+            "avoid_player_form_counter_signal": avoid_player_form_counter_signal,
+        },
         "bp_report": bp_report,
         "predictions": predictions,
         "decision_summary": _decision_summary(predictions),
@@ -94,6 +116,8 @@ def forecast_fixtures_file(
     epochs: int = 50,
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
+    minimum_margin: float = 0.02,
+    avoid_player_form_counter_signal: bool = False,
 ) -> Dict[str, object]:
     profiles: Optional[Mapping[str, Mapping[str, Any]]] = None
     if profiles_path:
@@ -111,6 +135,8 @@ def forecast_fixtures_file(
         epochs=epochs,
         max_age_days=max_age_days,
         ensemble_weights=ensemble_weights,
+        minimum_margin=minimum_margin,
+        avoid_player_form_counter_signal=avoid_player_form_counter_signal,
     )
 
 def _num(value: Any, default: float) -> float:
@@ -145,11 +171,34 @@ def _player_form_side(row: Mapping[str, Any], prefix: str) -> Dict[str, object]:
     }
 
 
+def _avoid_reason(
+    pick: str,
+    adjusted_probability_team1: float,
+    minimum_margin: float,
+    player_form_summary: Mapping[str, Any],
+    avoid_player_form_counter_signal: bool,
+) -> str | None:
+    if pick != "avoid":
+        return None
+    if abs(adjusted_probability_team1 - 0.5) <= minimum_margin:
+        return "low_confidence"
+    diff = player_form_summary.get("diff", {})
+    form_score_diff = _num(diff.get("score") if isinstance(diff, Mapping) else None, 0.0)
+    directional_form_score = form_score_diff if adjusted_probability_team1 >= 0.5 else -form_score_diff
+    if avoid_player_form_counter_signal and directional_form_score < 0:
+        return "player_form_counter_signal"
+    return "avoid"
+
+
 def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int]:
     materialized = list(predictions)
     low_confidence = sum(1 for row in materialized if row.get("low_confidence"))
+    avoid_picks = sum(1 for row in materialized if row.get("pick") == "avoid")
+    player_form_counter_signal_avoids = sum(1 for row in materialized if row.get("avoid_reason") == "player_form_counter_signal")
     return {
         "fixtures": len(materialized),
-        "actionable_picks": len(materialized) - low_confidence,
+        "actionable_picks": len(materialized) - avoid_picks,
+        "avoid_picks": avoid_picks,
         "low_confidence_avoids": low_confidence,
+        "player_form_counter_signal_avoids": player_form_counter_signal_avoids,
     }

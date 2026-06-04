@@ -16,6 +16,50 @@ class StageStrategyTests(unittest.TestCase):
         self.assertEqual(single_match_pick(0.5201, "Alpha", "Bravo"), "Alpha")
         self.assertEqual(single_match_pick(0.4799, "Alpha", "Bravo"), "Bravo")
 
+    def test_single_match_pick_accepts_custom_minimum_margin(self):
+        from cs2pickem.strategy import single_match_pick
+
+        self.assertEqual(single_match_pick(0.549, "Alpha", "Bravo", minimum_margin=0.05), "avoid")
+        self.assertEqual(single_match_pick(0.551, "Alpha", "Bravo", minimum_margin=0.05), "Alpha")
+        self.assertEqual(single_match_pick(0.449, "Alpha", "Bravo", minimum_margin=0.05), "Bravo")
+
+    def test_single_match_pick_can_avoid_player_form_counter_signal(self):
+        from cs2pickem.strategy import single_match_pick
+
+        self.assertEqual(
+            single_match_pick(
+                0.61,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                player_form_score_diff=-0.06,
+                avoid_player_form_counter_signal=True,
+            ),
+            "avoid",
+        )
+        self.assertEqual(
+            single_match_pick(
+                0.39,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                player_form_score_diff=0.06,
+                avoid_player_form_counter_signal=True,
+            ),
+            "avoid",
+        )
+        self.assertEqual(
+            single_match_pick(
+                0.61,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                player_form_score_diff=0.06,
+                avoid_player_form_counter_signal=True,
+            ),
+            "Alpha",
+        )
+
     def test_challengers_stage_prefers_bo1_map_profile_when_probabilities_are_close(self):
         from cs2pickem.strategy import choose_pickems
 

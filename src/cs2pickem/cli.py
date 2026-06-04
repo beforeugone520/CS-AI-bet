@@ -128,6 +128,8 @@ def main() -> int:
     forecast_parser.add_argument("--top-k", type=int, default=25, help="number of selected features to keep")
     forecast_parser.add_argument("--epochs", type=int, default=50, help="training epochs for lightweight learners")
     forecast_parser.add_argument("--max-age-days", type=int, default=90, help="freshness window for training rows")
+    forecast_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
+    forecast_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
     forecast_parser.add_argument("--output", help="optional JSON output path")
     odds_parser = subparsers.add_parser("merge-odds", help="merge multi-provider decimal odds into match/fixture CSV")
     odds_parser.add_argument("--matches", required=True, help="match or fixture CSV")
@@ -384,6 +386,8 @@ def main() -> int:
             top_k=args.top_k,
             epochs=args.epochs,
             max_age_days=args.max_age_days,
+            minimum_margin=args.minimum_margin,
+            avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
         )
         return _emit(report, args.output)
     if args.command == "merge-odds":

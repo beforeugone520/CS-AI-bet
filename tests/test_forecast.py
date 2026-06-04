@@ -140,6 +140,46 @@ class ForecastTests(unittest.TestCase):
         self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["score"], 0.11)
         self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["trend"], 0.07)
 
+    def test_forecast_fixtures_applies_custom_single_match_policy(self):
+        from cs2pickem.forecast import forecast_fixtures
+
+        fixtures = [
+            {
+                "date": "2026-06-01",
+                "event": "IEM Cologne Major",
+                "event_tier": "S",
+                "status": "scheduled",
+                "team1": "Alpha",
+                "team2": "Bravo",
+                "best_of": 1,
+                "map": "mirage",
+                "team1_rank": 4,
+                "team2_rank": 20,
+                "team1_player_form_score": -0.08,
+                "team2_player_form_score": 0.02,
+                "team1_player_sample_confidence": 0.8,
+                "team2_player_sample_confidence": 0.8,
+            }
+        ]
+
+        report = forecast_fixtures(
+            history_rows(),
+            fixtures,
+            reference_date="2026-05-31",
+            top_k=8,
+            epochs=5,
+            minimum_margin=0.5,
+            avoid_player_form_counter_signal=True,
+        )
+
+        prediction = report["predictions"][0]
+        self.assertEqual(prediction["pick"], "avoid")
+        self.assertEqual(prediction["avoid_reason"], "low_confidence")
+        self.assertTrue(prediction["low_confidence"])
+        self.assertEqual(report["decision_policy"]["minimum_margin"], 0.5)
+        self.assertTrue(report["decision_policy"]["avoid_player_form_counter_signal"])
+        self.assertEqual(report["decision_summary"]["avoid_picks"], 1)
+
     def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
         from cs2pickem.predictor import MatchPredictor
 
