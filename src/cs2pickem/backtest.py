@@ -10,6 +10,7 @@ from .pickem import model_driven_pickems
 
 PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
 PLAYER_FORM_COUNTER_CONFIDENCE_CANDIDATES = (0.0, 0.2, 0.4, 0.6, 0.8)
+FAVORITE_UPSET_MIN_PROBABILITY = 0.55
 
 
 def evaluate_pickem_result(
@@ -203,6 +204,19 @@ def evaluate_forecast_result(
         player_form_diff = _player_form_diff(prediction)
         player_form_sample_confidence = _player_form_sample_confidence(prediction)
         confidence_margin = _float(prediction.get("confidence_margin"), abs(probability_team1 - 0.5))
+        model_probability_team1 = _optional_probability(prediction.get("model_probability_team1"))
+        market_probability_team1 = _market_probability_team1(prediction)
+        adjusted_favorite = _favorite_from_probability(probability_team1, team1, team2)
+        model_favorite = _favorite_from_probability(model_probability_team1, team1, team2)
+        market_favorite = _favorite_from_probability(market_probability_team1, team1, team2)
+        player_form_directional_score = (
+            _directional_player_form_score(
+                {"team2": team2, "directional_pick": directional_pick},
+                player_form_diff,
+            )
+            if player_form_diff
+            else None
+        )
         match_reports.append(
             {
                 "date": prediction.get("date"),
@@ -220,10 +234,19 @@ def evaluate_forecast_result(
                 "directional_correct": directional_correct,
                 "adjusted_probability_team1": probability_team1,
                 "confidence_margin": confidence_margin,
+                "model_probability_team1": model_probability_team1,
+                "market_probability_team1": market_probability_team1,
+                "adjusted_favorite": adjusted_favorite["team"],
+                "adjusted_favorite_probability": adjusted_favorite["probability"],
+                "model_favorite": model_favorite["team"] if model_favorite else None,
+                "model_favorite_probability": model_favorite["probability"] if model_favorite else None,
+                "market_favorite": market_favorite["team"] if market_favorite else None,
+                "market_favorite_probability": market_favorite["probability"] if market_favorite else None,
                 "low_confidence": bool(prediction.get("low_confidence")),
                 "market_adjustment_applied": bool(prediction.get("market_adjustment_applied")),
                 "player_form_diff": player_form_diff,
                 "player_form_sample_confidence": player_form_sample_confidence,
+                "player_form_directional_score": player_form_directional_score,
             }
         )
 
@@ -248,6 +271,7 @@ def evaluate_forecast_result(
         "low_confidence_avoids": sum(1 for row in avoid_matches if row["low_confidence"]),
         "market_adjusted_matches": sum(1 for row in match_reports if row["market_adjustment_applied"]),
         "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
+        "favorite_upset_diagnostics": _forecast_favorite_upset_diagnostics(match_reports),
         "policy_diagnostics": _forecast_policy_diagnostics(match_reports),
         "matches": match_reports,
     }
@@ -650,6 +674,108 @@ def _forecast_prediction_identity(prediction: Mapping[str, Any]) -> Dict[str, ob
     }
 
 
+def _forecast_favorite_upset_diagnostics(
+    match_reports: Iterable[Mapping[str, Any]],
+    minimum_probability: float = FAVORITE_UPSET_MIN_PROBABILITY,
+) -> Dict[str, object]:
+    materialized = list(match_reports)
+    adjusted_favorites = _forecast_favorite_rows(materialized, "adjusted", minimum_probability)
+    model_favorites = _forecast_favorite_rows(materialized, "model", minimum_probability)
+    market_favorites = _forecast_favorite_rows(materialized, "market", minimum_probability)
+    agree_favorites = [
+        row
+        for row in materialized
+        if row.get("model_favorite")
+        and row.get("market_favorite")
+        and _team_key(row.get("model_favorite")) == _team_key(row.get("market_favorite"))
+        and _float(row.get("model_favorite_probability"), 0.0) >= minimum_probability
+        and _float(row.get("market_favorite_probability"), 0.0) >= minimum_probability
+    ]
+    adjusted_losses = [row for row in adjusted_favorites if _forecast_favorite_lost(row, "adjusted")]
+    model_losses = [row for row in model_favorites if _forecast_favorite_lost(row, "model")]
+    market_losses = [row for row in market_favorites if _forecast_favorite_lost(row, "market")]
+    agree_losses = [row for row in agree_favorites if _forecast_favorite_lost(row, "model")]
+    return {
+        "minimum_favorite_probability": minimum_probability,
+        "adjusted_favorites": len(adjusted_favorites),
+        "adjusted_favorite_losses": len(adjusted_losses),
+        "adjusted_favorite_loss_rate": (
+            len(adjusted_losses) / len(adjusted_favorites)
+            if adjusted_favorites
+            else 0.0
+        ),
+        "model_favorites": len(model_favorites),
+        "model_favorite_losses": len(model_losses),
+        "model_favorite_loss_rate": (
+            len(model_losses) / len(model_favorites)
+            if model_favorites
+            else 0.0
+        ),
+        "market_favorites": len(market_favorites),
+        "market_favorite_losses": len(market_losses),
+        "market_favorite_loss_rate": (
+            len(market_losses) / len(market_favorites)
+            if market_favorites
+            else 0.0
+        ),
+        "model_market_agree_favorites": len(agree_favorites),
+        "model_market_agree_favorite_losses": len(agree_losses),
+        "favorite_losses_with_player_form_counter_signal": sum(
+            1
+            for row in adjusted_losses
+            if row.get("player_form_directional_score") is not None
+            and _float(row.get("player_form_directional_score"), 0.0) < 0
+        ),
+        "favorite_loss_examples": [
+            _forecast_favorite_loss_example(row, "adjusted")
+            for row in adjusted_losses[:5]
+        ],
+        "market_favorite_loss_examples": [
+            _forecast_favorite_loss_example(row, "market")
+            for row in market_losses[:5]
+        ],
+    }
+
+
+def _forecast_favorite_rows(
+    rows: Iterable[Mapping[str, Any]],
+    kind: str,
+    minimum_probability: float,
+) -> List[Mapping[str, Any]]:
+    favorite_key = f"{kind}_favorite"
+    probability_key = f"{kind}_favorite_probability"
+    return [
+        row
+        for row in rows
+        if row.get(favorite_key)
+        and _float(row.get(probability_key), 0.0) >= minimum_probability
+    ]
+
+
+def _forecast_favorite_lost(row: Mapping[str, Any], kind: str) -> bool:
+    favorite = row.get(f"{kind}_favorite")
+    if not favorite:
+        return False
+    return _team_key(favorite) != _team_key(row.get("winner"))
+
+
+def _forecast_favorite_loss_example(row: Mapping[str, Any], kind: str) -> Dict[str, object]:
+    return {
+        "date": row.get("date"),
+        "team1": row.get("team1"),
+        "team2": row.get("team2"),
+        "favorite": row.get(f"{kind}_favorite"),
+        "favorite_probability": row.get(f"{kind}_favorite_probability"),
+        "winner": row.get("winner"),
+        "model_favorite": row.get("model_favorite"),
+        "model_favorite_probability": row.get("model_favorite_probability"),
+        "market_favorite": row.get("market_favorite"),
+        "market_favorite_probability": row.get("market_favorite_probability"),
+        "player_form_directional_score": row.get("player_form_directional_score"),
+        "player_form_sample_confidence": row.get("player_form_sample_confidence"),
+    }
+
+
 def _forecast_player_form_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
     materialized = list(match_reports)
     correct_actionable = [row for row in materialized if row.get("actionable") and row.get("correct")]
@@ -847,6 +973,27 @@ def _player_form_sample_confidence(prediction: Mapping[str, Any]) -> float:
     return 0.0
 
 
+def _market_probability_team1(prediction: Mapping[str, Any]) -> float | None:
+    market_signal = prediction.get("market_signal")
+    if isinstance(market_signal, Mapping):
+        probability = _optional_probability(market_signal.get("probability_team1"))
+        if probability is not None:
+            return probability
+    return _optional_probability(prediction.get("market_probability_team1"))
+
+
+def _favorite_from_probability(
+    probability_team1: float | None,
+    team1: str,
+    team2: str,
+) -> Dict[str, object] | None:
+    if probability_team1 is None:
+        return None
+    if probability_team1 >= 0.5:
+        return {"team": team1, "probability": probability_team1}
+    return {"team": team2, "probability": 1.0 - probability_team1}
+
+
 def _extract_pickems(payload: Any) -> Dict[str, List[str]]:
     if not isinstance(payload, Mapping):
         raise ValueError("pickems payload must be a JSON object")
@@ -929,6 +1076,16 @@ def _float(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _optional_probability(value: Any) -> float | None:
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        return None
+    if 0.0 <= probability <= 1.0:
+        return probability
+    return None
 
 
 def _int(value: Any) -> int:

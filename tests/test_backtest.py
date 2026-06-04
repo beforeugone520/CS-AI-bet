@@ -486,6 +486,72 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(candidates[0.8]["counter_signal_matches"], 0)
         self.assertEqual(candidates[0.8]["actionable_picks"], 3)
 
+    def test_evaluate_forecast_result_reports_favorite_upset_diagnostics(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.66,
+                    "model_probability_team1": 0.62,
+                    "market_signal": {"probability_team1": 0.64, "basis": "real_odds"},
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.7},
+                        "team2": {"sample_confidence": 0.6},
+                        "diff": {"score": -0.08},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.60,
+                    "model_probability_team1": 0.48,
+                    "market_signal": {"probability_team1": 0.65, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": 0.04}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.54,
+                    "model_probability_team1": 0.54,
+                    "market_signal": {"probability_team1": 0.52, "basis": "real_odds"},
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Foxtrot"},
+            ],
+        )
+
+        self.assertIn("favorite_upset_diagnostics", report)
+        diagnostics = report["favorite_upset_diagnostics"]
+        self.assertEqual(diagnostics["minimum_favorite_probability"], 0.55)
+        self.assertEqual(diagnostics["adjusted_favorites"], 2)
+        self.assertEqual(diagnostics["adjusted_favorite_losses"], 1)
+        self.assertAlmostEqual(diagnostics["adjusted_favorite_loss_rate"], 0.5)
+        self.assertEqual(diagnostics["model_favorites"], 1)
+        self.assertEqual(diagnostics["model_favorite_losses"], 1)
+        self.assertEqual(diagnostics["market_favorites"], 2)
+        self.assertEqual(diagnostics["market_favorite_losses"], 1)
+        self.assertEqual(diagnostics["model_market_agree_favorites"], 1)
+        self.assertEqual(diagnostics["model_market_agree_favorite_losses"], 1)
+        self.assertEqual(diagnostics["favorite_losses_with_player_form_counter_signal"], 1)
+        self.assertEqual(diagnostics["favorite_loss_examples"][0]["favorite"], "Alpha")
+        self.assertEqual(diagnostics["favorite_loss_examples"][0]["winner"], "Bravo")
+        self.assertAlmostEqual(diagnostics["favorite_loss_examples"][0]["player_form_directional_score"], -0.08)
+        self.assertIn("market_favorite_loss_examples", diagnostics)
+        self.assertEqual(diagnostics["market_favorite_loss_examples"][0]["favorite"], "Alpha")
+        self.assertEqual(diagnostics["market_favorite_loss_examples"][0]["winner"], "Bravo")
+
     def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv
