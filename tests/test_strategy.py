@@ -85,6 +85,42 @@ class StageStrategyTests(unittest.TestCase):
 
         self.assertEqual(pickems["3-0"], ["BorderlineUpside"])
 
+    def test_player_form_downweights_low_sample_substitute_pickem_candidates(self):
+        from cs2pickem.strategy import choose_pickems, describe_pickem_risk
+
+        probabilities = {
+            "StableCore": {"3-0": 0.31, "advance": 0.74, "0-3": 0.03},
+            "FragileFavorite": {"3-0": 0.32, "advance": 0.75, "0-3": 0.04},
+        }
+        rankings = {"StableCore": 8, "FragileFavorite": 9}
+        team_features = {
+            "StableCore": {
+                "player_form_score": 0.10,
+                "player_form_trend": 0.02,
+                "player_sample_confidence": 1.0,
+                "substitute_flag": 0,
+            },
+            "FragileFavorite": {
+                "player_form_score": 0.01,
+                "player_form_trend": -0.06,
+                "player_sample_confidence": 0.2,
+                "substitute_flag": 1,
+            },
+        }
+
+        pickems = choose_pickems(
+            probabilities,
+            rankings=rankings,
+            slots={"3-0": 1, "advance": 0, "0-3": 0},
+            team_features=team_features,
+        )
+        risk_details = describe_pickem_risk(probabilities, rankings=rankings, team_features=team_features)
+        fragile = next(entry for entry in risk_details["3-0"] if entry["team"] == "FragileFavorite")
+
+        self.assertEqual(pickems["3-0"], ["StableCore"])
+        self.assertLess(fragile["player_form_adjustment"], 0.0)
+        self.assertLess(fragile["player_availability_multiplier"], 1.0)
+
     def test_describe_pickem_risk_reports_stage_and_upset_adjustments(self):
         from cs2pickem.strategy import describe_pickem_risk
 

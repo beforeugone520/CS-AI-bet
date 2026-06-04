@@ -133,11 +133,19 @@ def describe_pickem_risk(
         for team, values in team_probabilities.items():
             rank = rankings.get(team, 80)
             base_probability = float(values.get(key, 0.0))
-            stage_adjustment = _stage_adjustment(stage, key, team_features.get(team, {}), rank)
+            features = team_features.get(team, {})
+            stage_adjustment = _stage_adjustment(stage, key, features, rank)
+            player_form_adjustment = _player_form_adjustment(key, features)
             upset_rank_gap = max(0, rank - best_rank)
             upset_penalty_multiplier = _upset_penalty_multiplier(key, upset_rank_gap, upset_rank_limit)
             prefer_weak_multiplier = _prefer_weak_multiplier(rank) if key == "0-3" else 1.0
-            final_score = (base_probability + stage_adjustment) * upset_penalty_multiplier * prefer_weak_multiplier
+            player_availability_multiplier = _player_availability_multiplier(key, features)
+            final_score = (
+                (base_probability + stage_adjustment + player_form_adjustment)
+                * upset_penalty_multiplier
+                * prefer_weak_multiplier
+                * player_availability_multiplier
+            )
             entries.append(
                 {
                     "team": team,
@@ -145,9 +153,11 @@ def describe_pickem_risk(
                     "rank": rank,
                     "base_probability": base_probability,
                     "stage_adjustment": stage_adjustment,
+                    "player_form_adjustment": player_form_adjustment,
                     "upset_rank_gap": upset_rank_gap,
                     "upset_penalty_multiplier": upset_penalty_multiplier,
                     "prefer_weak_multiplier": prefer_weak_multiplier,
+                    "player_availability_multiplier": player_availability_multiplier,
                     "final_score": final_score,
                 }
             )
@@ -198,10 +208,11 @@ def _candidate_score(
     features: Mapping[str, float],
     prefer_weak: bool = False,
 ) -> float:
-    score = base_probability + _stage_adjustment(stage, key, features, rank)
+    score = base_probability + _stage_adjustment(stage, key, features, rank) + _player_form_adjustment(key, features)
     score *= _upset_penalty_multiplier(key, max(0, rank - best_rank), upset_rank_limit)
     if prefer_weak:
         score *= _prefer_weak_multiplier(rank)
+    score *= _player_availability_multiplier(key, features)
     return score
 
 
@@ -243,6 +254,21 @@ def _stage_adjustment(stage: str, key: str, features: Mapping[str, float], rank:
         rank_bonus = (80.0 - min(max(rank, 1), 80)) / 80.0
         return max(-0.03, min(0.06, (rating - 1.0) * 0.10 + rank_bonus * 0.04))
     return 0.0
+
+
+def _player_form_adjustment(key: str, features: Mapping[str, float]) -> float:
+    form_score = _num(features.get("player_form_score", features.get("form_score", 0.0)), 0.0)
+    form_trend = _num(features.get("player_form_trend", features.get("form_trend", 0.0)), 0.0)
+    adjustment = max(-0.035, min(0.035, form_score * 0.12 + form_trend * 0.08))
+    return -adjustment if key == "0-3" else adjustment
+
+
+def _player_availability_multiplier(key: str, features: Mapping[str, float]) -> float:
+    sample_confidence = _clip(_num(features.get("player_sample_confidence", features.get("sample_confidence", 1.0)), 1.0))
+    substitute_flag = 1.0 if _num(features.get("substitute_flag", features.get("player_substitute_flag", 0.0)), 0.0) >= 1.0 else 0.0
+    if key == "0-3":
+        return min(1.08, 1.0 + (1.0 - sample_confidence) * 0.04 + substitute_flag * 0.03)
+    return max(0.90, 1.0 - (1.0 - sample_confidence) * 0.05 - substitute_flag * 0.04)
 
 
 def _num(value: object, default: float) -> float:

@@ -41,6 +41,10 @@ class PlayerStatsTests(unittest.TestCase):
         self.assertAlmostEqual(first["team1_star_rating"], 1.30)
         self.assertEqual(first["team1_substitute_flag"], 1)
         self.assertEqual(first["team1_player_sample"], 3)
+        self.assertAlmostEqual(first["team1_player_form_score"], 0.07716666666666668)
+        self.assertAlmostEqual(first["team1_player_form_trend"], -0.134)
+        self.assertAlmostEqual(first["team1_player_sample_confidence"], 0.6)
+        self.assertGreater(first["team1_player_form_score"], first["team2_player_form_score"])
         self.assertLess(first["team1_rating"], 2.0)
         self.assertAlmostEqual(first["team2_rating"], (1.00 + 1.08) / 2)
 
@@ -52,6 +56,9 @@ class PlayerStatsTests(unittest.TestCase):
         self.assertEqual(merged[0]["team1_rating"], 1.0)
         self.assertEqual(merged[0]["team2_opening_success"], 0.5)
         self.assertEqual(merged[0]["team1_player_sample"], 0)
+        self.assertEqual(merged[0]["team1_player_form_score"], 0.0)
+        self.assertEqual(merged[0]["team1_player_form_trend"], 0.0)
+        self.assertEqual(merged[0]["team1_player_sample_confidence"], 0.0)
 
     def test_merge_player_stats_preserves_existing_values_when_recent_window_is_empty(self):
         from cs2pickem.players import merge_player_stats_into_matches
@@ -79,6 +86,31 @@ class PlayerStatsTests(unittest.TestCase):
         self.assertAlmostEqual(merged[0]["team1_opening_success"], 0.57)
         self.assertAlmostEqual(merged[0]["team1_clutch_winrate"], 0.61)
         self.assertAlmostEqual(merged[0]["team1_star_rating"], 1.35)
+        self.assertAlmostEqual(merged[0]["team1_player_form_score"], 0.1745)
+        self.assertEqual(merged[0]["team1_player_form_trend"], 0.0)
+        self.assertEqual(merged[0]["team1_player_sample_confidence"], 0.0)
+
+    def test_merge_player_stats_preserves_existing_player_form_when_recent_window_is_empty(self):
+        from cs2pickem.players import merge_player_stats_into_matches
+
+        merged = merge_player_stats_into_matches(
+            [
+                {
+                    "date": "2026-04-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "team1_player_form_score": 0.07,
+                    "team1_player_form_trend": -0.02,
+                    "team1_player_sample_confidence": 0.4,
+                }
+            ],
+            player_rows(),
+            window_days=15,
+        )
+
+        self.assertEqual(merged[0]["team1_player_form_score"], 0.07)
+        self.assertEqual(merged[0]["team1_player_form_trend"], -0.02)
+        self.assertEqual(merged[0]["team1_player_sample_confidence"], 0.4)
 
     def test_player_file_workflow_writes_augmented_matches(self):
         from cs2pickem.data import read_matches_csv, write_matches_csv
@@ -98,6 +130,10 @@ class PlayerStatsTests(unittest.TestCase):
         self.assertEqual(report["teams_augmented"], 4)
         self.assertIn("team1_star_rating", merged[0])
         self.assertEqual(merged[0]["team1_substitute_flag"], 1)
+        self.assertIn("team1_player_form_score", merged[0])
+        self.assertIn("team1_player_form_trend", merged[0])
+        self.assertIn("team1_player_sample_confidence", merged[0])
+        self.assertIsInstance(merged[0]["team1_player_form_score"], float)
 
     def test_player_fields_are_consumed_by_feature_builder(self):
         from cs2pickem.features import FeatureBuilder
@@ -112,6 +148,9 @@ class PlayerStatsTests(unittest.TestCase):
 
         self.assertIn("substitute_flag_diff", dataset.feature_names)
         self.assertIn("player_sample_diff", dataset.feature_names)
+        self.assertIn("player_form_score_diff", dataset.feature_names)
+        self.assertIn("player_form_trend_diff", dataset.feature_names)
+        self.assertIn("player_sample_confidence_diff", dataset.feature_names)
 
     def test_cli_merge_players_writes_augmented_csv(self):
         from cs2pickem.cli import main

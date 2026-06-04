@@ -89,6 +89,13 @@ class ForecastTests(unittest.TestCase):
                 "team2_kd": 0.99,
                 "team1_star_rating": 1.32,
                 "team2_star_rating": 1.06,
+                "team1_player_form_score": 0.12,
+                "team2_player_form_score": 0.01,
+                "team1_player_form_trend": 0.03,
+                "team2_player_form_trend": -0.04,
+                "team1_player_sample_confidence": 0.9,
+                "team2_player_sample_confidence": 0.4,
+                "team2_substitute_flag": 1,
                 "odds_team1": 2.05,
                 "odds_team2": 1.85,
             }
@@ -127,6 +134,11 @@ class ForecastTests(unittest.TestCase):
         self.assertAlmostEqual(sum(prediction["weighted_model_contributions_team1"].values()), prediction["model_probability_team1"])
         self.assertEqual(report["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
         self.assertGreater(prediction["team1_elo"], prediction["team2_elo"])
+        self.assertEqual(prediction["player_form_summary"]["team1"]["score"], 0.12)
+        self.assertEqual(prediction["player_form_summary"]["team2"]["sample_confidence"], 0.4)
+        self.assertEqual(prediction["player_form_summary"]["team2"]["substitute_flag"], 1)
+        self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["score"], 0.11)
+        self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["trend"], 0.07)
 
     def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
         from cs2pickem.predictor import MatchPredictor

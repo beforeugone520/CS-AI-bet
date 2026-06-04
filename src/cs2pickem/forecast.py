@@ -61,6 +61,7 @@ def forecast_fixtures(
                 "pick": pick,
                 "confidence_margin": confidence_margin,
                 "low_confidence": pick == "avoid",
+                "player_form_summary": _player_form_summary(fixture),
                 "bp_applied": fixture.get("bp_applied", 0),
                 "bp_source": fixture.get("bp_source"),
                 "bp_confidence": fixture.get("bp_confidence"),
@@ -117,6 +118,32 @@ def _num(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _player_form_summary(row: Mapping[str, Any]) -> Dict[str, object]:
+    team1 = _player_form_side(row, "team1")
+    team2 = _player_form_side(row, "team2")
+    return {
+        "team1": team1,
+        "team2": team2,
+        "diff": {
+            "score": float(team1["score"]) - float(team2["score"]),
+            "trend": float(team1["trend"]) - float(team2["trend"]),
+            "sample_confidence": float(team1["sample_confidence"]) - float(team2["sample_confidence"]),
+        },
+    }
+
+
+def _player_form_side(row: Mapping[str, Any], prefix: str) -> Dict[str, object]:
+    return {
+        "team": row.get(prefix),
+        "score": _num(row.get(f"{prefix}_player_form_score"), 0.0),
+        "trend": _num(row.get(f"{prefix}_player_form_trend"), 0.0),
+        "sample_confidence": _num(row.get(f"{prefix}_player_sample_confidence"), 0.0),
+        "player_sample": int(_num(row.get(f"{prefix}_player_sample"), 0.0)),
+        "substitute_flag": int(_num(row.get(f"{prefix}_substitute_flag"), 0.0)),
+    }
+
 
 def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int]:
     materialized = list(predictions)

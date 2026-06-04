@@ -30,6 +30,9 @@ def merge_player_stats_into_matches(
             copied[f"{prefix}_star_rating"] = summary["star_rating"]
             copied[f"{prefix}_substitute_flag"] = summary["substitute_flag"]
             copied[f"{prefix}_player_sample"] = summary["player_sample"]
+            copied[f"{prefix}_player_form_score"] = summary["player_form_score"]
+            copied[f"{prefix}_player_form_trend"] = summary["player_form_trend"]
+            copied[f"{prefix}_player_sample_confidence"] = summary["player_sample_confidence"]
         output.append(copied)
     return output
 
@@ -58,7 +61,12 @@ def _team_summary(team: str, prefix: str, match: Dict[str, Any], match_date, pla
         "clutch_winrate": _num(match.get(f"{prefix}_clutch_winrate"), 0.5),
         "star_rating": _num(match.get(f"{prefix}_star_rating"), _num(match.get(f"{prefix}_rating"), 1.0)),
         "substitute_flag": int(_num(match.get(f"{prefix}_substitute_flag"), 0.0)),
+        "player_form_score": _num(match.get(f"{prefix}_player_form_score"), 0.0),
+        "player_form_trend": _num(match.get(f"{prefix}_player_form_trend"), 0.0),
+        "player_sample_confidence": _num(match.get(f"{prefix}_player_sample_confidence"), 0.0),
+        "has_player_form_score": match.get(f"{prefix}_player_form_score") not in (None, ""),
     }
+    selected_scores = _player_form_scores(selected)
     return {
         "rating": _average(selected, "rating", defaults["rating"]),
         "kd": _average(selected, "kd", defaults["kd"]),
@@ -67,12 +75,42 @@ def _team_summary(team: str, prefix: str, match: Dict[str, Any], match_date, pla
         "star_rating": max([_num(row.get("rating"), defaults["star_rating"]) for row in selected], default=defaults["star_rating"]),
         "substitute_flag": 1 if any(_truthy(row.get("is_substitute")) for row in selected) else defaults["substitute_flag"],
         "player_sample": len(selected),
+        "player_form_score": sum(selected_scores) / len(selected_scores) if selected_scores else _default_player_form_score(defaults),
+        "player_form_trend": _player_form_trend(selected) if selected_scores else defaults["player_form_trend"],
+        "player_sample_confidence": min(1.0, len(selected) / 5.0) if selected else defaults["player_sample_confidence"],
     }
 
 
 def _average(rows: List[Dict[str, Any]], key: str, default: float) -> float:
     values = [_num(row.get(key), default) for row in rows if row.get(key) not in (None, "")]
     return sum(values) / len(values) if values else default
+
+
+def _player_form_scores(rows: List[Dict[str, Any]]) -> List[float]:
+    return [_player_form_score(row) for row in rows]
+
+
+def _player_form_trend(rows: List[Dict[str, Any]]) -> float:
+    if len(rows) < 2:
+        return 0.0
+    ordered = sorted(rows, key=lambda row: parse_date(row.get("date")))
+    return _player_form_score(ordered[-1]) - _player_form_score(ordered[0])
+
+
+def _player_form_score(row: Dict[str, Any]) -> float:
+    score = (
+        (_num(row.get("rating"), 1.0) - 1.0) * 0.45
+        + (_num(row.get("kd"), 1.0) - 1.0) * 0.30
+        + (_num(row.get("opening_success"), 0.5) - 0.5) * 0.15
+        + (_num(row.get("clutch_winrate"), 0.5) - 0.5) * 0.10
+    )
+    return max(-0.25, min(0.25, score))
+
+
+def _default_player_form_score(defaults: Dict[str, Any]) -> float:
+    if defaults.get("has_player_form_score"):
+        return _num(defaults.get("player_form_score"), 0.0)
+    return _player_form_score(defaults)
 
 
 def _num(value: Any, default: float) -> float:
