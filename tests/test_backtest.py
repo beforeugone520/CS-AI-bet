@@ -305,6 +305,89 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertAlmostEqual(three_zero["player_status_risk_broken_rate"], 0.5)
         self.assertIsNone(three_zero["non_status_risk_broken_rate"])
 
+    def test_checkpoint_pickem_cli_annotates_status_adjusted_candidate_scoreboard(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pickems_path = os.path.join(tmpdir, "pickems.json")
+            standings_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "checkpoint.json")
+            with open(pickems_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "picks": {
+                            "3-0": [{"team": "Alpha"}],
+                            "advance": [],
+                            "0-3": [],
+                        },
+                        "candidate_scoreboard": {
+                            "3-0": [
+                                {
+                                    "team": "Alpha",
+                                    "category": "3-0",
+                                    "raw_rank": 1,
+                                    "adjusted_rank": 1,
+                                    "selected": True,
+                                    "status_adjusted_score": 0.9,
+                                    "player_status_risk": True,
+                                },
+                                {
+                                    "team": "Bravo",
+                                    "category": "3-0",
+                                    "raw_rank": 2,
+                                    "adjusted_rank": 2,
+                                    "selected": False,
+                                    "status_adjusted_score": 0.8,
+                                    "player_status_risk": True,
+                                },
+                            ],
+                            "advance": [],
+                            "0-3": [],
+                        },
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                standings_path,
+                [
+                    {"team": "Alpha", "wins": 2, "losses": 1},
+                    {"team": "Bravo", "wins": 3, "losses": 0},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "checkpoint-pickem",
+                "--pickems",
+                pickems_path,
+                "--standings",
+                standings_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("candidate_scoreboard_checkpoint", report)
+        self.assertIn("candidate_scoreboard_diagnostics", report)
+        candidates = {(row["category"], row["team"]): row for row in report["candidate_scoreboard_checkpoint"]}
+        self.assertEqual(candidates[("3-0", "Alpha")]["status"], "broken")
+        self.assertEqual(candidates[("3-0", "Bravo")]["status"], "locked")
+        self.assertFalse(candidates[("3-0", "Bravo")]["selected"])
+        self.assertEqual(candidates[("3-0", "Bravo")]["adjusted_rank"], 2)
+        diagnostics = report["candidate_scoreboard_diagnostics"]["3-0"]
+        self.assertEqual(diagnostics["locked_candidates"], 1)
+        self.assertEqual(diagnostics["unselected_locked_candidates"], 1)
+        self.assertEqual(diagnostics["selected_broken_candidates"], 1)
+        self.assertEqual(diagnostics["best_unselected_locked_adjusted_rank"], 2)
+
     def test_evaluate_pickem_checkpoint_reports_category_diagnostics(self):
         from cs2pickem.backtest import evaluate_pickem_checkpoint
 

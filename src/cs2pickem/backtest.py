@@ -84,6 +84,7 @@ def evaluate_pickem_checkpoint(
     pickems: Mapping[str, Iterable[str]],
     standings_rows: Iterable[Mapping[str, Any]],
     pick_details: Mapping[tuple[str, str], Mapping[str, Any]] | None = None,
+    candidate_scoreboard: Mapping[str, Any] | None = None,
 ) -> Dict[str, object]:
     normalized_pickems = {category: [str(team) for team in teams] for category, teams in pickems.items()}
     standings = {_team_name(row.get("team") or row.get("name") or row.get("team_name")): row for row in standings_rows}
@@ -105,12 +106,17 @@ def evaluate_pickem_checkpoint(
             pick_report.update(_checkpoint_detail_fields(detail_lookup.get((category, _team_key(team)), {})))
             pick_report.update(_checkpoint_pressure_fields(category, status, row))
             pick_reports.append(pick_report)
-    return {
+    report = {
         "summary": summary,
         "status_diagnostics": _checkpoint_status_diagnostics(pick_reports),
         "category_diagnostics": _checkpoint_category_diagnostics(pick_reports),
         "picks": pick_reports,
     }
+    if candidate_scoreboard is not None:
+        candidate_reports = _checkpoint_candidate_scoreboard(candidate_scoreboard, standings)
+        report["candidate_scoreboard_checkpoint"] = candidate_reports
+        report["candidate_scoreboard_diagnostics"] = _candidate_scoreboard_diagnostics(candidate_reports)
+    return report
 
 
 def checkpoint_pickem_file(
@@ -124,6 +130,7 @@ def checkpoint_pickem_file(
         _extract_pickems(payload),
         read_matches_csv(standings_path),
         pick_details=_pickem_detail_lookup(payload),
+        candidate_scoreboard=_extract_candidate_scoreboard(payload),
     )
     report["pickems_path"] = pickems_path
     report["standings_path"] = standings_path
@@ -647,6 +654,78 @@ def _checkpoint_detail_fields(detail: Mapping[str, Any]) -> Dict[str, object]:
     return {key: detail[key] for key in allowed if key in detail}
 
 
+def _checkpoint_candidate_scoreboard(
+    candidate_scoreboard: Mapping[str, Any],
+    standings: Mapping[str, Mapping[str, Any]],
+) -> List[Dict[str, object]]:
+    candidate_reports: List[Dict[str, object]] = []
+    if not isinstance(candidate_scoreboard, Mapping):
+        return candidate_reports
+    for category in PICKEM_CATEGORIES:
+        for item in _pickem_items(candidate_scoreboard.get(category, [])):
+            if not isinstance(item, Mapping):
+                continue
+            team = _pickem_team(item)
+            if not team:
+                continue
+            row = standings.get(_team_name(team))
+            status = _checkpoint_status(category, row)
+            candidate_report = dict(item)
+            candidate_report.update(
+                {
+                    "category": category,
+                    "team": team,
+                    "wins": _int(row.get("wins")) if row else None,
+                    "losses": _int(row.get("losses")) if row else None,
+                    "status": status,
+                }
+            )
+            candidate_report.update(_checkpoint_pressure_fields(category, status, row))
+            candidate_reports.append(candidate_report)
+    return candidate_reports
+
+
+def _candidate_scoreboard_diagnostics(
+    candidates: Iterable[Mapping[str, Any]],
+) -> Dict[str, Dict[str, object]]:
+    diagnostics: Dict[str, Dict[str, object]] = {}
+    materialized = list(candidates)
+    for category in PICKEM_CATEGORIES:
+        category_rows = [row for row in materialized if row.get("category") == category]
+        selected_rows = [row for row in category_rows if _truthy(row.get("selected"))]
+        unselected_rows = [row for row in category_rows if not _truthy(row.get("selected"))]
+        locked_rows = [row for row in category_rows if row.get("status") == "locked"]
+        unselected_locked_rows = [row for row in unselected_rows if row.get("status") == "locked"]
+        selected_broken_rows = [row for row in selected_rows if row.get("status") == "broken"]
+        best_unselected_rank = _best_adjusted_rank(unselected_locked_rows)
+        row: Dict[str, object] = {
+            "candidates": len(category_rows),
+            "selected_candidates": len(selected_rows),
+            "locked_candidates": len(locked_rows),
+            "selected_locked_candidates": sum(
+                1 for candidate in selected_rows if candidate.get("status") == "locked"
+            ),
+            "unselected_locked_candidates": len(unselected_locked_rows),
+            "selected_broken_candidates": len(selected_broken_rows),
+            "best_unselected_locked_adjusted_rank": best_unselected_rank,
+            "unselected_locked_teams": [str(candidate.get("team")) for candidate in unselected_locked_rows],
+        }
+        for status in ("locked", "alive", "broken", "missing"):
+            status_rows = [candidate for candidate in category_rows if candidate.get("status") == status]
+            row[status] = len(status_rows)
+        diagnostics[category] = row
+    return diagnostics
+
+
+def _best_adjusted_rank(candidates: Iterable[Mapping[str, Any]]) -> int | None:
+    ranks = [
+        rank
+        for rank in (_optional_int(candidate.get("adjusted_rank")) for candidate in candidates)
+        if rank is not None
+    ]
+    return min(ranks) if ranks else None
+
+
 def _checkpoint_status_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, object]]:
     diagnostics: Dict[str, Dict[str, object]] = {}
     materialized = list(picks)
@@ -783,6 +862,15 @@ def _pickem_detail_lookup(payload: Any) -> Dict[tuple[str, str], Mapping[str, An
             key = (category, _team_key(team))
             details.setdefault(key, {}).update(item)
     return details
+
+
+def _extract_candidate_scoreboard(payload: Any) -> Mapping[str, Any] | None:
+    if not isinstance(payload, Mapping):
+        return None
+    candidate_scoreboard = payload.get("candidate_scoreboard")
+    if isinstance(candidate_scoreboard, Mapping):
+        return candidate_scoreboard
+    return None
 
 
 def _pickem_detail_items(payload: Mapping[str, Any]) -> Iterable[tuple[str, Any]]:
