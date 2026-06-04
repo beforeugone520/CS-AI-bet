@@ -307,7 +307,7 @@ CS-AI-bet/
 - `forecast_without_market_odds_2026-06-01.json`、`pickem_without_market_odds_2026-06-01.json`、`pickem_answer_sheet_without_market_odds_2026-06-01.json` —— 无市场赔率备份，便于对比。
 - `final_fused_pickem_2026-06-01.json` / `final_fused_pickem_table_2026-06-01.csv` —— 专家/市场/模型最终融合结果，当前权重为专家 `0.30`、市场 `0.20`、模型 `0.50`。
 
-当前最终融合答案单（模型权重更高、专家和市场权重更低）：
+当前最终融合答案单（赛前快照，2026-06-01；模型权重更高、专家和市场权重更低）：
 
 | 槽位 | 队伍 |
 | --- | --- |
@@ -315,7 +315,11 @@ CS-AI-bet/
 | `晋级` | BIG, BetBoom, B8, HEROIC, M80, TYLOO |
 | `0-3` | NRG, Gaimin Gladiators |
 
-### Round 3 后 Pick'em 状态图
+> 上表是赛前提交清单；下面的赛程更新只追踪兑现进度，不反向修改赛前预测。
+
+### 当前进度快照（Round 3 后，2026-06-04）
+
+2026-06-03 Stage 1 Round 3 已结束，两个 `2-0` 晋级名额和两个 `0-2` 淘汰名额已经决出；Round 4 将进入全 BO3 的 `2-1` 晋级战与 `1-2` 淘汰战。以下赛程以 [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 的 Stage 1 results/schedule 更新为主，并用 [HLTV Major hub](https://www.hltv.org/major) 交叉核对。
 
 <div align="center">
 
@@ -323,9 +327,55 @@ CS-AI-bet/
 
 </div>
 
-### 预测海报（统一电竞风格）
+Pick'em 进度现在可以按三类读：
 
-> 由 Codex + Claude Code 制作；队标为各战队官方 logo，仅用于结果可视化展示。
+| 状态 | 队伍 | 含义 |
+| --- | --- | --- |
+| 已兑现 | BetBoom、B8、Gaimin Gladiators | 两个 `晋级` 已进 Stage 2；一个 `0-3` 已命中 |
+| 仍可兑现 | M80、BIG、TYLOO、HEROIC | 都还在 `晋级` 路径，但 TYLOO/HEROIC 已经没有容错 |
+| 槽位已失效 | GamerLegion、MIBR、NRG | GamerLegion/MIBR 无法再 `3-0`；NRG 已无法 `0-3` |
+
+Round 3 后战绩池：
+
+| 战绩池 | 队伍 | 下一步 |
+| --- | --- | --- |
+| `3-0 / 已晋级` | BetBoom、B8 | 进入 Stage 2 |
+| `2-1` | GamerLegion、M80、NRG、Lynn Vision、MIBR、BIG | Round 4 晋级战，胜者进 Stage 2 |
+| `1-2` | FlyQuest、Sharks、Team Liquid、THUNDER dOWNUNDER、TYLOO、HEROIC | Round 4 淘汰战，负者出局 |
+| `0-3 / 已淘汰` | SINNERS、Gaimin Gladiators | Stage 1 结束 |
+
+### Round 4 关键赛程
+
+| 战绩池 | 对阵 | 赛制 | Pick'em 关注点 |
+| --- | --- | --- | --- |
+| `2-1` 晋级战 | GamerLegion vs BIG | BO3 | BIG 是 `晋级` 关键战；GamerLegion 的 `3-0` 已失效 |
+| `2-1` 晋级战 | M80 vs NRG | BO3 | M80 `晋级` 需要赢；NRG `0-3` 已失效 |
+| `2-1` 晋级战 | MIBR vs Lynn Vision | BO3 | MIBR 的 `3-0` 已失效，只影响晋级池竞争 |
+| `1-2` 淘汰战 | TYLOO vs Sharks | BO3 | TYLOO `晋级` 必须连赢两轮，从这里开始 |
+| `1-2` 淘汰战 | Team Liquid vs HEROIC | BO3 | HEROIC `晋级` 必须连赢两轮，从这里开始 |
+| `1-2` 淘汰战 | THUNDER dOWNUNDER vs FlyQuest | BO3 | 非 Pick'em 直接项，但影响最终晋级名额 |
+
+Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HEROIC 四支活着，其中 M80/BIG 一场 BO3 即可兑现，TYLOO/HEROIC 必须先活过淘汰战再打 Round 5。Round 4 结束后会再确定 3 支晋级队和 3 支淘汰队，剩余 `2-2` 队伍进入 2026-06-05 的 Round 5。
+
+<details>
+<summary>展开 Round 3 逐场结果</summary>
+
+| 战绩池 | 对阵 | 结果 | Pick'em 影响 |
+| --- | --- | --- | --- |
+| `2-0` 晋级战 | GamerLegion vs BetBoom | BetBoom 2-0 GamerLegion | BetBoom `晋级` 已兑现；GamerLegion `3-0` 已错 |
+| `2-0` 晋级战 | M80 vs B8 | B8 2-0 M80 | B8 `晋级` 已兑现；M80 仍在 `晋级` 路径 |
+| `1-1` 调整战 | NRG vs FlyQuest | NRG 13-10 FlyQuest | NRG `0-3` 已错 |
+| `1-1` 调整战 | Sharks vs Lynn Vision | Lynn Vision 13-5 Sharks | 非 Pick'em 直接影响 |
+| `1-1` 调整战 | Team Liquid vs MIBR | MIBR 13-10 Team Liquid | MIBR `3-0` 已错，但仍可晋级 |
+| `1-1` 调整战 | THUNDER dOWNUNDER vs BIG | BIG 13-7 THUNDER dOWNUNDER | BIG `晋级` 仍在路上 |
+| `0-2` 淘汰战 | TYLOO vs SINNERS | TYLOO 2-0 SINNERS | TYLOO `晋级` 仍活着；SINNERS 淘汰 |
+| `0-2` 淘汰战 | Gaimin Gladiators vs HEROIC | HEROIC 2-0 Gaimin Gladiators | Gaimin Gladiators `0-3` 命中；HEROIC `晋级` 仍活着 |
+
+</details>
+
+### 赛前预测海报（归档）
+
+> 由 Codex + Claude Code 制作；队标为各战队官方 logo，仅用于赛前结果可视化展示。海报保留原始赛前选择，不随赛果回填。
 
 <div align="center">
 
@@ -346,43 +396,6 @@ CS-AI-bet/
 </div>
 
 > 这些是赛前快照，不是长期训练数据，也不替代赛前最新抓取、赔率与选手状态更新。
-
-## Round 3 赛果与 Round 4 赛程（2026-06-04 更新）
-
-2026-06-03 Stage 1 Round 3 已结束，两个 `2-0` 晋级名额和两个 `0-2` 淘汰名额已经决出；Round 4 将进入全 BO3 的 `2-1` 晋级战与 `1-2` 淘汰战。以下赛程以 [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 的 Stage 1 results/schedule 更新为主，并用 [HLTV Major hub](https://www.hltv.org/major) 交叉核对。
-
-### Round 3 结果
-
-| 战绩池 | 对阵 | 结果 | Pick'em 影响 |
-| --- | --- | --- | --- |
-| `2-0` 晋级战 | GamerLegion vs BetBoom | BetBoom 2-0 GamerLegion | BetBoom `晋级` 已兑现；GamerLegion `3-0` 已错 |
-| `2-0` 晋级战 | M80 vs B8 | B8 2-0 M80 | B8 `晋级` 已兑现；M80 仍在 `晋级` 路径 |
-| `1-1` 调整战 | NRG vs FlyQuest | NRG 13-10 FlyQuest | NRG `0-3` 已错 |
-| `1-1` 调整战 | Sharks vs Lynn Vision | Lynn Vision 13-5 Sharks | 非 Pick'em 直接影响 |
-| `1-1` 调整战 | Team Liquid vs MIBR | MIBR 13-10 Team Liquid | MIBR `3-0` 已错，但仍可晋级 |
-| `1-1` 调整战 | THUNDER dOWNUNDER vs BIG | BIG 13-7 THUNDER dOWNUNDER | BIG `晋级` 仍在路上 |
-| `0-2` 淘汰战 | TYLOO vs SINNERS | TYLOO 2-0 SINNERS | TYLOO `晋级` 仍活着；SINNERS 淘汰 |
-| `0-2` 淘汰战 | Gaimin Gladiators vs HEROIC | HEROIC 2-0 Gaimin Gladiators | Gaimin Gladiators `0-3` 命中；HEROIC `晋级` 仍活着 |
-
-### Round 4 赛程
-
-| 战绩池 | 对阵 | 赛制 | Pick'em 关注点 |
-| --- | --- | --- | --- |
-| `2-1` 晋级战 | MIBR vs Lynn Vision | BO3 | MIBR 的 `3-0` 已失效，只影响晋级池竞争 |
-| `2-1` 晋级战 | GamerLegion vs BIG | BO3 | BIG 是 `晋级` 关键战；GamerLegion 的 `3-0` 已失效 |
-| `2-1` 晋级战 | M80 vs NRG | BO3 | M80 `晋级` 需要赢；NRG `0-3` 已失效 |
-| `1-2` 淘汰战 | TYLOO vs Sharks | BO3 | TYLOO `晋级` 必须连赢两轮，从这里开始 |
-| `1-2` 淘汰战 | Team Liquid vs HEROIC | BO3 | HEROIC `晋级` 必须连赢两轮，从这里开始 |
-| `1-2` 淘汰战 | THUNDER dOWNUNDER vs FlyQuest | BO3 | 非 Pick'em 直接项，但影响最终晋级名额 |
-
-Round 3 后战绩池：
-
-- **3-0 / 已晋级**：BetBoom、B8
-- **2-1**：GamerLegion、M80、NRG、Lynn Vision、MIBR、BIG
-- **1-2**：FlyQuest、Sharks、Team Liquid、THUNDER dOWNUNDER、TYLOO、HEROIC
-- **0-3 / 已淘汰**：SINNERS、Gaimin Gladiators
-
-小结：目前 Pick'em 已锁定 3 个正向项（BetBoom、B8 晋级；Gaimin Gladiators 0-3），M80/BIG/TYLOO/HEROIC 仍有晋级机会；GamerLegion/MIBR 的 `3-0` 槽位和 NRG 的 `0-3` 槽位已经失效。Round 4 结束后将确定另外 3 支晋级队与 3 支淘汰队，剩余 `2-2` 队伍进入 Round 5。
 
 ## Day 1 真实赛果对照（2026-06-02）
 
