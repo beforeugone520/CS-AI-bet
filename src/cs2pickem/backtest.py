@@ -744,6 +744,8 @@ def _candidate_policy_names() -> tuple[str, ...]:
         "expert_category_votes",
         "model_category_probability",
         "market_category_signal",
+        "extreme_consensus_composite",
+        "status_model_market_composite",
     )
 
 
@@ -753,10 +755,7 @@ def _candidate_policy_report(
     slot_count: int,
     policy: str,
 ) -> Dict[str, object]:
-    ranked = sorted(
-        rows,
-        key=lambda row: _candidate_policy_sort_key(category, policy, row),
-    )
+    ranked = _rank_candidate_policy(category, list(rows), policy)
     top_rows = ranked[:slot_count]
     return {
         "policy": policy,
@@ -771,12 +770,38 @@ def _candidate_policy_report(
     }
 
 
+def _rank_candidate_policy(
+    category: str,
+    rows: List[Mapping[str, Any]],
+    policy: str,
+) -> List[Mapping[str, Any]]:
+    if policy in _candidate_composite_policy_weights():
+        scores = _candidate_composite_scores(category, rows, policy)
+        return [
+            row
+            for index, row in sorted(
+                enumerate(rows),
+                key=lambda indexed: _candidate_policy_sort_key(
+                    category,
+                    policy,
+                    indexed[1],
+                    scores[indexed[0]],
+                ),
+            )
+        ]
+    return sorted(
+        rows,
+        key=lambda row: _candidate_policy_sort_key(category, policy, row),
+    )
+
+
 def _candidate_policy_sort_key(
     category: str,
     policy: str,
     row: Mapping[str, Any],
+    score_override: float | None = None,
 ) -> tuple[bool, float, int, str]:
-    score = _candidate_policy_score(category, policy, row)
+    score = score_override if score_override is not None else _candidate_policy_score(category, policy, row)
     adjusted_rank = _optional_int(row.get("adjusted_rank"))
     return (
         score is None,
@@ -784,6 +809,65 @@ def _candidate_policy_sort_key(
         adjusted_rank if adjusted_rank is not None else 1_000_000,
         _team_key(row.get("team")),
     )
+
+
+def _candidate_composite_policy_weights() -> Dict[str, Dict[str, float]]:
+    return {
+        "extreme_consensus_composite": {
+            "status_adjusted_score": 0.15,
+            "confidence": 0.30,
+            "expert_category_votes": 0.35,
+            "market_category_signal": 0.20,
+        },
+        "status_model_market_composite": {
+            "status_adjusted_score": 0.40,
+            "model_category_probability": 0.35,
+            "market_category_signal": 0.25,
+        },
+    }
+
+
+def _candidate_composite_scores(
+    category: str,
+    rows: List[Mapping[str, Any]],
+    policy: str,
+) -> List[float | None]:
+    weights = _candidate_composite_policy_weights()[policy]
+    normalized = {
+        signal: _candidate_normalized_signal_scores(category, rows, signal)
+        for signal in weights
+    }
+    scores: List[float | None] = []
+    for index in range(len(rows)):
+        weighted_sum = 0.0
+        weight_sum = 0.0
+        for signal, weight in weights.items():
+            value = normalized[signal][index]
+            if value is None:
+                continue
+            weighted_sum += value * weight
+            weight_sum += weight
+        scores.append(weighted_sum / weight_sum if weight_sum else None)
+    return scores
+
+
+def _candidate_normalized_signal_scores(
+    category: str,
+    rows: List[Mapping[str, Any]],
+    signal: str,
+) -> List[float | None]:
+    values = [_candidate_policy_score(category, signal, row) for row in rows]
+    numeric = [value for value in values if value is not None]
+    if not numeric:
+        return [None for _ in values]
+    low = min(numeric)
+    high = max(numeric)
+    if high == low:
+        return [0.5 if value is not None else None for value in values]
+    return [
+        (value - low) / (high - low) if value is not None else None
+        for value in values
+    ]
 
 
 def _candidate_policy_score(

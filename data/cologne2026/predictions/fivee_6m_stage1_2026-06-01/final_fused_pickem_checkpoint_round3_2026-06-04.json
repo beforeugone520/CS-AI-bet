@@ -1828,6 +1828,38 @@
             "Gaimin Gladiators",
             "THUNDER dOWNUNDER"
           ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "extreme_consensus_composite",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "THUNDER dOWNUNDER",
+            "Gaimin Gladiators"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "status_model_market_composite",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "NRG",
+            "Gaimin Gladiators"
+          ]
         }
       ],
       "slot_count": 2
@@ -1922,6 +1954,36 @@
           "top_k_teams": [
             "MIBR",
             "BetBoom"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom"
+          ],
+          "policy": "extreme_consensus_composite",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "GamerLegion",
+            "BetBoom"
+          ]
+        },
+        {
+          "locked_teams": [],
+          "policy": "status_model_market_composite",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 2,
+          "top_k_locked": 0,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "MIBR",
+            "GamerLegion"
           ]
         }
       ],
@@ -2053,6 +2115,48 @@
             "B8",
             "SINNERS",
             "BIG"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "extreme_consensus_composite",
+          "selected_overlap": 5,
+          "top_k": 6,
+          "top_k_alive": 3,
+          "top_k_broken": 1,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "BetBoom",
+            "HEROIC",
+            "B8",
+            "M80",
+            "SINNERS"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "status_model_market_composite",
+          "selected_overlap": 6,
+          "top_k": 6,
+          "top_k_alive": 4,
+          "top_k_broken": 0,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "BetBoom",
+            "HEROIC",
+            "B8",
+            "M80",
+            "TYLOO"
           ]
         }
       ],
