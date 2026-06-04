@@ -8,6 +8,9 @@ from .data import read_matches_csv, read_teams_csv, write_json
 from .pickem import model_driven_pickems
 
 
+PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
+
+
 def evaluate_pickem_result(
     pickems: Mapping[str, Iterable[str]],
     result_rows: Iterable[Mapping[str, Any]],
@@ -19,7 +22,7 @@ def evaluate_pickem_result(
     correct_picks: List[Dict[str, str]] = []
     missed_picks: List[Dict[str, str]] = []
 
-    for category in ("3-0", "advance", "0-3"):
+    for category in PICKEM_CATEGORIES:
         teams = normalized_pickems.get(category, [])
         correct = []
         missed = []
@@ -62,7 +65,7 @@ def backtest_pickem_file(
 ) -> Dict[str, object]:
     with open(pickems_path, encoding="utf-8") as handle:
         payload = json.load(handle)
-    pickems = payload.get("pickems", payload)
+    pickems = _extract_pickems(payload)
     report = evaluate_pickem_result(pickems, read_matches_csv(results_path), pass_threshold=pass_threshold)
     report["pickems_path"] = pickems_path
     report["results_path"] = results_path
@@ -225,10 +228,10 @@ def _materialize_suite_case(case: Mapping[str, Any], base_dir: str) -> Dict[str,
         pickems_path = _resolve_suite_path(str(case["pickems_path"]), base_dir)
         with open(pickems_path, encoding="utf-8") as handle:
             payload = json.load(handle)
-        output["pickems"] = payload.get("pickems", payload)
+        output["pickems"] = _extract_pickems(payload)
         output["pickems_path"] = pickems_path
     else:
-        output["pickems"] = case.get("pickems", {})
+        output["pickems"] = _extract_pickems(case.get("pickems", {}))
     if case.get("results_path"):
         results_path = _resolve_suite_path(str(case["results_path"]), base_dir)
         output["results"] = read_matches_csv(results_path)
@@ -295,6 +298,61 @@ def _copy_optional_replay_settings(case: Mapping[str, Any], output: Dict[str, ob
 
 def _resolve_suite_path(path: str, base_dir: str) -> str:
     return path if os.path.isabs(path) else os.path.abspath(os.path.join(base_dir, path))
+
+
+def _extract_pickems(payload: Any) -> Dict[str, List[str]]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("pickems payload must be a JSON object")
+    if isinstance(payload.get("pickems"), Mapping):
+        return _normalize_pickem_mapping(payload["pickems"])
+    if "picks" in payload:
+        picks = payload["picks"]
+        if isinstance(picks, Mapping):
+            return _normalize_pickem_mapping(picks)
+        if isinstance(picks, list):
+            return _normalize_pickem_rows(picks)
+    return _normalize_pickem_mapping(payload)
+
+
+def _normalize_pickem_mapping(raw_pickems: Mapping[str, Any]) -> Dict[str, List[str]]:
+    normalized: Dict[str, List[str]] = {}
+    for category in PICKEM_CATEGORIES:
+        normalized[category] = []
+        for item in _pickem_items(raw_pickems.get(category, [])):
+            team = _pickem_team(item)
+            if team:
+                normalized[category].append(team)
+    return normalized
+
+
+def _normalize_pickem_rows(rows: Iterable[Any]) -> Dict[str, List[str]]:
+    normalized = {category: [] for category in PICKEM_CATEGORIES}
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        category = str(row.get("category") or "").strip()
+        if category not in normalized:
+            continue
+        team = _pickem_team(row)
+        if team:
+            normalized[category].append(team)
+    return normalized
+
+
+def _pickem_items(value: Any) -> Iterable[Any]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, Mapping):
+        return [value]
+    if isinstance(value, Iterable):
+        return value
+    return []
+
+
+def _pickem_team(item: Any) -> str:
+    if isinstance(item, Mapping):
+        return _team_name(item.get("team") or item.get("name") or item.get("team_name"))
+    return _team_name(item)
 
 
 def _category_matches(category: str, row: Mapping[str, Any] | None) -> bool:

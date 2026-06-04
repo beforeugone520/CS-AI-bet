@@ -87,6 +87,60 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["correct"], 3)
         self.assertTrue(report["passed"])
 
+    def test_backtest_cli_reads_final_fused_pickem_json(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pickems_path = os.path.join(tmpdir, "final-fused-pickems.json")
+            results_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "backtest.json")
+            with open(pickems_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "weights": {"experts": 0.3, "market": 0.2, "model": 0.5},
+                        "picks": {
+                            "3-0": [{"team": "Alpha", "confidence": 0.81}],
+                            "advance": [{"team": "Bravo", "confidence": 0.74}],
+                            "0-3": [{"team": "Charlie", "confidence": 0.69}],
+                        },
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                results_path,
+                [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 3, "losses": 2},
+                    {"team": "Charlie", "wins": 0, "losses": 3},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "backtest-pickem",
+                "--pickems",
+                pickems_path,
+                "--results",
+                results_path,
+                "--pass-threshold",
+                "3",
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["correct"], 3)
+        self.assertEqual(report["total_picks"], 3)
+        self.assertTrue(report["passed"])
+
     def test_evaluate_pickem_backtest_suite_reports_historical_pass_rate(self):
         from cs2pickem.backtest import evaluate_pickem_backtest_suite
 

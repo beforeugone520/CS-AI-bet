@@ -397,11 +397,50 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 
 > 这些是赛前快照，不是长期训练数据，也不替代赛前最新抓取、赔率与选手状态更新。
 
-## Day 1 真实赛果对照（2026-06-02）
+## 回测记录与诊断
 
-2026-06-02 IEM Cologne 2026 Stage 1 首日开打，瑞士轮前两轮共 16 场 BO1 全部结束。下面用昨日真实赛果回测上文的赛前预测。赛果以 [Liquipedia](https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne/Stage_1) 为准，并经 [dfrag.gg](https://dfrag.gg/counterstrike/news/iem-cologne-major-2026-schedule-results-streams-standings/) / [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 赛后 recap 交叉核对——逐场比分两源一致；战绩分组按 16 队瑞士轮规则确定性推导（已修正个别媒体的 standings 笔误）。
+这里把回测拆成三层，避免把“单场胜负预测”“Pick'em 槽位中途状态”和“最终 Pick'em 命中”混在一起。Day 1 逐场赛果以 [Liquipedia](https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne/Stage_1) 为准，并经 [dfrag.gg](https://dfrag.gg/counterstrike/news/iem-cologne-major-2026-schedule-results-streams-standings/) / [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 赛后 recap 交叉核对；Round 3/Round 4 状态沿用上文赛程源。
 
-### 首轮 8 场：单场预测 vs 真实
+### 回测口径
+
+| 层级 | 评估对象 | 当前读数 | 结论用途 |
+| --- | --- | --- | --- |
+| 单场 forecast 回测 | Day 1 首轮 8 场 BO1；`avoid` 不计入有效下注 | 有效下注 **3/7 ≈ 43%**；计入规避方向为 **4/8 = 50%** | 诊断单场模型、市场修正和低置信规避是否合理 |
+| Pick'em 槽位中途回测 | 赛前 `3-0 / 晋级 / 0-3` 槽位对照 Round 3 后战绩 | **3 个已兑现**、**4 个仍可兑现**、**3 个槽位已失效** | 追踪提交清单的兑现路径，但不提前计算最终通过率 |
+| 最终 Pick'em 回测 | Stage 1 完赛后的最终 Swiss standings | 待 Round 5 结束后用 `backtest-pickem` 计算 | 判断是否达到 pass threshold，并进入 readiness 审计 |
+
+### 当前诊断
+
+- 单场层面：首轮有效下注只命中 3/7，说明这版模型尚不能作为独立投注信号；`B8 vs TYLOO` 的低置信规避虽然方向偏对，但正确地避免把 50.9% 当成强信号。
+- 失误结构：MIBR、HEROIC、BIG 三个“模型 + 市场都偏看好”的强队同时爆冷，暴露出 BO1 方差、热门队低估下限、弱队短期状态冲击没有被充分惩罚。
+- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
+- 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果/地图池不确定性惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
+
+### 完赛后回测入口
+
+Stage 1 全部结束后，先整理最终瑞士轮战绩 CSV，字段至少包含 `team,wins,losses`。不要用 Round 3/Round 4 的中途战绩喂给最终回测。
+
+```csv
+team,wins,losses
+BetBoom,3,0
+B8,3,0
+...
+```
+
+然后对 README 归档的最终融合选择直接打分：
+
+```bash
+PYTHONPATH=src python3 -m cs2pickem.cli backtest-pickem \
+  --pickems data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json \
+  --results data/cologne2026/source_inputs/stage1_final_standings_2026-06-XX.csv \
+  --pass-threshold 5 \
+  --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_backtest_2026-06-XX.json
+```
+
+`backtest-pickem` 会把 `3-0`、`advance`、`0-3` 分开计分，并输出总命中数、是否达到 5 分通过线，以及每个槽位的正确/失效队伍。
+
+<details>
+<summary>展开 Day 1 首轮单场明细</summary>
 
 逐场对应 `forecast_report.json` 的赛前 fixtures 预测（调整后胜率为含真实赔率的融合值）。
 
@@ -416,18 +455,16 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 | BetBoom vs Gaimin Gladiators | **BetBoom**（55.5%） | BetBoom 13–4（Dust II） | ✅ |
 | BIG vs Liquid | BIG（66.6%） | Liquid 13–10（Nuke） | ❌ 爆冷 |
 
-- 有效下注 7 场（B8/TYLOO 已按低置信规避）命中 **3/7 ≈ 43%**：M80、GamerLegion、BetBoom 命中；SINNERS、MIBR、HEROIC、BIG 失误。计入规避局的方向判断则为 4/8 = 50%。
-- 失误集中在“模型 + 市场都看好的传统强队”：MIBR、HEROIC、BIG 三支被看好的队首轮全部被 THUNDERdOWNUNDER、Sharks、Liquid 爆冷，连模型最自信的一场（BIG 66.6%）也翻车。这与本项目既有判断一致——模型尚未达到可靠门槛，对强队赔率高度敏感，最终选择仍主要由专家/市场融合托底。
+</details>
 
-### 两轮后战绩与 Pick'em 槽位校验
+<details>
+<summary>展开 Day 1 两轮后 Pick'em 槽位明细</summary>
 
 首日两轮结束后（瑞士轮规则推导）：
 
 - **2-0**：B8、GamerLegion、M80、BetBoom
 - **1-1**：THUNDERdOWNUNDER、FlyQuest、Sharks、Liquid、Lynn Vision、MIBR、NRG、BIG
 - **0-2**：HEROIC、TYLOO、SINNERS、Gaimin Gladiators
-
-对照赛前最终融合答案单：
 
 | 预测槽位 | 队伍 | Day 1 战绩 | 早期校验 |
 | --- | --- | --- | --- |
@@ -442,7 +479,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 | `0-3` | Gaimin Gladiators | 0-2 | ✅ 走在 0-3 轨道 |
 | `0-3` | NRG | 1-1 | ❌ 0-3 已无可能（次轮胜 SINNERS） |
 
-小结：晋级组 6 支里 3 支（BetBoom / B8 / M80）开局 2-0 强势兑现，BIG 尚存机会，HEROIC / TYLOO 两连败濒危；3-0 组 GamerLegion 在轨、MIBR 出局；0-3 组 Gaimin 在轨、NRG 偏离。最终 `3-0 / 晋级 / 0-3` 仍需 Round 3-5（6-03 起）决出，本节为中途快照，会随赛程推进刷新。
+</details>
 
 ## 设计原则
 
