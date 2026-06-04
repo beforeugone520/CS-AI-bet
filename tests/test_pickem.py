@@ -149,6 +149,47 @@ class PickemTests(unittest.TestCase):
         self.assertEqual(report["stage_strategy"]["stage"], "challengers")
         self.assertIn("BO1", report["stage_strategy"]["focus"])
 
+    def test_model_driven_pickem_uses_fixture_player_status_for_risk_details(self):
+        from cs2pickem.pickem import model_driven_pickems
+
+        report = model_driven_pickems(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "team1_player_form_score": -0.04,
+                    "team1_player_form_trend": -0.03,
+                    "team1_player_sample_confidence": 0.2,
+                    "team1_substitute_flag": 1,
+                    "team2_player_form_score": 0.05,
+                    "team2_player_form_trend": 0.01,
+                    "team2_player_sample_confidence": 0.8,
+                    "team2_substitute_flag": 0,
+                }
+            ],
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=20,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+
+        alpha = next(entry for entry in report["pickem_risk_details"]["advance"] if entry["team"] == "Alpha")
+        bravo = next(entry for entry in report["pickem_risk_details"]["advance"] if entry["team"] == "Bravo")
+        self.assertEqual(alpha["player_sample_confidence"], 0.2)
+        self.assertEqual(alpha["substitute_flag"], 1)
+        self.assertEqual(alpha["player_form_score"], -0.04)
+        self.assertEqual(alpha["player_form_trend"], -0.03)
+        self.assertTrue(alpha["player_status_risk"])
+        self.assertEqual(bravo["player_sample_confidence"], 0.8)
+        self.assertEqual(bravo["substitute_flag"], 0)
+        self.assertFalse(bravo["player_status_risk"])
+
     def test_model_driven_pickem_applies_market_odds_adjustment_to_swiss_probabilities(self):
         from cs2pickem.pickem import model_driven_pickems
 

@@ -27,9 +27,10 @@ def model_driven_pickems(
     fixture_rows: Optional[Iterable[Mapping[str, Any]]] = None,
 ) -> Dict[str, object]:
     teams_data = {str(row["team"]): dict(row) for row in team_rows}
+    materialized_fixtures = [dict(row) for row in (fixture_rows or [])]
+    _apply_fixture_player_status_to_teams(teams_data, materialized_fixtures)
     teams = [TeamSeed(name, int(row.get("seed", index + 1))) for index, (name, row) in enumerate(teams_data.items())]
     teams.sort(key=lambda team: team.seed)
-    materialized_fixtures = [dict(row) for row in (fixture_rows or [])]
     fixture_odds = _fixture_odds_lookup(materialized_fixtures)
     fixture_market_signals = _fixture_market_signal_lookup(materialized_fixtures)
     team_market_strengths = _team_market_strength_lookup(materialized_fixtures)
@@ -196,6 +197,31 @@ def _fixture_from_team_rows(team1: Mapping[str, Any], team2: Mapping[str, Any], 
             }
         )
     return fixture
+
+
+def _apply_fixture_player_status_to_teams(
+    teams_data: Dict[str, Dict[str, Any]],
+    fixtures: Iterable[Mapping[str, Any]],
+) -> None:
+    for fixture in fixtures:
+        for prefix in ("team1", "team2"):
+            team = str(fixture.get(prefix) or "")
+            if not team or team not in teams_data:
+                continue
+            status = _fixture_player_status(fixture, prefix)
+            for key, value in status.items():
+                if value not in (None, ""):
+                    teams_data[team][key] = value
+
+
+def _fixture_player_status(fixture: Mapping[str, Any], prefix: str) -> Dict[str, Any]:
+    return {
+        "substitute_flag": fixture.get(f"{prefix}_substitute_flag"),
+        "player_sample": fixture.get(f"{prefix}_player_sample"),
+        "player_form_score": fixture.get(f"{prefix}_player_form_score"),
+        "player_form_trend": fixture.get(f"{prefix}_player_form_trend"),
+        "player_sample_confidence": fixture.get(f"{prefix}_player_sample_confidence"),
+    }
 
 
 def _sample_probabilities(cache: Dict[str, float], teams: list[TeamSeed], predictor) -> Dict[str, float]:
