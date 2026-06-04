@@ -87,6 +87,118 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["correct"], 3)
         self.assertTrue(report["passed"])
 
+    def test_evaluate_forecast_result_reports_accuracy_and_player_form_diagnostics(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.61,
+                    "confidence_margin": 0.11,
+                    "low_confidence": False,
+                    "player_form_summary": {"diff": {"score": 0.08, "trend": 0.03, "sample_confidence": 0.6}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.57,
+                    "confidence_margin": 0.07,
+                    "low_confidence": False,
+                    "player_form_summary": {"diff": {"score": 0.12, "trend": -0.05, "sample_confidence": -0.4}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "avoid",
+                    "adjusted_probability_team1": 0.49,
+                    "confidence_margin": 0.01,
+                    "low_confidence": True,
+                    "player_form_summary": {"diff": {"score": -0.02, "trend": 0.0, "sample_confidence": 0.0}},
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "score": "13-8", "map": "Mirage"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Delta", "score": "16-14", "map": "Ancient", "note": "OT"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Foxtrot"},
+            ],
+        )
+
+        self.assertEqual(report["matched"], 3)
+        self.assertEqual(report["actionable_picks"], 2)
+        self.assertEqual(report["correct_actionable"], 1)
+        self.assertEqual(report["avoid_picks"], 1)
+        self.assertEqual(report["avoid_directional_correct"], 1)
+        self.assertEqual(report["model_upsets"], 1)
+        self.assertAlmostEqual(report["actionable_accuracy"], 0.5)
+        self.assertAlmostEqual(report["directional_accuracy"], 2 / 3)
+        self.assertAlmostEqual(report["player_form_diagnostics"]["correct_actionable_avg_score_diff"], 0.08)
+        self.assertAlmostEqual(report["player_form_diagnostics"]["missed_actionable_avg_score_diff"], 0.12)
+        self.assertEqual(report["matches"][0]["score"], "13-8")
+        self.assertEqual(report["matches"][0]["map"], "Mirage")
+        self.assertEqual(report["matches"][1]["result_note"], "OT")
+        self.assertEqual(report["matches"][1]["correct"], False)
+        self.assertEqual(report["matches"][1]["directional_pick"], "Charlie")
+
+    def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            forecast_path = os.path.join(tmpdir, "forecast.json")
+            results_path = os.path.join(tmpdir, "results.csv")
+            output_path = os.path.join(tmpdir, "forecast-backtest.json")
+            with open(forecast_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "predictions": [
+                            {
+                                "date": "2026-06-02",
+                                "team1": "Alpha",
+                                "team2": "Bravo",
+                                "pick": "Alpha",
+                                "adjusted_probability_team1": 0.61,
+                                "player_form_summary": {"diff": {"score": 0.08}},
+                            }
+                        ]
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                results_path,
+                [{"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha"}],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "backtest-forecast",
+                "--forecast-report",
+                forecast_path,
+                "--results",
+                results_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["matched"], 1)
+        self.assertEqual(report["correct_actionable"], 1)
+        self.assertEqual(report["forecast_report_path"], forecast_path)
+        self.assertEqual(report["results_path"], results_path)
+
     def test_backtest_cli_reads_final_fused_pickem_json(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

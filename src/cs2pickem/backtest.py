@@ -74,6 +74,99 @@ def backtest_pickem_file(
     return report
 
 
+def evaluate_forecast_result(
+    predictions: Iterable[Mapping[str, Any]],
+    result_rows: Iterable[Mapping[str, Any]],
+) -> Dict[str, object]:
+    materialized_predictions = [dict(row) for row in predictions]
+    lookup = _forecast_result_lookup(result_rows)
+    match_reports: List[Dict[str, object]] = []
+    unmatched_predictions: List[Dict[str, object]] = []
+
+    for prediction in materialized_predictions:
+        result = _lookup_forecast_result(prediction, lookup)
+        if result is None:
+            unmatched_predictions.append(_forecast_prediction_identity(prediction))
+            continue
+        team1 = _team_name(prediction.get("team1"))
+        team2 = _team_name(prediction.get("team2"))
+        winner = _team_name(result.get("winner"))
+        probability_team1 = _float(
+            prediction.get("adjusted_probability_team1"),
+            _float(prediction.get("model_probability_team1"), 0.5),
+        )
+        directional_pick = team1 if probability_team1 >= 0.5 else team2
+        pick = _team_name(prediction.get("pick"))
+        actionable = pick.lower() != "avoid" and bool(pick)
+        correct = actionable and _team_key(pick) == _team_key(winner)
+        directional_correct = _team_key(directional_pick) == _team_key(winner)
+        player_form_diff = _player_form_diff(prediction)
+        match_reports.append(
+            {
+                "date": prediction.get("date"),
+                "team1": team1,
+                "team2": team2,
+                "winner": winner,
+                "score": result.get("score"),
+                "map": result.get("map"),
+                "result_note": result.get("note"),
+                "result_source": result.get("source"),
+                "pick": pick or None,
+                "actionable": actionable,
+                "correct": correct if actionable else None,
+                "directional_pick": directional_pick,
+                "directional_correct": directional_correct,
+                "adjusted_probability_team1": probability_team1,
+                "confidence_margin": prediction.get("confidence_margin"),
+                "low_confidence": bool(prediction.get("low_confidence")),
+                "market_adjustment_applied": bool(prediction.get("market_adjustment_applied")),
+                "player_form_diff": player_form_diff,
+            }
+        )
+
+    actionable_matches = [row for row in match_reports if row["actionable"]]
+    avoid_matches = [row for row in match_reports if not row["actionable"]]
+    correct_actionable = sum(1 for row in actionable_matches if row["correct"])
+    directional_correct = sum(1 for row in match_reports if row["directional_correct"])
+    return {
+        "forecast_predictions": len(materialized_predictions),
+        "matched": len(match_reports),
+        "unmatched": len(unmatched_predictions),
+        "unmatched_predictions": unmatched_predictions,
+        "actionable_picks": len(actionable_matches),
+        "correct_actionable": correct_actionable,
+        "missed_actionable": len(actionable_matches) - correct_actionable,
+        "actionable_accuracy": correct_actionable / len(actionable_matches) if actionable_matches else 0.0,
+        "avoid_picks": len(avoid_matches),
+        "avoid_directional_correct": sum(1 for row in avoid_matches if row["directional_correct"]),
+        "directional_correct": directional_correct,
+        "directional_accuracy": directional_correct / len(match_reports) if match_reports else 0.0,
+        "model_upsets": sum(1 for row in match_reports if not row["directional_correct"]),
+        "low_confidence_avoids": sum(1 for row in avoid_matches if row["low_confidence"]),
+        "market_adjusted_matches": sum(1 for row in match_reports if row["market_adjustment_applied"]),
+        "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
+        "matches": match_reports,
+    }
+
+
+def backtest_forecast_file(
+    forecast_report_path: str,
+    results_path: str,
+    output_path: str | None = None,
+) -> Dict[str, object]:
+    with open(forecast_report_path, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    predictions = payload.get("predictions", payload)
+    if not isinstance(predictions, list):
+        raise ValueError("forecast report must be a list or an object with a predictions list")
+    report = evaluate_forecast_result(predictions, read_matches_csv(results_path))
+    report["forecast_report_path"] = forecast_report_path
+    report["results_path"] = results_path
+    if output_path:
+        write_json(output_path, report)
+    return report
+
+
 def backtest_pickem_suite_file(
     suite_path: str,
     output_path: str | None = None,
@@ -300,6 +393,84 @@ def _resolve_suite_path(path: str, base_dir: str) -> str:
     return path if os.path.isabs(path) else os.path.abspath(os.path.join(base_dir, path))
 
 
+def _forecast_result_lookup(
+    result_rows: Iterable[Mapping[str, Any]],
+) -> Dict[tuple[str, str, str], List[Mapping[str, Any]]]:
+    lookup: Dict[tuple[str, str, str], List[Mapping[str, Any]]] = {}
+    for row in result_rows:
+        key = _forecast_match_key(row)
+        lookup.setdefault(key, []).append(row)
+        if key[0]:
+            fallback_key = ("", key[1], key[2])
+            lookup.setdefault(fallback_key, []).append(row)
+    return lookup
+
+
+def _lookup_forecast_result(
+    prediction: Mapping[str, Any],
+    lookup: Mapping[tuple[str, str, str], List[Mapping[str, Any]]],
+) -> Mapping[str, Any] | None:
+    prediction_key = _forecast_match_key(prediction)
+    for key in (prediction_key, ("", prediction_key[1], prediction_key[2])):
+        candidates = lookup.get(key, [])
+        if len(candidates) == 1:
+            return candidates[0]
+    return None
+
+
+def _forecast_match_key(row: Mapping[str, Any]) -> tuple[str, str, str]:
+    teams = sorted((_team_key(row.get("team1")), _team_key(row.get("team2"))))
+    return (str(row.get("date") or "")[:10], teams[0], teams[1])
+
+
+def _forecast_prediction_identity(prediction: Mapping[str, Any]) -> Dict[str, object]:
+    return {
+        "date": prediction.get("date"),
+        "team1": prediction.get("team1"),
+        "team2": prediction.get("team2"),
+    }
+
+
+def _forecast_player_form_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
+    materialized = list(match_reports)
+    correct_actionable = [row for row in materialized if row.get("actionable") and row.get("correct")]
+    missed_actionable = [row for row in materialized if row.get("actionable") and not row.get("correct")]
+    directional_correct = [row for row in materialized if row.get("directional_correct")]
+    directional_missed = [row for row in materialized if not row.get("directional_correct")]
+    return {
+        "available_matches": sum(1 for row in materialized if row.get("player_form_diff")),
+        "correct_actionable_avg_score_diff": _avg_player_form_value(correct_actionable, "score"),
+        "missed_actionable_avg_score_diff": _avg_player_form_value(missed_actionable, "score"),
+        "directional_correct_avg_score_diff": _avg_player_form_value(directional_correct, "score"),
+        "directional_missed_avg_score_diff": _avg_player_form_value(directional_missed, "score"),
+        "directional_missed_avg_trend_diff": _avg_player_form_value(directional_missed, "trend"),
+        "directional_missed_avg_sample_confidence_diff": _avg_player_form_value(directional_missed, "sample_confidence"),
+    }
+
+
+def _avg_player_form_value(rows: Iterable[Mapping[str, Any]], key: str) -> float | None:
+    values = []
+    for row in rows:
+        diff = row.get("player_form_diff")
+        if isinstance(diff, Mapping) and diff.get(key) not in (None, ""):
+            values.append(_float(diff.get(key), 0.0))
+    return sum(values) / len(values) if values else None
+
+
+def _player_form_diff(prediction: Mapping[str, Any]) -> Dict[str, float]:
+    summary = prediction.get("player_form_summary")
+    if not isinstance(summary, Mapping):
+        return {}
+    diff = summary.get("diff")
+    if not isinstance(diff, Mapping):
+        return {}
+    return {
+        "score": _float(diff.get("score"), 0.0),
+        "trend": _float(diff.get("trend"), 0.0),
+        "sample_confidence": _float(diff.get("sample_confidence"), 0.0),
+    }
+
+
 def _extract_pickems(payload: Any) -> Dict[str, List[str]]:
     if not isinstance(payload, Mapping):
         raise ValueError("pickems payload must be a JSON object")
@@ -371,6 +542,17 @@ def _category_matches(category: str, row: Mapping[str, Any] | None) -> bool:
 
 def _team_name(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _team_key(value: Any) -> str:
+    return _team_name(value).lower().replace(" ", "")
+
+
+def _float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _int(value: Any) -> int:

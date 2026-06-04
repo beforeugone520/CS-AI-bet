@@ -3,7 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 
-from .backtest import backtest_pickem_file, backtest_pickem_suite_file, replay_pickem_backtest_suite_file
+from .backtest import (
+    backtest_forecast_file,
+    backtest_pickem_file,
+    backtest_pickem_suite_file,
+    replay_pickem_backtest_suite_file,
+)
 from .bp import merge_bp_file
 from .data import read_matches_csv, read_teams_csv, write_json
 from .export import build_pickem_answer_sheet_file
@@ -89,6 +94,13 @@ def main() -> int:
     backtest_parser.add_argument("--results", required=True, help="CSV with team,wins,losses final Swiss standings")
     backtest_parser.add_argument("--pass-threshold", type=int, default=5, help="minimum correct picks considered a pass")
     backtest_parser.add_argument("--output", help="optional JSON output path")
+    forecast_backtest_parser = subparsers.add_parser(
+        "backtest-forecast",
+        help="score single-match forecast report against actual match results",
+    )
+    forecast_backtest_parser.add_argument("--forecast-report", required=True, help="JSON output from forecast command")
+    forecast_backtest_parser.add_argument("--results", required=True, help="CSV with date,team1,team2,winner actual results")
+    forecast_backtest_parser.add_argument("--output", help="optional JSON output path")
     backtest_suite_parser = subparsers.add_parser("backtest-pickem-suite", help="score multiple historical Pick'em cases and report pass rate")
     backtest_suite_parser.add_argument("--suite", required=True, help="JSON list or {cases: [...]} with pickems/results or pickems_path/results_path")
     backtest_suite_parser.add_argument("--pass-threshold", type=int, default=5, help="minimum correct picks considered a case pass")
@@ -329,6 +341,13 @@ def main() -> int:
             results_path=args.results,
             output_path=None,
             pass_threshold=args.pass_threshold,
+        )
+        return _emit(report, args.output)
+    if args.command == "backtest-forecast":
+        report = backtest_forecast_file(
+            forecast_report_path=args.forecast_report,
+            results_path=args.results,
+            output_path=None,
         )
         return _emit(report, args.output)
     if args.command == "backtest-pickem-suite":
