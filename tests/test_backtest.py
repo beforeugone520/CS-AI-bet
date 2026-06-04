@@ -621,6 +621,53 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(candidates[0.65]["avoided_wins"], 0)
         self.assertAlmostEqual(candidates[0.65]["actionable_accuracy"], 2 / 3)
 
+    def test_evaluate_forecast_result_reports_avoid_reason_diagnostics(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "avoid",
+                    "avoid_reason": "low_confidence",
+                    "adjusted_probability_team1": 0.51,
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "avoid",
+                    "avoid_reason": "market_favorite_player_form_counter_signal",
+                    "adjusted_probability_team1": 0.62,
+                    "player_form_summary": {"diff": {"score": -0.04}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.61,
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Delta"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+            ],
+        )
+
+        self.assertIn("avoid_reason_diagnostics", report)
+        self.assertEqual(report["matches"][0]["avoid_reason"], "low_confidence")
+        diagnostics = report["avoid_reason_diagnostics"]
+        self.assertEqual(diagnostics["low_confidence"]["avoid_picks"], 1)
+        self.assertEqual(diagnostics["low_confidence"]["avoided_wins"], 1)
+        self.assertEqual(diagnostics["low_confidence"]["avoided_losses"], 0)
+        self.assertEqual(diagnostics["market_favorite_player_form_counter_signal"]["avoid_picks"], 1)
+        self.assertEqual(diagnostics["market_favorite_player_form_counter_signal"]["avoided_wins"], 0)
+        self.assertEqual(diagnostics["market_favorite_player_form_counter_signal"]["avoided_losses"], 1)
+
     def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

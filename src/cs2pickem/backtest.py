@@ -202,6 +202,7 @@ def evaluate_forecast_result(
         actionable = pick.lower() != "avoid" and bool(pick)
         correct = actionable and _team_key(pick) == _team_key(winner)
         directional_correct = _team_key(directional_pick) == _team_key(winner)
+        avoid_reason = _forecast_avoid_reason(prediction, actionable)
         player_form_diff = _player_form_diff(prediction)
         player_form_sample_confidence = _player_form_sample_confidence(prediction)
         confidence_margin = _float(prediction.get("confidence_margin"), abs(probability_team1 - 0.5))
@@ -230,6 +231,7 @@ def evaluate_forecast_result(
                 "result_source": result.get("source"),
                 "pick": pick or None,
                 "actionable": actionable,
+                "avoid_reason": avoid_reason,
                 "correct": correct if actionable else None,
                 "directional_pick": directional_pick,
                 "directional_correct": directional_correct,
@@ -271,6 +273,7 @@ def evaluate_forecast_result(
         "model_upsets": sum(1 for row in match_reports if not row["directional_correct"]),
         "low_confidence_avoids": sum(1 for row in avoid_matches if row["low_confidence"]),
         "market_adjusted_matches": sum(1 for row in match_reports if row["market_adjustment_applied"]),
+        "avoid_reason_diagnostics": _forecast_avoid_reason_diagnostics(match_reports),
         "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
         "favorite_upset_diagnostics": _forecast_favorite_upset_diagnostics(match_reports),
         "policy_diagnostics": _forecast_policy_diagnostics(match_reports),
@@ -673,6 +676,46 @@ def _forecast_prediction_identity(prediction: Mapping[str, Any]) -> Dict[str, ob
         "team1": prediction.get("team1"),
         "team2": prediction.get("team2"),
     }
+
+
+def _forecast_avoid_reason(prediction: Mapping[str, Any], actionable: bool) -> str | None:
+    if actionable:
+        return None
+    reason = str(prediction.get("avoid_reason") or "").strip()
+    if reason:
+        return reason
+    if prediction.get("low_confidence"):
+        return "low_confidence"
+    return "avoid"
+
+
+def _forecast_avoid_reason_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, object]]:
+    diagnostics: Dict[str, Dict[str, object]] = {}
+    for row in match_reports:
+        if row.get("actionable"):
+            continue
+        reason = str(row.get("avoid_reason") or "avoid")
+        bucket = diagnostics.setdefault(
+            reason,
+            {
+                "avoid_picks": 0,
+                "avoided_wins": 0,
+                "avoided_losses": 0,
+            },
+        )
+        bucket["avoid_picks"] = int(bucket["avoid_picks"]) + 1
+        if row.get("directional_correct"):
+            bucket["avoided_wins"] = int(bucket["avoided_wins"]) + 1
+        else:
+            bucket["avoided_losses"] = int(bucket["avoided_losses"]) + 1
+    for bucket in diagnostics.values():
+        avoid_picks = int(bucket["avoid_picks"])
+        bucket["avoided_loss_rate"] = (
+            int(bucket["avoided_losses"]) / avoid_picks
+            if avoid_picks
+            else 0.0
+        )
+    return diagnostics
 
 
 def _forecast_favorite_upset_diagnostics(
