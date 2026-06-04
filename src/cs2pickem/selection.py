@@ -21,32 +21,65 @@ class FeatureSelector:
         correlation_threshold: float = 0.8,
         top_k: int = 25,
         excluded_feature_names: Sequence[str] | None = None,
+        required_feature_names: Sequence[str] | None = None,
     ) -> None:
         self.variance_threshold = variance_threshold
         self.correlation_threshold = correlation_threshold
         self.top_k = top_k
         self.excluded_feature_names = set(excluded_feature_names or [])
+        self.required_feature_names = list(required_feature_names or [])
+        self._required_feature_name_set = set(self.required_feature_names)
         self.importance_scores: Dict[str, float] = {}
         self.selected_indexes: List[int] = []
         self.selected_feature_names: List[str] = []
+        self.required_feature_report: Dict[str, List[str]] = {
+            "requested": list(self.required_feature_names),
+            "available": [],
+            "selected": [],
+            "unavailable": list(self.required_feature_names),
+        }
 
     def fit(self, rows: Sequence[Sequence[float]], labels: Sequence[int], feature_names: Sequence[str]) -> "FeatureSelector":
         if not rows:
             self.selected_indexes = []
             self.selected_feature_names = []
             self.importance_scores = {}
+            self.required_feature_report = {
+                "requested": list(self.required_feature_names),
+                "available": [],
+                "selected": [],
+                "unavailable": list(self.required_feature_names),
+            }
             return self
 
         surviving = self._excluded_feature_filter(feature_names, self._variance_filter(rows))
-        surviving = self._correlation_filter(rows, surviving)
+        required = [index for index in surviving if feature_names[index] in self._required_feature_name_set]
+        optional = self._correlation_filter(
+            rows,
+            [index for index in surviving if feature_names[index] not in self._required_feature_name_set],
+        )
+        surviving = required + optional
         label_values = [float(label) for label in labels]
         self.importance_scores = {
             feature_names[index]: abs(_pearson(_column(rows, index), label_values))
             for index in surviving
         }
-        ordered = sorted(surviving, key=lambda index: (-self.importance_scores[feature_names[index]], index))
-        self.selected_indexes = ordered[: self.top_k]
+        required_ordered = sorted(required, key=lambda index: (-self.importance_scores[feature_names[index]], index))
+        optional_ordered = sorted(optional, key=lambda index: (-self.importance_scores[feature_names[index]], index))
+        if len(required_ordered) >= self.top_k:
+            self.selected_indexes = required_ordered[: self.top_k]
+        else:
+            self.selected_indexes = optional_ordered[: self.top_k - len(required_ordered)] + required_ordered
         self.selected_feature_names = [feature_names[index] for index in self.selected_indexes]
+        available_names = _ordered_required_names(self.required_feature_names, {feature_names[index] for index in required})
+        selected_required_names = _ordered_required_names(self.required_feature_names, set(self.selected_feature_names))
+        unavailable_names = [name for name in self.required_feature_names if name not in set(available_names)]
+        self.required_feature_report = {
+            "requested": list(self.required_feature_names),
+            "available": available_names,
+            "selected": selected_required_names,
+            "unavailable": unavailable_names,
+        }
         return self
 
     def transform(self, rows: Sequence[Sequence[float]]) -> SelectedDataset:
@@ -84,6 +117,10 @@ class FeatureSelector:
 
 def _column(rows: Sequence[Sequence[float]], index: int) -> List[float]:
     return [float(row[index]) for row in rows]
+
+
+def _ordered_required_names(required_names: Sequence[str], names: set[str]) -> List[str]:
+    return [name for name in required_names if name in names]
 
 
 def _variance(values: Sequence[float]) -> float:

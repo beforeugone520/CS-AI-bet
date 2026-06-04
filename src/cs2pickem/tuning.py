@@ -9,7 +9,7 @@ from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .models import default_ensemble
 from .odds import market_probability_from_row
-from .reliability import UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
+from .reliability import PLAYER_STATUS_REQUIRED_FEATURES, UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
 from .selection import FeatureSelector
 from .splitting import time_series_folds, time_series_split
 
@@ -66,13 +66,19 @@ def optimize_match_predictions(
         candidate_split = split_cache[inject_elo]
         cache_key = (top_k, inject_elo)
         if cache_key not in prepared_cache:
-            prepared_cache[cache_key] = _prepare_split_matrices(candidate_split.train, candidate_split.validation, candidate_split.test, top_k=top_k)
-            prepared_cache[cache_key]["feature_preparation"] = feature_preparation_cache[inject_elo]
+            prepared_cache[cache_key] = _prepare_split_matrices(
+                candidate_split.train,
+                candidate_split.validation,
+                candidate_split.test,
+                top_k=top_k,
+                feature_preparation=feature_preparation_cache[inject_elo],
+            )
         if cache_key not in rolling_cache:
             rolling_cache[cache_key] = _prepare_rolling_fold_matrices(
                 candidate_split.train + candidate_split.validation + candidate_split.test,
                 top_k=top_k,
                 rolling_folds=rolling_folds,
+                feature_preparation=feature_preparation_cache[inject_elo],
             )
         candidate_results.append(
             _evaluate_candidate(
@@ -216,6 +222,7 @@ def _evaluate_candidate(
         "selected_feature_names": selected_train.feature_names,
         "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
         "feature_preparation": prepared.get("feature_preparation", {}),
+        "feature_selection": prepared.get("feature_selection", {}),
         "imbalance": rebalanced.report,
         "calibration": calibration_report,
         "probability_selection": {key: value for key, value in probability_selection.items() if key != "selected_probabilities"},
@@ -233,15 +240,29 @@ def _prepare_split_matrices(
     validation_rows: Sequence[dict],
     test_rows: Sequence[dict],
     top_k: int,
+    feature_preparation: Dict[str, object] | None = None,
 ) -> Dict[str, object]:
+    feature_preparation = feature_preparation or {
+        "elo": {"basis": "not_applied", "rows": len(train_rows), "teams": 0},
+        "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+        "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
+    }
     builder = FeatureBuilder()
     train_dataset = builder.fit_transform(train_rows)
-    selector = FeatureSelector(top_k=top_k, excluded_feature_names=UNSTABLE_IDENTITY_FEATURES)
+    selector = FeatureSelector(
+        top_k=top_k,
+        excluded_feature_names=feature_preparation["excluded_feature_names"],
+        required_feature_names=feature_preparation.get("required_feature_names", []),
+    )
     selected_train = selector.fit_transform(train_dataset.rows, train_dataset.labels, train_dataset.feature_names)
     rebalanced = rebalance_training_data(selected_train.rows, train_dataset.labels)
     return {
         "selected_train": selected_train,
         "rebalanced": rebalanced,
+        "feature_preparation": feature_preparation,
+        "feature_selection": {
+            "required_features": selector.required_feature_report,
+        },
         "validation_rows": validation_rows,
         "test_rows": test_rows,
         "validation_x": selector.transform(builder.transform(validation_rows)).rows,
@@ -251,12 +272,25 @@ def _prepare_split_matrices(
     }
 
 
-def _prepare_rolling_fold_matrices(cleaned: Sequence[dict], top_k: int, rolling_folds: int) -> List[Dict[str, object]]:
+def _prepare_rolling_fold_matrices(
+    cleaned: Sequence[dict],
+    top_k: int,
+    rolling_folds: int,
+    feature_preparation: Dict[str, object] | None = None,
+) -> List[Dict[str, object]]:
     prepared_folds: List[Dict[str, object]] = []
     for train_rows, validation_rows in time_series_folds(cleaned, folds=max(1, rolling_folds)):
         if not train_rows or not validation_rows:
             continue
-        prepared_folds.append(_prepare_split_matrices(train_rows, validation_rows, [], top_k=top_k))
+        prepared_folds.append(
+            _prepare_split_matrices(
+                train_rows,
+                validation_rows,
+                [],
+                top_k=top_k,
+                feature_preparation=feature_preparation,
+            )
+        )
     return prepared_folds
 
 

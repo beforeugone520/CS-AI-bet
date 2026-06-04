@@ -9,6 +9,18 @@ ELO_BASE = 1500.0
 ELO_K = 24.0
 ELO_TIER_K = {"S": 32.0, "A": 20.0, "B": 14.0, "C": 10.0}
 UNSTABLE_IDENTITY_FEATURES = ("team1_code", "team2_code", "event_code", "version_tag_code")
+PLAYER_STATUS_REQUIRED_FEATURES = (
+    "rating_diff",
+    "kd_diff",
+    "opening_success_diff",
+    "clutch_winrate_diff",
+    "star_rating_diff",
+    "substitute_flag_diff",
+    "player_sample_diff",
+    "player_form_score_diff",
+    "player_form_trend_diff",
+    "player_sample_confidence_diff",
+)
 
 
 def prepare_reliability_features(
@@ -38,6 +50,7 @@ def prepare_reliability_features(
     return materialized, final_elo, {
         "elo": elo_report,
         "excluded_feature_names": list(excluded),
+        "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
     }
 
 

@@ -8,7 +8,12 @@ from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .maps import average_unknown_map_prediction
 from .models import default_ensemble, model_hyperparameters
-from .reliability import UNSTABLE_IDENTITY_FEATURES, apply_final_elo_to_match, prepare_reliability_features
+from .reliability import (
+    PLAYER_STATUS_REQUIRED_FEATURES,
+    UNSTABLE_IDENTITY_FEATURES,
+    apply_final_elo_to_match,
+    prepare_reliability_features,
+)
 from .selection import FeatureSelector
 
 
@@ -45,6 +50,7 @@ class MatchPredictor:
         self.feature_preparation = feature_preparation or {
             "elo": {"basis": "not_applied", "rows": trained_matches, "teams": 0},
             "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+            "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
         }
 
     @classmethod
@@ -70,7 +76,11 @@ class MatchPredictor:
         )
         builder = FeatureBuilder()
         dataset = builder.fit_transform(model_rows)
-        selector = FeatureSelector(top_k=top_k, excluded_feature_names=feature_preparation["excluded_feature_names"])
+        selector = FeatureSelector(
+            top_k=top_k,
+            excluded_feature_names=feature_preparation["excluded_feature_names"],
+            required_feature_names=feature_preparation.get("required_feature_names", []),
+        )
         selected = selector.fit_transform(dataset.rows, dataset.labels, dataset.feature_names)
         rebalanced = rebalance_training_data(selected.rows, dataset.labels)
         model = default_ensemble(seed=seed, epochs=epochs, weights=ensemble_weights).fit(rebalanced.rows, rebalanced.labels, sample_weights=rebalanced.sample_weights)

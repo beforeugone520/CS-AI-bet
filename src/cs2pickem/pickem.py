@@ -89,6 +89,9 @@ def model_driven_pickems(
         "teams": len(teams),
         "simulations": simulations,
         "selected_feature_names": predictor.selected_feature_names,
+        "feature_selection": {
+            "required_features": predictor.selector.required_feature_report,
+        },
         "imbalance": predictor.imbalance_report,
         "ensemble_weights": predictor.ensemble_weights,
         "model_hyperparameters": predictor.model_hyperparameters,

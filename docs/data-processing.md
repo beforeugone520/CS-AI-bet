@@ -233,6 +233,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 | `data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_with_market_odds_2026-06-01.csv` | Stage 1 首轮 fixtures 已合并开盘美式赔率 |
 | `forecast_report.json` / `pickem_report.json` / `pickem_answer_sheet.json` | 当前主报告使用真实市场赔率版本 |
 | `stage1_day1_results_2026-06-02.csv` / `forecast_backtest_day1_2026-06-02.json` | Day 1 首轮真实赛果和 `backtest-forecast` 机器回测产物 |
+| `forecast_status_required_logistic_2026-06-04.json` / `forecast_status_required_logistic_backtest_day1_2026-06-02.json` | 状态特征 required-selection 的 logistic-only 快速诊断；用于确认训练历史是否真的提供可学习的选手状态信号，不替代赛前主报告 |
 | `stage1_day2_results_2026-06-03.csv` | Day 2 的 Round 2-3 共 16 场赛果单独归档 |
 | `stage1_round1_3_results_2026-06-04.csv` / `stage1_round3_standings_2026-06-04.csv` / `final_fused_pickem_checkpoint_round3_2026-06-04.json` | Round 1-3 已复核赛果、Round 3 standings 和 `checkpoint-pickem` 中途状态报告 |
 | `stage1_round4_fixtures_2026-06-04.csv` / `stage1_round4_fixtures_with_standings_2026-06-04.csv` | Round 4 赛程快照，以及合并 Round 3 standings 后的晋级/淘汰压力 fixtures |
@@ -259,6 +260,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 - 把赛前单场 minimum margin 提到 `0.05` 后，Day 1 有效 pick 变成 `3/5`；`policy_tradeoff_summary.recommended_policy_update` 会把原始 Day 1 回测的候选直接翻译成 `apply-forecast-policy` 参数和 CLI flags，例如 `--minimum-margin 0.05`。`--bo1-minimum-margin 0.05` 可只收紧 BO1，不把 BO3 一起收紧。
 - `market favorite ≥0.60 且 player form 反向则 avoid` 能提高百分比但覆盖太低，只作为低覆盖候选，不作为默认策略。
 - `player_status_signal_risk` 会把实际赛果按被选中一侧的低样本/替补风险拆开。原始赛前 `forecast_report.json` 没有 player status 字段；补入 player-form fixtures 后，5%+player form 的 5 个有效 pick 全部带低样本状态风险，命中 `3/5`，状态规避版本降到 3 个有效 pick，命中 `2/3`。因此 `--avoid-player-status-risk` 只作为审查信号，不替换 5%+player form 默认策略。
+- 模型训练层新增 `feature_selection.required_features` 诊断，会把选手 rating/KD/首杀/残局/star、替补、样本量、player form 和样本置信度列为 required 候选。2026-06-04 的 logistic-only 快速诊断显示，当前 6 个月训练历史中这些状态特征全部 `unavailable`，Day 1 回测为 `4/8`；这说明现阶段缺的是无泄漏历史选手状态数据，不能把 fixtures 上的状态字段当作模型已经学到的信号。
 - Pick'em 层面，BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
 - `candidate_scoreboard_policy_diagnostics` 把 `3-0` 标为 `review_candidate_policy / extreme_consensus_composite`，`advance` 和 `0-3` 继续 `keep_current_policy / status_adjusted_score`。
 
@@ -271,7 +273,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。`policy_tradeoff_summary.recommended_policy_update` 会额外给出 `apply_forecast_policy_args` 和 `cli_flags`；如果结论是 `keep_current_policy`，也会回显原 forecast report 的 `decision_policy`，便于把实际赛果里验证过的当前策略复用到下一轮 forecast。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。forecast / pickem / train 报告会输出 `feature_selection.required_features`，用于审计 required 选手状态特征是 `available`、`selected` 还是因为历史数据无方差而 `unavailable`。`policy_tradeoff_summary.recommended_policy_update` 会额外给出 `apply_forecast_policy_args` 和 `cli_flags`；如果结论是 `keep_current_policy`，也会回显原 forecast report 的 `decision_policy`，便于把实际赛果里验证过的当前策略复用到下一轮 forecast。
 
 ### 不重训策略重打标
 

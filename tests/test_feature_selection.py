@@ -111,6 +111,47 @@ class FeatureSelectionTests(unittest.TestCase):
         self.assertEqual(len(selector.importance_scores), 2)
         self.assertEqual(selector.selected_feature_names, ["strong_signal"])
 
+    def test_feature_selector_preserves_required_features_within_top_k(self):
+        from cs2pickem.selection import FeatureSelector
+
+        rows = [
+            [0.05, 0.05, 0.1],
+            [0.15, 0.10, 0.9],
+            [0.85, 0.90, 0.2],
+            [0.95, 0.95, 0.8],
+        ]
+        labels = [0, 0, 1, 1]
+        selector = FeatureSelector(
+            top_k=2,
+            required_feature_names=["player_sample_confidence_diff"],
+        )
+        selector.fit(rows, labels, ["strong_signal", "second_signal", "player_sample_confidence_diff"])
+
+        self.assertEqual(len(selector.selected_feature_names), 2)
+        self.assertIn("strong_signal", selector.selected_feature_names)
+        self.assertIn("player_sample_confidence_diff", selector.selected_feature_names)
+
+    def test_feature_selector_reports_required_feature_availability(self):
+        from cs2pickem.selection import FeatureSelector
+
+        rows = [
+            [0.1, 0.0, 0.2],
+            [0.2, 0.0, 0.8],
+            [0.8, 0.0, 0.3],
+            [0.9, 0.0, 0.7],
+        ]
+        labels = [0, 0, 1, 1]
+        selector = FeatureSelector(
+            top_k=2,
+            required_feature_names=["constant_status", "variable_status", "missing_status"],
+        )
+        selector.fit(rows, labels, ["strong_signal", "constant_status", "variable_status"])
+
+        self.assertEqual(selector.required_feature_report["requested"], ["constant_status", "variable_status", "missing_status"])
+        self.assertEqual(selector.required_feature_report["available"], ["variable_status"])
+        self.assertEqual(selector.required_feature_report["selected"], ["variable_status"])
+        self.assertEqual(selector.required_feature_report["unavailable"], ["constant_status", "missing_status"])
+
 
 if __name__ == "__main__":
     unittest.main()

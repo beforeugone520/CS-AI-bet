@@ -132,6 +132,9 @@ def forecast_fixtures(
         "trained_matches": predictor.trained_matches,
         "fixtures": len(fixtures),
         "selected_feature_names": predictor.selected_feature_names,
+        "feature_selection": {
+            "required_features": predictor.selector.required_feature_report,
+        },
         "imbalance": predictor.imbalance_report,
         "ensemble_weights": predictor.ensemble_weights,
         "model_hyperparameters": predictor.model_hyperparameters,

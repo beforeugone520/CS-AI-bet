@@ -11,7 +11,7 @@ from .evaluation import accuracy, auc, brier_score, calibration_table, log_loss,
 from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .models import default_ensemble, model_hyperparameters
-from .reliability import UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
+from .reliability import PLAYER_STATUS_REQUIRED_FEATURES, UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
 from .selection import FeatureSelector
 from .splitting import time_series_date_split, time_series_folds, time_series_split
 from .strategy import choose_pickems
@@ -73,7 +73,7 @@ def train_evaluate(
         _validate_non_empty_date_split(split)
     else:
         split = time_series_split(cleaned, train_ratio=train_ratio, validation_ratio=validation_ratio)
-    prepared = _prepare_time_split(split.train, [split.validation, split.test], top_k=top_k)
+    prepared = _prepare_time_split(split.train, [split.validation, split.test], top_k=top_k, feature_preparation=feature_preparation)
     train_x, train_y = prepared["train_rows"], prepared["train_labels"]
     validation_x, validation_y = prepared["eval_rows"][0], _labels(split.validation)
     test_x, test_y = prepared["eval_rows"][1], _labels(split.test)
@@ -99,6 +99,7 @@ def train_evaluate(
         "feature_names": prepared["feature_names"],
         "selected_feature_names": prepared["selected_feature_names"],
         "feature_importance": prepared["feature_importance"],
+        "feature_selection": prepared["feature_selection"],
         "feature_preparation": feature_preparation,
         "imbalance": prepared["imbalance"],
         "ensemble_weights": ensemble_weights,
@@ -210,10 +211,15 @@ def _train_evaluate_in_sample(
     feature_preparation = feature_preparation or {
         "elo": {"basis": "not_applied", "rows": len(cleaned), "teams": 0},
         "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+        "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
     }
     builder = FeatureBuilder()
     dataset = builder.fit_transform(cleaned)
-    selector = FeatureSelector(top_k=top_k, excluded_feature_names=feature_preparation["excluded_feature_names"])
+    selector = FeatureSelector(
+        top_k=top_k,
+        excluded_feature_names=feature_preparation["excluded_feature_names"],
+        required_feature_names=feature_preparation.get("required_feature_names", []),
+    )
     selected = selector.fit_transform(dataset.rows, dataset.labels, dataset.feature_names)
     rebalanced = rebalance_training_data(selected.rows, dataset.labels)
     model = default_ensemble(seed=19, epochs=epochs).fit(rebalanced.rows, rebalanced.labels, sample_weights=rebalanced.sample_weights)
@@ -229,6 +235,9 @@ def _train_evaluate_in_sample(
         "feature_names": dataset.feature_names,
         "selected_feature_names": selected.feature_names,
         "feature_importance": selector.importance_scores,
+        "feature_selection": {
+            "required_features": selector.required_feature_report,
+        },
         "feature_preparation": feature_preparation,
         "imbalance": rebalanced.report,
         "ensemble_weights": ensemble_weights,
@@ -264,10 +273,24 @@ def _train_evaluate_in_sample(
     }
 
 
-def _prepare_time_split(train_rows: List[dict], eval_groups: Sequence[List[dict]], top_k: int) -> Dict[str, object]:
+def _prepare_time_split(
+    train_rows: List[dict],
+    eval_groups: Sequence[List[dict]],
+    top_k: int,
+    feature_preparation: Dict[str, object] | None = None,
+) -> Dict[str, object]:
+    feature_preparation = feature_preparation or {
+        "elo": {"basis": "not_applied", "rows": len(train_rows), "teams": 0},
+        "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
+        "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
+    }
     builder = FeatureBuilder()
     train_dataset = builder.fit_transform(train_rows)
-    selector = FeatureSelector(top_k=top_k, excluded_feature_names=UNSTABLE_IDENTITY_FEATURES)
+    selector = FeatureSelector(
+        top_k=top_k,
+        excluded_feature_names=feature_preparation["excluded_feature_names"],
+        required_feature_names=feature_preparation.get("required_feature_names", []),
+    )
     selected_train = selector.fit_transform(train_dataset.rows, train_dataset.labels, train_dataset.feature_names)
     rebalanced = rebalance_training_data(selected_train.rows, train_dataset.labels)
     selected_eval_rows = []
@@ -283,6 +306,9 @@ def _prepare_time_split(train_rows: List[dict], eval_groups: Sequence[List[dict]
         "feature_names": train_dataset.feature_names,
         "selected_feature_names": selected_train.feature_names,
         "feature_importance": selector.importance_scores,
+        "feature_selection": {
+            "required_features": selector.required_feature_report,
+        },
     }
 
 

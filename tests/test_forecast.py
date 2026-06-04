@@ -61,6 +61,39 @@ def history_rows():
     return rows
 
 
+def history_rows_with_player_status():
+    rows = []
+    for index, row in enumerate(history_rows()):
+        copied = dict(row)
+        alpha_side = copied["team1"] == "Alpha"
+        alpha_status = {
+            "player_form_score": 0.12 if index != 3 else -0.08,
+            "player_form_trend": 0.04 if index % 3 else -0.03,
+            "player_sample_confidence": 0.9 if index < 6 else 0.35,
+            "substitute_flag": 0,
+            "player_sample": 5 if index < 6 else 2,
+        }
+        bravo_status = {
+            "player_form_score": -0.04 if index != 3 else 0.09,
+            "player_form_trend": -0.02 if index % 2 else 0.01,
+            "player_sample_confidence": 0.35 if index < 6 else 0.8,
+            "substitute_flag": 1 if index in {1, 5} else 0,
+            "player_sample": 2 if index < 6 else 5,
+        }
+        statuses = {
+            "team1": alpha_status if alpha_side else bravo_status,
+            "team2": bravo_status if alpha_side else alpha_status,
+        }
+        for prefix, status in statuses.items():
+            copied[f"{prefix}_player_form_score"] = status["player_form_score"]
+            copied[f"{prefix}_player_form_trend"] = status["player_form_trend"]
+            copied[f"{prefix}_player_sample_confidence"] = status["player_sample_confidence"]
+            copied[f"{prefix}_substitute_flag"] = status["substitute_flag"]
+            copied[f"{prefix}_player_sample"] = status["player_sample"]
+        rows.append(copied)
+    return rows
+
+
 class ForecastTests(unittest.TestCase):
     def test_forecast_fixtures_outputs_adjusted_pick_and_unknown_map_average(self):
         from cs2pickem.forecast import forecast_fixtures
@@ -157,6 +190,50 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(prediction["team2_record"], "2-1")
         self.assertEqual(prediction["swiss_match_type"], "advancement")
         self.assertEqual(prediction["standings_source"], "unit")
+
+    def test_forecast_training_preserves_player_status_features(self):
+        from cs2pickem.forecast import forecast_fixtures
+
+        fixtures = [
+            {
+                "date": "2026-06-01",
+                "event": "IEM Cologne Major",
+                "event_tier": "S",
+                "status": "scheduled",
+                "team1": "Alpha",
+                "team2": "Bravo",
+                "best_of": 1,
+                "map": "mirage",
+                "team1_player_form_score": 0.10,
+                "team2_player_form_score": -0.03,
+                "team1_player_form_trend": 0.02,
+                "team2_player_form_trend": -0.02,
+                "team1_player_sample_confidence": 0.9,
+                "team2_player_sample_confidence": 0.35,
+                "team2_substitute_flag": 1,
+            }
+        ]
+
+        report = forecast_fixtures(
+            history_rows_with_player_status(),
+            fixtures,
+            reference_date="2026-05-31",
+            top_k=10,
+            epochs=3,
+        )
+
+        self.assertLessEqual(len(report["selected_feature_names"]), 10)
+        for name in [
+            "rating_diff",
+            "star_rating_diff",
+            "player_form_score_diff",
+            "player_form_trend_diff",
+            "player_sample_confidence_diff",
+            "substitute_flag_diff",
+        ]:
+            self.assertIn(name, report["selected_feature_names"])
+            self.assertIn(name, report["feature_preparation"]["required_feature_names"])
+            self.assertIn(name, report["feature_selection"]["required_features"]["selected"])
 
     def test_forecast_fixtures_applies_custom_single_match_policy(self):
         from cs2pickem.forecast import forecast_fixtures
