@@ -215,6 +215,7 @@ class ForecastTests(unittest.TestCase):
                                 "date": "2026-06-01",
                                 "team1": "Alpha",
                                 "team2": "Bravo",
+                                "best_of": 1,
                                 "adjusted_probability_team1": 0.54,
                                 "pick": "Alpha",
                             },
@@ -278,6 +279,8 @@ class ForecastTests(unittest.TestCase):
                 "--fixtures",
                 fixtures_path,
                 "--minimum-margin",
+                "0.02",
+                "--bo1-minimum-margin",
                 "0.05",
                 "--avoid-player-form-counter-signal",
                 "--player-form-counter-min-confidence",
@@ -294,7 +297,8 @@ class ForecastTests(unittest.TestCase):
                 report = json.load(handle)
 
         self.assertEqual(exit_code, 0)
-        self.assertEqual(report["decision_policy"]["minimum_margin"], 0.05)
+        self.assertEqual(report["decision_policy"]["minimum_margin"], 0.02)
+        self.assertEqual(report["decision_policy"]["bo1_minimum_margin"], 0.05)
         self.assertEqual(report["decision_policy"]["player_form_counter_min_confidence"], 0.4)
         self.assertEqual(report["decision_summary"]["avoid_picks"], 2)
         self.assertEqual(report["decision_summary"]["low_confidence_avoids"], 1)
@@ -307,6 +311,42 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["predictions"][1]["team2_record"], "1-2")
         self.assertEqual(report["predictions"][1]["swiss_match_type"], "elimination")
         self.assertEqual(report["predictions"][2]["pick"], "Echo")
+
+    def test_apply_forecast_policy_can_use_bo1_specific_minimum_margin(self):
+        from cs2pickem.forecast import apply_forecast_policy
+
+        report = apply_forecast_policy(
+            {
+                "predictions": [
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Alpha",
+                        "team2": "Bravo",
+                        "best_of": 1,
+                        "adjusted_probability_team1": 0.54,
+                        "pick": "Alpha",
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Charlie",
+                        "team2": "Delta",
+                        "best_of": 3,
+                        "adjusted_probability_team1": 0.54,
+                        "pick": "Charlie",
+                    },
+                ]
+            },
+            minimum_margin=0.02,
+            bo1_minimum_margin=0.05,
+        )
+
+        self.assertEqual(report["decision_policy"]["minimum_margin"], 0.02)
+        self.assertEqual(report["decision_policy"]["bo1_minimum_margin"], 0.05)
+        self.assertEqual(report["predictions"][0]["pick"], "avoid")
+        self.assertEqual(report["predictions"][0]["avoid_reason"], "low_confidence")
+        self.assertEqual(report["predictions"][1]["pick"], "Charlie")
+        self.assertIsNone(report["predictions"][1]["avoid_reason"])
+        self.assertEqual(report["decision_summary"]["low_confidence_avoids"], 1)
 
     def test_apply_forecast_policy_can_avoid_market_favorite_with_counter_player_form(self):
         from cs2pickem.forecast import apply_forecast_policy

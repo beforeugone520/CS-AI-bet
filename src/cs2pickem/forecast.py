@@ -36,6 +36,7 @@ def forecast_fixtures(
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
     minimum_margin: float = 0.02,
+    bo1_minimum_margin: float | None = None,
     avoid_player_form_counter_signal: bool = False,
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
@@ -69,12 +70,13 @@ def forecast_fixtures(
                 market_probability=_num(market_signal.get("probability_team1"), 0.5),
             )
         confidence_margin = abs(adjusted - 0.5)
+        effective_minimum_margin = _effective_minimum_margin(fixture, minimum_margin, bo1_minimum_margin)
         player_form_summary = _player_form_summary(fixture)
         pick = single_match_pick(
             adjusted,
             str(fixture.get("team1")),
             str(fixture.get("team2")),
-            minimum_margin=minimum_margin,
+            minimum_margin=effective_minimum_margin,
             player_form_score_diff=_num(player_form_summary.get("diff", {}).get("score"), 0.0),
             player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
             player_form_counter_min_confidence=player_form_counter_min_confidence,
@@ -87,7 +89,7 @@ def forecast_fixtures(
         avoid_reason = _avoid_reason(
             pick=pick,
             adjusted_probability_team1=adjusted,
-            minimum_margin=minimum_margin,
+            minimum_margin=effective_minimum_margin,
             player_form_summary=player_form_summary,
             avoid_player_form_counter_signal=avoid_player_form_counter_signal,
             player_form_counter_min_confidence=player_form_counter_min_confidence,
@@ -115,6 +117,7 @@ def forecast_fixtures(
                 "pick": pick,
                 "avoid_reason": avoid_reason,
                 "confidence_margin": confidence_margin,
+                "effective_minimum_margin": effective_minimum_margin,
                 "low_confidence": avoid_reason == "low_confidence",
                 "player_form_summary": player_form_summary,
                 "bp_applied": fixture.get("bp_applied", 0),
@@ -136,6 +139,7 @@ def forecast_fixtures(
         "feature_preparation": predictor.feature_preparation,
         "decision_policy": {
             "minimum_margin": minimum_margin,
+            "bo1_minimum_margin": bo1_minimum_margin,
             "avoid_player_form_counter_signal": avoid_player_form_counter_signal,
             "player_form_counter_min_confidence": player_form_counter_min_confidence,
             "avoid_market_favorite_player_form_counter_signal": avoid_market_favorite_player_form_counter_signal,
@@ -161,6 +165,7 @@ def forecast_fixtures_file(
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
     minimum_margin: float = 0.02,
+    bo1_minimum_margin: float | None = None,
     avoid_player_form_counter_signal: bool = False,
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
@@ -186,6 +191,7 @@ def forecast_fixtures_file(
         max_age_days=max_age_days,
         ensemble_weights=ensemble_weights,
         minimum_margin=minimum_margin,
+        bo1_minimum_margin=bo1_minimum_margin,
         avoid_player_form_counter_signal=avoid_player_form_counter_signal,
         player_form_counter_min_confidence=player_form_counter_min_confidence,
         avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
@@ -200,6 +206,7 @@ def apply_forecast_policy(
     forecast_report: Mapping[str, Any],
     fixture_rows: Optional[Iterable[Mapping[str, Any]]] = None,
     minimum_margin: float = 0.02,
+    bo1_minimum_margin: float | None = None,
     avoid_player_form_counter_signal: bool = False,
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
@@ -230,6 +237,7 @@ def apply_forecast_policy(
             updated,
             player_form_summary=player_form_summary,
             minimum_margin=minimum_margin,
+            bo1_minimum_margin=bo1_minimum_margin,
             avoid_player_form_counter_signal=avoid_player_form_counter_signal,
             player_form_counter_min_confidence=player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
@@ -243,6 +251,7 @@ def apply_forecast_policy(
     report["predictions"] = predictions
     report["decision_policy"] = {
         "minimum_margin": minimum_margin,
+        "bo1_minimum_margin": bo1_minimum_margin,
         "avoid_player_form_counter_signal": avoid_player_form_counter_signal,
         "player_form_counter_min_confidence": player_form_counter_min_confidence,
         "avoid_market_favorite_player_form_counter_signal": avoid_market_favorite_player_form_counter_signal,
@@ -264,6 +273,7 @@ def apply_forecast_policy_file(
     fixtures_path: Optional[str] = None,
     output_path: Optional[str] = None,
     minimum_margin: float = 0.02,
+    bo1_minimum_margin: float | None = None,
     avoid_player_form_counter_signal: bool = False,
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
@@ -280,6 +290,7 @@ def apply_forecast_policy_file(
         payload,
         fixture_rows=read_matches_csv(fixtures_path) if fixtures_path else None,
         minimum_margin=minimum_margin,
+        bo1_minimum_margin=bo1_minimum_margin,
         avoid_player_form_counter_signal=avoid_player_form_counter_signal,
         player_form_counter_min_confidence=player_form_counter_min_confidence,
         avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
@@ -301,6 +312,23 @@ def _num(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _effective_minimum_margin(
+    row: Mapping[str, Any],
+    minimum_margin: float,
+    bo1_minimum_margin: float | None,
+) -> float:
+    if bo1_minimum_margin is not None and _best_of(row) == 1:
+        return bo1_minimum_margin
+    return minimum_margin
+
+
+def _best_of(row: Mapping[str, Any]) -> int:
+    try:
+        return int(float(row.get("best_of", 1)))
+    except (TypeError, ValueError):
+        return 1
 
 
 def _swiss_pressure_fields(row: Mapping[str, Any]) -> Dict[str, object]:
@@ -442,6 +470,7 @@ def _apply_decision_policy_to_prediction(
     prediction: Dict[str, Any],
     player_form_summary: Mapping[str, Any],
     minimum_margin: float,
+    bo1_minimum_margin: float | None,
     avoid_player_form_counter_signal: bool,
     player_form_counter_min_confidence: float,
     avoid_market_favorite_player_form_counter_signal: bool,
@@ -454,14 +483,20 @@ def _apply_decision_policy_to_prediction(
         prediction.get("adjusted_probability_team1"),
         _num(prediction.get("model_probability_team1"), 0.5),
     )
+    effective_minimum_margin = _effective_minimum_margin(
+        prediction,
+        minimum_margin,
+        bo1_minimum_margin,
+    )
     prediction["previous_pick"] = prediction.get("pick")
     prediction["confidence_margin"] = abs(adjusted - 0.5)
+    prediction["effective_minimum_margin"] = effective_minimum_margin
     prediction["player_form_summary"] = player_form_summary
     prediction["pick"] = single_match_pick(
         adjusted,
         str(prediction.get("team1")),
         str(prediction.get("team2")),
-        minimum_margin=minimum_margin,
+        minimum_margin=effective_minimum_margin,
         player_form_score_diff=_num(player_form_summary.get("diff", {}).get("score"), 0.0),
         player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
         player_form_counter_min_confidence=player_form_counter_min_confidence,
@@ -474,7 +509,7 @@ def _apply_decision_policy_to_prediction(
     prediction["avoid_reason"] = _avoid_reason(
         pick=str(prediction["pick"]),
         adjusted_probability_team1=adjusted,
-        minimum_margin=minimum_margin,
+        minimum_margin=effective_minimum_margin,
         player_form_summary=player_form_summary,
         avoid_player_form_counter_signal=avoid_player_form_counter_signal,
         player_form_counter_min_confidence=player_form_counter_min_confidence,

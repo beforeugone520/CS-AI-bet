@@ -146,6 +146,7 @@ def main() -> int:
     forecast_parser.add_argument("--epochs", type=int, default=50, help="training epochs for lightweight learners")
     forecast_parser.add_argument("--max-age-days", type=int, default=90, help="freshness window for training rows")
     forecast_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
+    forecast_parser.add_argument("--bo1-minimum-margin", type=float, help="optional BO1-only probability margin above 50%%; overrides --minimum-margin for BO1 fixtures")
     forecast_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
     forecast_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
     forecast_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
@@ -158,6 +159,7 @@ def main() -> int:
     apply_forecast_policy_parser.add_argument("--forecast-report", required=True, help="JSON output from forecast command")
     apply_forecast_policy_parser.add_argument("--fixtures", help="optional fixture CSV with player form fields to merge into predictions")
     apply_forecast_policy_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
+    apply_forecast_policy_parser.add_argument("--bo1-minimum-margin", type=float, help="optional BO1-only probability margin above 50%%; overrides --minimum-margin for BO1 predictions")
     apply_forecast_policy_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
     apply_forecast_policy_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
     apply_forecast_policy_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
@@ -440,6 +442,7 @@ def main() -> int:
             epochs=args.epochs,
             max_age_days=args.max_age_days,
             minimum_margin=args.minimum_margin,
+            bo1_minimum_margin=args.bo1_minimum_margin,
             avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
@@ -455,6 +458,7 @@ def main() -> int:
             fixtures_path=args.fixtures,
             output_path=None,
             minimum_margin=args.minimum_margin,
+            bo1_minimum_margin=args.bo1_minimum_margin,
             avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
