@@ -173,7 +173,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli pipeline \
 | `backtest-forecast` | 单场 forecast 报告 vs 实际赛果 CSV，输出有效下注命中率、方向命中率、低置信规避、市场修正和 player form 诊断 |
 | `standings-from-results` | 从逐场赛果 CSV 自动推导 Swiss `team,wins,losses,status` standings，减少手写战绩表错误 |
 | `backtest-pickem` | Pick'em 报告 vs 最终 Swiss standings，计算命中数与是否达 pass threshold |
-| `checkpoint-pickem` | Pick'em 报告 vs 当前 Swiss standings，输出每个槽位 locked / alive / broken，中途复盘不冒充最终打分 |
+| `checkpoint-pickem` | Pick'em 报告 vs 当前 Swiss standings，输出每个槽位 locked / alive / broken、状态/槽位 confidence 诊断，中途复盘不冒充最终打分 |
 | `backtest-pickem-suite` | 多场 Major 的 suite 级通过率汇总（默认目标 38%） |
 | `replay-pickem-suite` | 重新训练、生成并评分历史 Pick'em replay cases，避免只测静态旧报告 |
 
@@ -423,7 +423,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 | 层级 | 评估对象 | 当前读数 | 结论用途 |
 | --- | --- | --- | --- |
 | 单场 forecast 回测 | Day 1 首轮 8 场 BO1；`avoid` 不计入有效下注 | 有效下注 **3/7 ≈ 43%**；计入规避方向为 **4/8 = 50%**；已写入 `forecast_backtest_day1_2026-06-02.json` | 诊断单场模型、市场修正、低置信规避和 player form 是否合理 |
-| Pick'em 槽位中途回测 | 赛前 `3-0 / 晋级 / 0-3` 槽位对照 Round 3 后战绩 | `checkpoint-pickem` 输出 **3 locked / 4 alive / 3 broken**；已写入 `final_fused_pickem_checkpoint_round3_2026-06-04.json` | 追踪提交清单的兑现路径，但不提前计算最终通过率 |
+| Pick'em 槽位中途回测 | 赛前 `3-0 / 晋级 / 0-3` 槽位对照 Round 3 后战绩 | `checkpoint-pickem` 输出 **3 locked / 4 alive / 3 broken**，并补充槽位级 confidence 诊断；已写入 `final_fused_pickem_checkpoint_round3_2026-06-04.json` | 追踪提交清单的兑现路径，但不提前计算最终通过率 |
 | 最终 Pick'em 回测 | Stage 1 完赛后的最终 Swiss standings | 待 Round 5 结束后用 `backtest-pickem` 计算 | 判断是否达到 pass threshold，并进入 readiness 审计 |
 
 ### 当前诊断
@@ -432,7 +432,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 - 阈值调参：`forecast_backtest_day1_2026-06-02.json` 的 `policy_diagnostics` 显示，把赛前单场 minimum margin 从约 2% 提到 **5%** 后，方向命中可从 **4/8 = 50%** 变成 **3/5 = 60%**，会避开 2 个错单、同时放弃 1 个对单；`forecast_policy_margin_0_05_player_form_backtest_day1_2026-06-02.json` 已按这个策略落盘，实际有效 pick 为 **3/5 = 60%**。
 - 失误结构：MIBR、HEROIC、BIG 三个“模型 + 市场都偏看好”的强队同时爆冷，暴露出 BO1 方差、热门队低估下限、弱队短期状态冲击和选手状态波动没有被充分惩罚。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`；重打标版本已从 player-form fixtures 补齐 8 场 form diff。新增的 `player_form_policy_candidates` 显示，如果把所有低样本反向 form 都拿来规避，可以避开 3 个错向但会误伤 2 个对向；从 0.2 样本置信门槛开始又只误伤不避错。因此当前继续保留 `--player-form-counter-min-confidence 0.4`，等更多真实赛果补足样本后再让 player form 自动改判。
-- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，可直接复盘高信心 pick 在 locked/alive/broken 三组里的表现。
+- Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，并新增 `category_diagnostics`：`3-0` 为 **0 locked / 0 alive / 2 broken**，`advance` 为 **2 locked / 4 alive / 0 broken**，`0-3` 为 **1 locked / 0 alive / 1 broken**。这说明当前最需要调低的是极端槽位的 BO1/短期状态方差权重，而不是晋级槽主体选择。
 - 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果、地图池、短期 player form、替补和样本不足惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
 
 ### 完赛后回测入口

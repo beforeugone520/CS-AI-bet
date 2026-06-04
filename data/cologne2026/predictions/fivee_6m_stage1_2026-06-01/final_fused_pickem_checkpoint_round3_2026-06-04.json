@@ -1,4 +1,45 @@
 {
+  "category_diagnostics": {
+    "0-3": {
+      "alive": 0,
+      "alive_avg_confidence": null,
+      "avg_confidence": 0.33499999999999996,
+      "broken": 1,
+      "broken_avg_confidence": 0.311,
+      "high_tier_broken": 1,
+      "locked": 1,
+      "locked_avg_confidence": 0.359,
+      "missing": 0,
+      "missing_avg_confidence": null,
+      "picks": 2
+    },
+    "3-0": {
+      "alive": 0,
+      "alive_avg_confidence": null,
+      "avg_confidence": 0.275,
+      "broken": 2,
+      "broken_avg_confidence": 0.275,
+      "high_tier_broken": 1,
+      "locked": 0,
+      "locked_avg_confidence": null,
+      "missing": 0,
+      "missing_avg_confidence": null,
+      "picks": 2
+    },
+    "advance": {
+      "alive": 4,
+      "alive_avg_confidence": 0.61325,
+      "avg_confidence": 0.6373333333333333,
+      "broken": 0,
+      "broken_avg_confidence": null,
+      "high_tier_broken": 0,
+      "locked": 2,
+      "locked_avg_confidence": 0.6855,
+      "missing": 0,
+      "missing_avg_confidence": null,
+      "picks": 6
+    }
+  },
   "pickems_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json",
   "picks": [
     {

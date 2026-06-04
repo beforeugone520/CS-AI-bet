@@ -218,6 +218,40 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["status_diagnostics"]["broken"]["avg_confidence"], 0.8)
         self.assertEqual(report["status_diagnostics"]["locked"]["avg_confidence"], 0.4)
 
+    def test_evaluate_pickem_checkpoint_reports_category_diagnostics(self):
+        from cs2pickem.backtest import evaluate_pickem_checkpoint
+
+        report = evaluate_pickem_checkpoint(
+            {
+                "3-0": ["Alpha", "Bravo"],
+                "advance": ["Charlie"],
+                "0-3": ["Delta"],
+            },
+            [
+                {"team": "Alpha", "wins": 2, "losses": 1},
+                {"team": "Bravo", "wins": 3, "losses": 0},
+                {"team": "Charlie", "wins": 2, "losses": 1},
+                {"team": "Delta", "wins": 0, "losses": 3},
+            ],
+            pick_details={
+                ("3-0", "alpha"): {"confidence": 0.8, "tier": "High"},
+                ("3-0", "bravo"): {"confidence": 0.4, "tier": "Low"},
+                ("advance", "charlie"): {"confidence": 0.6, "tier": "Medium"},
+                ("0-3", "delta"): {"confidence": 0.7, "tier": "High"},
+            },
+        )
+
+        self.assertIn("category_diagnostics", report)
+        categories = report["category_diagnostics"]
+        self.assertEqual(categories["3-0"]["picks"], 2)
+        self.assertEqual(categories["3-0"]["locked"], 1)
+        self.assertEqual(categories["3-0"]["broken"], 1)
+        self.assertAlmostEqual(categories["3-0"]["avg_confidence"], 0.6)
+        self.assertAlmostEqual(categories["3-0"]["broken_avg_confidence"], 0.8)
+        self.assertEqual(categories["3-0"]["high_tier_broken"], 1)
+        self.assertEqual(categories["advance"]["alive"], 1)
+        self.assertEqual(categories["0-3"]["locked"], 1)
+
     def test_standings_from_results_cli_derives_current_swiss_records(self):
         from cs2pickem.cli import main
         from cs2pickem.data import read_matches_csv, write_matches_csv

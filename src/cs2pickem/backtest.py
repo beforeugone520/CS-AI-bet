@@ -102,6 +102,7 @@ def evaluate_pickem_checkpoint(
     return {
         "summary": summary,
         "status_diagnostics": _checkpoint_status_diagnostics(pick_reports),
+        "category_diagnostics": _checkpoint_category_diagnostics(pick_reports),
         "picks": pick_reports,
     }
 
@@ -533,20 +534,42 @@ def _checkpoint_status_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict[s
     materialized = list(picks)
     for status in ("locked", "alive", "broken", "missing"):
         status_rows = [row for row in materialized if row.get("status") == status]
-        confidence_values = [
-            _float(row.get("confidence"), 0.0)
-            for row in status_rows
-            if row.get("confidence") not in (None, "")
-        ]
         diagnostics[status] = {
             "picks": len(status_rows),
-            "avg_confidence": (
-                sum(confidence_values) / len(confidence_values)
-                if confidence_values
-                else None
-            ),
+            "avg_confidence": _checkpoint_avg_confidence(status_rows),
         }
     return diagnostics
+
+
+def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, object]]:
+    diagnostics: Dict[str, Dict[str, object]] = {}
+    materialized = list(picks)
+    for category in PICKEM_CATEGORIES:
+        category_rows = [row for row in materialized if row.get("category") == category]
+        row: Dict[str, object] = {
+            "picks": len(category_rows),
+            "avg_confidence": _checkpoint_avg_confidence(category_rows),
+            "high_tier_broken": sum(
+                1
+                for pick in category_rows
+                if pick.get("status") == "broken" and str(pick.get("tier") or "").lower() == "high"
+            ),
+        }
+        for status in ("locked", "alive", "broken", "missing"):
+            status_rows = [pick for pick in category_rows if pick.get("status") == status]
+            row[status] = len(status_rows)
+            row[f"{status}_avg_confidence"] = _checkpoint_avg_confidence(status_rows)
+        diagnostics[category] = row
+    return diagnostics
+
+
+def _checkpoint_avg_confidence(rows: Iterable[Mapping[str, Any]]) -> float | None:
+    values = [
+        _float(row.get("confidence"), 0.0)
+        for row in rows
+        if row.get("confidence") not in (None, "")
+    ]
+    return sum(values) / len(values) if values else None
 
 
 def _pickem_detail_lookup(payload: Any) -> Dict[tuple[str, str], Mapping[str, Any]]:
