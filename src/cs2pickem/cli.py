@@ -149,6 +149,9 @@ def main() -> int:
     forecast_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
     forecast_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
     forecast_parser.add_argument("--market-favorite-counter-min-probability", type=float, default=0.6, help="minimum real market favorite probability required for market-favorite player form avoidance")
+    forecast_parser.add_argument("--avoid-player-status-risk", action="store_true", help="avoid fragile player-status picks unless their probability margin clears the status margin")
+    forecast_parser.add_argument("--player-status-min-confidence", type=float, default=0.4, help="minimum picked-side player sample confidence before status risk is considered acceptable")
+    forecast_parser.add_argument("--player-status-min-margin", type=float, default=0.06, help="extra probability margin required when the picked side has low player sample confidence or a substitute")
     forecast_parser.add_argument("--output", help="optional JSON output path")
     apply_forecast_policy_parser = subparsers.add_parser("apply-forecast-policy", help="apply single-match decision policy to an existing forecast report without retraining")
     apply_forecast_policy_parser.add_argument("--forecast-report", required=True, help="JSON output from forecast command")
@@ -158,6 +161,9 @@ def main() -> int:
     apply_forecast_policy_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
     apply_forecast_policy_parser.add_argument("--avoid-market-favorite-player-form-counter-signal", action="store_true", help="avoid actionable market favorites when short-term player form points against the favorite")
     apply_forecast_policy_parser.add_argument("--market-favorite-counter-min-probability", type=float, default=0.6, help="minimum real market favorite probability required for market-favorite player form avoidance")
+    apply_forecast_policy_parser.add_argument("--avoid-player-status-risk", action="store_true", help="avoid fragile player-status picks unless their probability margin clears the status margin")
+    apply_forecast_policy_parser.add_argument("--player-status-min-confidence", type=float, default=0.4, help="minimum picked-side player sample confidence before status risk is considered acceptable")
+    apply_forecast_policy_parser.add_argument("--player-status-min-margin", type=float, default=0.06, help="extra probability margin required when the picked side has low player sample confidence or a substitute")
     apply_forecast_policy_parser.add_argument("--output", help="optional JSON output path")
     odds_parser = subparsers.add_parser("merge-odds", help="merge multi-provider decimal odds into match/fixture CSV")
     odds_parser.add_argument("--matches", required=True, help="match or fixture CSV")
@@ -433,6 +439,9 @@ def main() -> int:
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
             market_favorite_counter_min_probability=args.market_favorite_counter_min_probability,
+            avoid_player_status_risk=args.avoid_player_status_risk,
+            player_status_min_confidence=args.player_status_min_confidence,
+            player_status_min_margin=args.player_status_min_margin,
         )
         return _emit(report, args.output)
     if args.command == "apply-forecast-policy":
@@ -445,6 +454,9 @@ def main() -> int:
             player_form_counter_min_confidence=args.player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=args.avoid_market_favorite_player_form_counter_signal,
             market_favorite_counter_min_probability=args.market_favorite_counter_min_probability,
+            avoid_player_status_risk=args.avoid_player_status_risk,
+            player_status_min_confidence=args.player_status_min_confidence,
+            player_status_min_margin=args.player_status_min_margin,
         )
         return _emit(report, args.output)
     if args.command == "merge-odds":

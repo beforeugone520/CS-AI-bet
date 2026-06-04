@@ -90,6 +90,56 @@ class StageStrategyTests(unittest.TestCase):
             "avoid",
         )
 
+    def test_single_match_pick_can_require_extra_margin_for_player_status_risk(self):
+        from cs2pickem.strategy import single_match_pick
+
+        self.assertEqual(
+            single_match_pick(
+                0.57,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                avoid_player_status_risk=True,
+                player_status_min_confidence=0.4,
+                player_status_min_margin=0.08,
+                team1_player_sample_confidence=0.2,
+                team1_substitute_flag=0,
+                team2_player_sample_confidence=0.9,
+                team2_substitute_flag=0,
+            ),
+            "avoid",
+        )
+        self.assertEqual(
+            single_match_pick(
+                0.61,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                avoid_player_status_risk=True,
+                player_status_min_confidence=0.4,
+                player_status_min_margin=0.08,
+                team1_player_sample_confidence=0.2,
+                team1_substitute_flag=0,
+            ),
+            "Alpha",
+        )
+        self.assertEqual(
+            single_match_pick(
+                0.43,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                avoid_player_status_risk=True,
+                player_status_min_confidence=0.4,
+                player_status_min_margin=0.08,
+                team1_player_sample_confidence=0.9,
+                team1_substitute_flag=0,
+                team2_player_sample_confidence=0.9,
+                team2_substitute_flag=1,
+            ),
+            "avoid",
+        )
+
     def test_challengers_stage_prefers_bo1_map_profile_when_probabilities_are_close(self):
         from cs2pickem.strategy import choose_pickems
 

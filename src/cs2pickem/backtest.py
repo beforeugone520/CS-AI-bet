@@ -12,6 +12,8 @@ PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
 PLAYER_FORM_COUNTER_CONFIDENCE_CANDIDATES = (0.0, 0.2, 0.4, 0.6, 0.8)
 FAVORITE_UPSET_MIN_PROBABILITY = 0.55
 MARKET_FAVORITE_FORM_COUNTER_PROBABILITY_CANDIDATES = (0.55, 0.60, 0.65, 0.70)
+PLAYER_STATUS_CONFIDENCE_CANDIDATES = (0.2, 0.4, 0.6)
+PLAYER_STATUS_MARGIN_CANDIDATES = (0.06, 0.08, 0.10)
 
 
 def evaluate_pickem_result(
@@ -219,6 +221,7 @@ def evaluate_forecast_result(
             if player_form_diff
             else None
         )
+        picked_player_status = _picked_player_status(prediction, directional_pick, team1, team2)
         match_reports.append(
             {
                 "date": prediction.get("date"),
@@ -250,6 +253,8 @@ def evaluate_forecast_result(
                 "player_form_diff": player_form_diff,
                 "player_form_sample_confidence": player_form_sample_confidence,
                 "player_form_directional_score": player_form_directional_score,
+                "picked_player_sample_confidence": picked_player_status.get("sample_confidence"),
+                "picked_substitute_flag": picked_player_status.get("substitute_flag"),
             }
         )
 
@@ -856,6 +861,7 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
     ]
     player_form_policy_candidates = _player_form_policy_candidates(materialized)
     market_favorite_player_form_policy_candidates = _market_favorite_player_form_policy_candidates(materialized)
+    player_status_policy_candidates = _player_status_policy_candidates(materialized)
     recommended = _recommended_threshold_candidate(threshold_candidates)
     return {
         "current_policy": current_policy,
@@ -869,11 +875,13 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
         "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
         "player_form_policy_candidates": player_form_policy_candidates,
         "market_favorite_player_form_policy_candidates": market_favorite_player_form_policy_candidates,
+        "player_status_policy_candidates": player_status_policy_candidates,
         "policy_tradeoff_summary": _policy_tradeoff_summary(
             current_policy,
             threshold_candidates,
             player_form_policy_candidates,
             market_favorite_player_form_policy_candidates,
+            player_status_policy_candidates,
         ),
     }
 
@@ -883,6 +891,7 @@ def _policy_tradeoff_summary(
     threshold_candidates: Iterable[Mapping[str, Any]],
     player_form_policy_candidates: Iterable[Mapping[str, Any]],
     market_favorite_player_form_policy_candidates: Iterable[Mapping[str, Any]],
+    player_status_policy_candidates: Iterable[Mapping[str, Any]],
 ) -> Dict[str, object]:
     current = _policy_tradeoff_candidate("current_policy", current_policy, {})
     candidates = [current]
@@ -909,6 +918,17 @@ def _policy_tradeoff_summary(
             {"market_favorite_min_probability": row.get("market_favorite_min_probability")},
         )
         for row in market_favorite_player_form_policy_candidates
+    )
+    candidates.extend(
+        _policy_tradeoff_candidate(
+            "player_status_policy_candidates",
+            row,
+            {
+                "player_status_min_confidence": row.get("player_status_min_confidence"),
+                "player_status_min_margin": row.get("player_status_min_margin"),
+            },
+        )
+        for row in player_status_policy_candidates
     )
     eligible = [row for row in candidates if int(row.get("actionable_picks", 0)) >= 2]
     if not eligible:
@@ -1148,6 +1168,74 @@ def _market_favorite_player_form_policy_candidate(
     }
 
 
+def _player_status_policy_candidates(rows: Iterable[Mapping[str, Any]]) -> List[Dict[str, object]]:
+    materialized = list(rows)
+    return [
+        _player_status_policy_candidate(materialized, min_confidence, min_margin)
+        for min_confidence in PLAYER_STATUS_CONFIDENCE_CANDIDATES
+        for min_margin in PLAYER_STATUS_MARGIN_CANDIDATES
+    ]
+
+
+def _player_status_policy_candidate(
+    rows: Iterable[Mapping[str, Any]],
+    min_confidence: float,
+    min_margin: float,
+) -> Dict[str, object]:
+    materialized = list(rows)
+    current_actionable = [row for row in materialized if row.get("actionable")]
+    avoided_indexes = set()
+    status_risk_matches = 0
+    substitute_risk_matches = 0
+    low_sample_risk_matches = 0
+    for index, row in enumerate(materialized):
+        if not row.get("actionable"):
+            continue
+        if _float(row.get("confidence_margin"), 0.0) > min_margin:
+            continue
+        low_sample = _player_status_low_sample(row, min_confidence)
+        substitute = _player_status_substitute(row)
+        if low_sample or substitute:
+            status_risk_matches += 1
+            if substitute:
+                substitute_risk_matches += 1
+            if low_sample:
+                low_sample_risk_matches += 1
+            avoided_indexes.add(index)
+    selected = [
+        row
+        for index, row in enumerate(materialized)
+        if row.get("actionable") and index not in avoided_indexes
+    ]
+    avoided = [row for index, row in enumerate(materialized) if index in avoided_indexes]
+    correct = sum(1 for row in selected if row.get("directional_correct"))
+    return {
+        "player_status_min_confidence": min_confidence,
+        "player_status_min_margin": min_margin,
+        "status_risk_matches": status_risk_matches,
+        "substitute_risk_matches": substitute_risk_matches,
+        "low_sample_risk_matches": low_sample_risk_matches,
+        "actionable_picks": len(selected),
+        "correct_actionable": correct,
+        "missed_actionable": len(selected) - correct,
+        "actionable_accuracy": correct / len(selected) if selected else 0.0,
+        "coverage": len(selected) / len(current_actionable) if current_actionable else 0.0,
+        "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
+        "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
+    }
+
+
+def _player_status_low_sample(row: Mapping[str, Any], min_confidence: float) -> bool:
+    sample_confidence = row.get("picked_player_sample_confidence")
+    if sample_confidence is None:
+        return False
+    return _float(sample_confidence, 1.0) < min_confidence
+
+
+def _player_status_substitute(row: Mapping[str, Any]) -> bool:
+    return _float(row.get("picked_substitute_flag"), 0.0) >= 1.0
+
+
 def _directional_player_form_score(row: Mapping[str, Any], diff: Mapping[str, Any]) -> float:
     score = _float(diff.get("score"), 0.0)
     if _team_key(row.get("directional_pick")) == _team_key(row.get("team2")):
@@ -1176,6 +1264,36 @@ def _player_form_diff(prediction: Mapping[str, Any]) -> Dict[str, float]:
         "trend": _float(diff.get("trend"), 0.0),
         "sample_confidence": _float(diff.get("sample_confidence"), 0.0),
     }
+
+
+def _picked_player_status(
+    prediction: Mapping[str, Any],
+    directional_pick: str,
+    team1: str,
+    team2: str,
+) -> Dict[str, object]:
+    summary = prediction.get("player_form_summary")
+    if not isinstance(summary, Mapping):
+        return {"sample_confidence": None, "substitute_flag": None}
+    side = summary.get("team1")
+    if isinstance(side, Mapping) and _player_status_side_matches(side, directional_pick, team1):
+        return {
+            "sample_confidence": _float(side.get("sample_confidence"), 0.0),
+            "substitute_flag": _int(side.get("substitute_flag")),
+        }
+    side = summary.get("team2")
+    if isinstance(side, Mapping) and _player_status_side_matches(side, directional_pick, team2):
+        return {
+            "sample_confidence": _float(side.get("sample_confidence"), 0.0),
+            "substitute_flag": _int(side.get("substitute_flag")),
+        }
+    return {"sample_confidence": None, "substitute_flag": None}
+
+
+def _player_status_side_matches(side: Mapping[str, Any], directional_pick: str, fallback_team: str) -> bool:
+    side_team = side.get("team")
+    expected_team = side_team if side_team not in (None, "") else fallback_team
+    return _team_key(expected_team) == _team_key(directional_pick)
 
 
 def _player_form_sample_confidence(prediction: Mapping[str, Any]) -> float:

@@ -36,6 +36,13 @@ def single_match_pick(
     player_form_sample_confidence: float | None = None,
     player_form_counter_min_confidence: float = 0.0,
     avoid_player_form_counter_signal: bool = False,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
+    team1_player_sample_confidence: float | None = None,
+    team2_player_sample_confidence: float | None = None,
+    team1_substitute_flag: float | None = None,
+    team2_substitute_flag: float | None = None,
 ) -> str:
     effective_threshold = 0.5 + max(0.0, minimum_margin) if minimum_margin is not None else threshold
     if max(probability_team1, 1.0 - probability_team1) <= effective_threshold:
@@ -44,6 +51,16 @@ def single_match_pick(
         sample_confidence = 1.0 if player_form_sample_confidence is None else _num(player_form_sample_confidence, 0.0)
         directional_form_score = player_form_score_diff if probability_team1 >= 0.5 else -player_form_score_diff
         if sample_confidence >= player_form_counter_min_confidence and directional_form_score < 0:
+            return "avoid"
+    if avoid_player_status_risk and _picked_player_status_risk(
+        probability_team1=probability_team1,
+        team1_player_sample_confidence=team1_player_sample_confidence,
+        team2_player_sample_confidence=team2_player_sample_confidence,
+        team1_substitute_flag=team1_substitute_flag,
+        team2_substitute_flag=team2_substitute_flag,
+        min_confidence=player_status_min_confidence,
+    ):
+        if abs(probability_team1 - 0.5) <= player_status_min_margin:
             return "avoid"
     return team1 if probability_team1 >= 0.5 else team2
 
@@ -251,6 +268,23 @@ def _market_probability(odds_team1: float, odds_team2: float) -> float:
     inv2 = 1.0 / odds_team2 if odds_team2 > 0 else 0.5
     total = inv1 + inv2
     return inv1 / total if total else 0.5
+
+
+def _picked_player_status_risk(
+    probability_team1: float,
+    team1_player_sample_confidence: float | None,
+    team2_player_sample_confidence: float | None,
+    team1_substitute_flag: float | None,
+    team2_substitute_flag: float | None,
+    min_confidence: float,
+) -> bool:
+    if probability_team1 >= 0.5:
+        sample_confidence = 1.0 if team1_player_sample_confidence is None else _clip(_num(team1_player_sample_confidence, 0.0))
+        substitute_flag = _num(team1_substitute_flag, 0.0)
+    else:
+        sample_confidence = 1.0 if team2_player_sample_confidence is None else _clip(_num(team2_player_sample_confidence, 0.0))
+        substitute_flag = _num(team2_substitute_flag, 0.0)
+    return sample_confidence < min_confidence or substitute_flag >= 1.0
 
 
 def _clip(value: float) -> float:

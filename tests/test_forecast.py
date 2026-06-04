@@ -348,6 +348,75 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["predictions"][1]["pick"], "Charlie")
         self.assertEqual(report["predictions"][2]["pick"], "Echo")
 
+    def test_apply_forecast_policy_can_avoid_fragile_player_status_pick(self):
+        from cs2pickem.forecast import apply_forecast_policy
+
+        report = apply_forecast_policy(
+            {
+                "predictions": [
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Alpha",
+                        "team2": "Bravo",
+                        "adjusted_probability_team1": 0.57,
+                        "pick": "Alpha",
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Charlie",
+                        "team2": "Delta",
+                        "adjusted_probability_team1": 0.61,
+                        "pick": "Charlie",
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Echo",
+                        "team2": "Foxtrot",
+                        "adjusted_probability_team1": 0.43,
+                        "pick": "Foxtrot",
+                    },
+                ]
+            },
+            fixture_rows=[
+                {
+                    "date": "2026-06-01",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "team1_player_sample_confidence": 0.2,
+                    "team2_player_sample_confidence": 0.9,
+                },
+                {
+                    "date": "2026-06-01",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "team1_player_sample_confidence": 0.2,
+                    "team2_player_sample_confidence": 0.9,
+                },
+                {
+                    "date": "2026-06-01",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "team1_player_sample_confidence": 0.9,
+                    "team2_player_sample_confidence": 0.9,
+                    "team2_substitute_flag": 1,
+                },
+            ],
+            minimum_margin=0.05,
+            avoid_player_status_risk=True,
+            player_status_min_confidence=0.4,
+            player_status_min_margin=0.08,
+        )
+
+        self.assertTrue(report["decision_policy"]["avoid_player_status_risk"])
+        self.assertEqual(report["decision_policy"]["player_status_min_confidence"], 0.4)
+        self.assertEqual(report["decision_policy"]["player_status_min_margin"], 0.08)
+        self.assertEqual(report["decision_summary"]["player_status_risk_avoids"], 2)
+        self.assertEqual(report["predictions"][0]["pick"], "avoid")
+        self.assertEqual(report["predictions"][0]["avoid_reason"], "player_status_risk")
+        self.assertEqual(report["predictions"][1]["pick"], "Charlie")
+        self.assertEqual(report["predictions"][2]["pick"], "avoid")
+        self.assertEqual(report["predictions"][2]["avoid_reason"], "player_status_risk")
+
     def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
         from cs2pickem.predictor import MatchPredictor
 

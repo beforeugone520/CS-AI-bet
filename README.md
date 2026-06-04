@@ -317,6 +317,7 @@ CS-AI-bet/
 - `data/cologne2026/source_inputs/stage1_round1_3_results_2026-06-04.csv` / `data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv` / `final_fused_pickem_checkpoint_round3_2026-06-04.json` —— Round 1-3 已复核赛果、Round 3 standings 和 `checkpoint-pickem` 中途状态报告。
 - `forecast_policy_margin_0_05_player_form_2026-06-04.json` / `forecast_policy_margin_0_05_player_form_backtest_day1_2026-06-02.json` —— 不重训的策略重打标版本：补入 player form fixtures、使用 5% minimum margin 和 player form 样本置信门槛。
 - `forecast_policy_margin_0_05_market_form_counter_2026-06-04.json` / `forecast_policy_margin_0_05_market_form_counter_backtest_day1_2026-06-02.json` —— 高精度/低覆盖候选：在 5% margin 基础上，当真实市场热门且短期 player form 反向时额外规避。
+- `forecast_policy_margin_0_05_player_status_risk_2026-06-04.json` / `forecast_policy_margin_0_05_player_status_risk_backtest_day1_2026-06-02.json` —— 选手状态候选：在 5%+player form 基础上，当被选中一侧低样本或替补且 margin 不足 6% 时额外规避。
 - `data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_with_market_odds_player_form_2026-06-04.csv` —— 已补短期 player form 字段的首轮 fixtures 快照，供后续重跑 forecast 和做选手状态诊断。
 - `forecast_without_market_odds_2026-06-01.json`、`pickem_without_market_odds_2026-06-01.json`、`pickem_answer_sheet_without_market_odds_2026-06-01.json` —— 无市场赔率备份，便于对比。
 - `final_fused_pickem_2026-06-01.json` / `final_fused_pickem_table_2026-06-01.csv` —— 专家/市场/模型最终融合结果，当前权重为专家 `0.30`、市场 `0.20`、模型 `0.50`。
@@ -435,6 +436,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 - 高精度候选：`market_favorite_player_form_policy_candidates` 显示，在 5%+player form 版本上叠加 “market favorite ≥0.60 且 player form 反向则 avoid”，会避开 1 个错单和 1 个对单，actionable 从 5 降到 3，命中从 **3/5 = 60%** 变成 **2/3 ≈ 67%**。新增 `avoid_reason_diagnostics` 后可以看到，5% 阈值的 `low_confidence` 规避避开 2 个错单、放弃 1 个对单；market favorite + form 反向规避又额外避开 HEROIC 错单、放弃 M80 对单。因此 `forecast_policy_margin_0_05_market_form_counter_2026-06-04.json` 只能作为低覆盖候选，不作为默认策略。
 - 策略取舍：新增 `policy_tradeoff_summary` 后，原始 Day 1 回测会把 5% margin 标为可升级候选：准确率 +17.1 个百分点、总命中不降、覆盖从 7 个 actionable 降到 5 个。到了 5%+player form 版本，最高准确率候选虽然能到 **2/3 ≈ 67%**，但总命中从 3 降到 2、覆盖再降 **40%**，因此机器建议为 `keep_current_policy / accuracy_gain_reduces_total_correct`。这条诊断专门防止只看百分比、忽略总命中数和覆盖率。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`；重打标版本已从 player-form fixtures 补齐 8 场 form diff。新增的 `player_form_policy_candidates` 显示，如果把所有低样本反向 form 都拿来规避，可以避开 3 个错向但会误伤 2 个对向；从 0.2 样本置信门槛开始又只误伤不避错。因此当前继续保留 `--player-form-counter-min-confidence 0.4`，等更多真实赛果补足样本后再让 player form 自动改判。
+- player status 边界：新增 `--avoid-player-status-risk` 和 `player_status_policy_candidates` 后，回测会把被选中一侧的 `picked_player_sample_confidence` / `picked_substitute_flag` 单独落盘。Day 1 用 `player_status_min_confidence=0.4`、`player_status_min_margin=0.06` 会额外规避 HEROIC 错单和 BetBoom 对单，actionable 从 5 降到 3，命中为 **2/3 ≈ 67%**；如果把状态 margin 提到 0.08，又会误伤 GamerLegion 和 BetBoom 两个对单。因此选手状态现在只作为低覆盖审查信号，不替换 5%+player form 默认策略。
 - Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，并新增 `category_diagnostics`：`3-0` 为 **0 locked / 0 alive / 2 broken**，`advance` 为 **2 locked / 4 alive / 0 broken**，`0-3` 为 **1 locked / 0 alive / 1 broken**。这说明当前最需要调低的是极端槽位的 BO1/短期状态方差权重，而不是晋级槽主体选择。
 - 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果、地图池、短期 player form、替补和样本不足惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
 
@@ -449,7 +451,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、`avoid_reason_diagnostics`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、`avoid_reason_diagnostics`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
 
 如果不需要重训，可以直接把 Day 1 诊断得到的策略阈值应用到既有 `forecast_report.json`：
 
@@ -475,6 +477,20 @@ PYTHONPATH=src python3 -m cs2pickem.cli apply-forecast-policy \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_market_form_counter_2026-06-04.json
 ```
 
+选手状态候选可以改用低样本/替补 margin 门槛做审查：
+
+```bash
+PYTHONPATH=src python3 -m cs2pickem.cli apply-forecast-policy \
+  --forecast-report data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_report.json \
+  --fixtures data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_with_market_odds_player_form_2026-06-04.csv \
+  --minimum-margin 0.05 --avoid-player-form-counter-signal \
+  --player-form-counter-min-confidence 0.4 \
+  --avoid-player-status-risk \
+  --player-status-min-confidence 0.4 \
+  --player-status-min-margin 0.06 \
+  --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_player_status_risk_2026-06-04.json
+```
+
 然后对重打标版本重新回测：
 
 ```bash
@@ -487,6 +503,11 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --forecast-report data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_market_form_counter_2026-06-04.json \
   --results data/cologne2026/source_inputs/stage1_day1_results_2026-06-02.csv \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_market_form_counter_backtest_day1_2026-06-02.json
+
+PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
+  --forecast-report data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_player_status_risk_2026-06-04.json \
+  --results data/cologne2026/source_inputs/stage1_day1_results_2026-06-02.csv \
+  --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_player_status_risk_backtest_day1_2026-06-02.json
 ```
 
 Round 3 / Round 4 这种中途状态先从逐场赛果推导当前 standings，再用 `checkpoint-pickem` 看槽位是否还活着，不用 `backtest-pickem` 提前算最终分：

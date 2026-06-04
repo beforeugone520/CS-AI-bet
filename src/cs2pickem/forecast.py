@@ -25,6 +25,9 @@ def forecast_fixtures(
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
     market_favorite_counter_min_probability: float = 0.6,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
 ) -> Dict[str, object]:
     fixtures = [dict(row) for row in fixture_rows]
     bp_report = None
@@ -61,6 +64,10 @@ def forecast_fixtures(
             player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
             player_form_counter_min_confidence=player_form_counter_min_confidence,
             avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+            avoid_player_status_risk=avoid_player_status_risk,
+            player_status_min_confidence=player_status_min_confidence,
+            player_status_min_margin=player_status_min_margin,
+            **_player_status_pick_kwargs(player_form_summary),
         )
         avoid_reason = _avoid_reason(
             pick=pick,
@@ -72,6 +79,9 @@ def forecast_fixtures(
             market_probability_team1=_market_probability_team1_from_signal(market_signal or {}),
             avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
             market_favorite_counter_min_probability=market_favorite_counter_min_probability,
+            avoid_player_status_risk=avoid_player_status_risk,
+            player_status_min_confidence=player_status_min_confidence,
+            player_status_min_margin=player_status_min_margin,
         )
         if avoid_reason == "market_favorite_player_form_counter_signal":
             pick = "avoid"
@@ -114,6 +124,9 @@ def forecast_fixtures(
             "player_form_counter_min_confidence": player_form_counter_min_confidence,
             "avoid_market_favorite_player_form_counter_signal": avoid_market_favorite_player_form_counter_signal,
             "market_favorite_counter_min_probability": market_favorite_counter_min_probability,
+            "avoid_player_status_risk": avoid_player_status_risk,
+            "player_status_min_confidence": player_status_min_confidence,
+            "player_status_min_margin": player_status_min_margin,
         },
         "bp_report": bp_report,
         "predictions": predictions,
@@ -136,6 +149,9 @@ def forecast_fixtures_file(
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
     market_favorite_counter_min_probability: float = 0.6,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
 ) -> Dict[str, object]:
     profiles: Optional[Mapping[str, Mapping[str, Any]]] = None
     if profiles_path:
@@ -158,6 +174,9 @@ def forecast_fixtures_file(
         player_form_counter_min_confidence=player_form_counter_min_confidence,
         avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
         market_favorite_counter_min_probability=market_favorite_counter_min_probability,
+        avoid_player_status_risk=avoid_player_status_risk,
+        player_status_min_confidence=player_status_min_confidence,
+        player_status_min_margin=player_status_min_margin,
     )
 
 
@@ -169,6 +188,9 @@ def apply_forecast_policy(
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
     market_favorite_counter_min_probability: float = 0.6,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
 ) -> Dict[str, object]:
     raw_predictions = forecast_report.get("predictions", [])
     if not isinstance(raw_predictions, list):
@@ -194,6 +216,9 @@ def apply_forecast_policy(
             player_form_counter_min_confidence=player_form_counter_min_confidence,
             avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
             market_favorite_counter_min_probability=market_favorite_counter_min_probability,
+            avoid_player_status_risk=avoid_player_status_risk,
+            player_status_min_confidence=player_status_min_confidence,
+            player_status_min_margin=player_status_min_margin,
         )
         predictions.append(updated)
     report = dict(forecast_report)
@@ -204,6 +229,9 @@ def apply_forecast_policy(
         "player_form_counter_min_confidence": player_form_counter_min_confidence,
         "avoid_market_favorite_player_form_counter_signal": avoid_market_favorite_player_form_counter_signal,
         "market_favorite_counter_min_probability": market_favorite_counter_min_probability,
+        "avoid_player_status_risk": avoid_player_status_risk,
+        "player_status_min_confidence": player_status_min_confidence,
+        "player_status_min_margin": player_status_min_margin,
     }
     report["decision_summary"] = _decision_summary(predictions)
     report["policy_application"] = {
@@ -222,6 +250,9 @@ def apply_forecast_policy_file(
     player_form_counter_min_confidence: float = 0.4,
     avoid_market_favorite_player_form_counter_signal: bool = False,
     market_favorite_counter_min_probability: float = 0.6,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
 ) -> Dict[str, object]:
     with open(forecast_report_path, encoding="utf-8") as handle:
         payload = json.load(handle)
@@ -235,6 +266,9 @@ def apply_forecast_policy_file(
         player_form_counter_min_confidence=player_form_counter_min_confidence,
         avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
         market_favorite_counter_min_probability=market_favorite_counter_min_probability,
+        avoid_player_status_risk=avoid_player_status_risk,
+        player_status_min_confidence=player_status_min_confidence,
+        player_status_min_margin=player_status_min_margin,
     )
     report["forecast_report_path"] = forecast_report_path
     if fixtures_path:
@@ -286,6 +320,9 @@ def _avoid_reason(
     market_probability_team1: float | None = None,
     avoid_market_favorite_player_form_counter_signal: bool = False,
     market_favorite_counter_min_probability: float = 0.6,
+    avoid_player_status_risk: bool = False,
+    player_status_min_confidence: float = 0.4,
+    player_status_min_margin: float = 0.06,
 ) -> str | None:
     diff = player_form_summary.get("diff", {})
     form_score_diff = _num(diff.get("score") if isinstance(diff, Mapping) else None, 0.0)
@@ -299,6 +336,16 @@ def _avoid_reason(
             and directional_form_score < 0
         ):
             return "player_form_counter_signal"
+        if (
+            avoid_player_status_risk
+            and abs(adjusted_probability_team1 - 0.5) <= player_status_min_margin
+            and _player_status_risk(
+                adjusted_probability_team1,
+                player_form_summary,
+                player_status_min_confidence,
+            )
+        ):
+            return "player_status_risk"
         return "avoid"
     if (
         avoid_market_favorite_player_form_counter_signal
@@ -339,6 +386,9 @@ def _apply_decision_policy_to_prediction(
     player_form_counter_min_confidence: float,
     avoid_market_favorite_player_form_counter_signal: bool,
     market_favorite_counter_min_probability: float,
+    avoid_player_status_risk: bool,
+    player_status_min_confidence: float,
+    player_status_min_margin: float,
 ) -> None:
     adjusted = _num(
         prediction.get("adjusted_probability_team1"),
@@ -356,6 +406,10 @@ def _apply_decision_policy_to_prediction(
         player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
         player_form_counter_min_confidence=player_form_counter_min_confidence,
         avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        avoid_player_status_risk=avoid_player_status_risk,
+        player_status_min_confidence=player_status_min_confidence,
+        player_status_min_margin=player_status_min_margin,
+        **_player_status_pick_kwargs(player_form_summary),
     )
     prediction["avoid_reason"] = _avoid_reason(
         pick=str(prediction["pick"]),
@@ -367,6 +421,9 @@ def _apply_decision_policy_to_prediction(
         market_probability_team1=_market_probability_team1_from_prediction(prediction),
         avoid_market_favorite_player_form_counter_signal=avoid_market_favorite_player_form_counter_signal,
         market_favorite_counter_min_probability=market_favorite_counter_min_probability,
+        avoid_player_status_risk=avoid_player_status_risk,
+        player_status_min_confidence=player_status_min_confidence,
+        player_status_min_margin=player_status_min_margin,
     )
     if prediction["avoid_reason"] == "market_favorite_player_form_counter_signal":
         prediction["pick"] = "avoid"
@@ -379,6 +436,35 @@ def _player_form_sample_confidence(player_form_summary: Mapping[str, Any]) -> fl
     if not isinstance(team1, Mapping) or not isinstance(team2, Mapping):
         return 0.0
     return min(_num(team1.get("sample_confidence"), 0.0), _num(team2.get("sample_confidence"), 0.0))
+
+
+def _player_status_pick_kwargs(player_form_summary: Mapping[str, Any]) -> Dict[str, object]:
+    team1 = player_form_summary.get("team1", {})
+    team2 = player_form_summary.get("team2", {})
+    if not isinstance(team1, Mapping):
+        team1 = {}
+    if not isinstance(team2, Mapping):
+        team2 = {}
+    return {
+        "team1_player_sample_confidence": _num(team1.get("sample_confidence"), 0.0),
+        "team2_player_sample_confidence": _num(team2.get("sample_confidence"), 0.0),
+        "team1_substitute_flag": _num(team1.get("substitute_flag"), 0.0),
+        "team2_substitute_flag": _num(team2.get("substitute_flag"), 0.0),
+    }
+
+
+def _player_status_risk(
+    adjusted_probability_team1: float,
+    player_form_summary: Mapping[str, Any],
+    player_status_min_confidence: float,
+) -> bool:
+    side_key = "team1" if adjusted_probability_team1 >= 0.5 else "team2"
+    side = player_form_summary.get(side_key, {})
+    if not isinstance(side, Mapping):
+        return False
+    sample_confidence = _num(side.get("sample_confidence"), 1.0)
+    substitute_flag = _num(side.get("substitute_flag"), 0.0)
+    return sample_confidence < player_status_min_confidence or substitute_flag >= 1.0
 
 
 def _market_probability_team1_from_signal(market_signal: Mapping[str, Any]) -> float | None:
@@ -439,6 +525,7 @@ def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int
         for row in materialized
         if row.get("avoid_reason") == "market_favorite_player_form_counter_signal"
     )
+    player_status_risk_avoids = sum(1 for row in materialized if row.get("avoid_reason") == "player_status_risk")
     return {
         "fixtures": len(materialized),
         "actionable_picks": len(materialized) - avoid_picks,
@@ -446,4 +533,5 @@ def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int
         "low_confidence_avoids": low_confidence,
         "player_form_counter_signal_avoids": player_form_counter_signal_avoids,
         "market_favorite_player_form_counter_signal_avoids": market_form_counter_avoids,
+        "player_status_risk_avoids": player_status_risk_avoids,
     }
