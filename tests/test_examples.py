@@ -114,6 +114,36 @@ class ExampleDataTests(unittest.TestCase):
         self.assertEqual(risk_detail["team"], mibr["team"])
         self.assertEqual(risk_detail["status_adjusted_score"], mibr["status_adjusted_score"])
 
+    def test_cologne_final_fused_pickems_include_status_adjusted_candidate_scoreboard(self):
+        import json
+
+        with open(
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "predictions",
+                "fivee_6m_stage1_2026-06-01",
+                "final_fused_pickem_2026-06-01.json",
+            ),
+            encoding="utf-8",
+        ) as handle:
+            report = json.load(handle)
+
+        self.assertIn("candidate_scoreboard", report)
+        scoreboard = report["candidate_scoreboard"]["3-0"]
+        mibr = next(row for row in scoreboard if row["team"] == "MIBR")
+        betboom = next(row for row in scoreboard if row["team"] == "BetBoom")
+
+        self.assertEqual(mibr["adjusted_rank"], 1)
+        self.assertEqual(mibr["raw_rank"], 1)
+        self.assertTrue(mibr["selected"])
+        self.assertEqual(mibr["category"], "3-0")
+        self.assertIn("player_availability_multiplier", mibr)
+        self.assertIn("status_adjusted_score", mibr)
+        self.assertGreaterEqual(betboom["adjusted_rank"], 3)
+        self.assertFalse(betboom["selected"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -137,6 +137,47 @@ def conf(team, cat):
     tier = ["Low", "Low", "Medium", "High"][a]
     return round(base, 3), a, tier
 
+def rank_map(score_rows, candidate_pool):
+    ranked = sorted(candidate_pool, key=lambda t: score_rows[t], reverse=True)
+    return {team: rank for rank, team in enumerate(ranked, start=1)}
+
+def candidate_scoreboard(cat, candidate_pool, selected):
+    raw_ranks = rank_map(RAW_SCORES[cat], candidate_pool)
+    adjusted_ranks = rank_map(STATUS_ADJUSTED_SCORES[cat], candidate_pool)
+    selected = set(selected)
+    rows = []
+    for team in sorted(candidate_pool, key=lambda t: STATUS_ADJUSTED_SCORES[cat][t], reverse=True):
+        b, a, tier = conf(team, cat)
+        row = {
+            "team": team,
+            "category": cat,
+            "raw_rank": raw_ranks[team],
+            "adjusted_rank": adjusted_ranks[team],
+            "rank_delta": raw_ranks[team] - adjusted_ranks[team],
+            "selected": team in selected,
+            "confidence": b,
+            "tier": tier,
+            "signals_agree": a,
+            "expert_votes": {
+                "3-0": votes(team, "3-0"),
+                "advance": votes(team, "advance"),
+                "0-3": votes(team, "0-3"),
+            },
+            "market_win_prob_r1": round(S[team], 3),
+            "model": {
+                "3-0": round(M30[team], 3),
+                "advance": round(MQ[team], 3),
+                "0-3": round(M03[team], 3),
+            },
+            "raw_fused_score": RAW_SCORES[cat][team],
+            "player_availability_multiplier": player_availability_multiplier(team, cat),
+            "status_adjusted_score": STATUS_ADJUSTED_SCORES[cat][team],
+            "score_basis": "status_adjusted_score",
+        }
+        row.update(player_status_fields(team))
+        rows.append(row)
+    return rows
+
 print("="*70)
 print("FINAL HIGH-CONFIDENCE PICK'EM (model + 19 experts + market fused)")
 print(f"weights: experts {WE}, market {WK}, model {WM}  |  experts N={N}")
@@ -147,6 +188,11 @@ result = {
     "player_status_source": PLAYER_STATUS_SOURCE,
     "picks": {},
     "pickem_risk_details": {},
+    "candidate_scoreboard": {
+        "3-0": candidate_scoreboard("3-0", TEAMS, pick_30),
+        "advance": candidate_scoreboard("advance", rem2, pick_adv),
+        "0-3": candidate_scoreboard("0-3", rem, pick_03),
+    },
 }
 for cat, picks in [("3-0", pick_30), ("advance", pick_adv), ("0-3", pick_03)]:
     print(f"\n[{cat}]")

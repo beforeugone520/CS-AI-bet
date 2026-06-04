@@ -472,5 +472,1315 @@
       }
     ]
   },
+  "candidate_scoreboard": {
+    "3-0": [
+      {
+        "team": "MIBR",
+        "category": "3-0",
+        "raw_rank": 1,
+        "adjusted_rank": 1,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.21,
+        "tier": "High",
+        "signals_agree": 3,
+        "expert_votes": {
+          "3-0": 4,
+          "advance": 13,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.688,
+        "model": {
+          "3-0": 0.218,
+          "advance": 0.668,
+          "0-3": 0.059
+        },
+        "raw_fused_score": 0.78,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6864,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.04433999999999998,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "GamerLegion",
+        "category": "3-0",
+        "raw_rank": 2,
+        "adjusted_rank": 2,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.34,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 15,
+          "advance": 4,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.657,
+        "model": {
+          "3-0": 0.144,
+          "advance": 0.548,
+          "0-3": 0.102
+        },
+        "raw_fused_score": 0.7592640692640693,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6681523809523809,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.028965000000000074,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "BetBoom",
+        "category": "3-0",
+        "raw_rank": 3,
+        "adjusted_rank": 3,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.22,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 7,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.688,
+        "model": {
+          "3-0": 0.143,
+          "advance": 0.536,
+          "0-3": 0.101
+        },
+        "raw_fused_score": 0.6137272727272727,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.54008,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.040200000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "BIG",
+        "category": "3-0",
+        "raw_rank": 4,
+        "adjusted_rank": 4,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.137,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 17,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.541,
+        "model": {
+          "3-0": 0.195,
+          "advance": 0.656,
+          "0-3": 0.069
+        },
+        "raw_fused_score": 0.5932705659427692,
+        "player_availability_multiplier": 0.904,
+        "status_adjusted_score": 0.5363165916122633,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.183,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "B8",
+        "category": "3-0",
+        "raw_rank": 5,
+        "adjusted_rank": 5,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.17,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 6,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.122,
+          "advance": 0.535,
+          "0-3": 0.114
+        },
+        "raw_fused_score": 0.46823632296115514,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.4120479642058165,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": -0.006960000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "HEROIC",
+        "category": "3-0",
+        "raw_rank": 6,
+        "adjusted_rank": 6,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.124,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 15,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.632,
+        "model": {
+          "3-0": 0.132,
+          "advance": 0.517,
+          "0-3": 0.105
+        },
+        "raw_fused_score": 0.45008939897311995,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.39607867109634554,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.00048000000000001373,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "TYLOO",
+        "category": "3-0",
+        "raw_rank": 7,
+        "adjusted_rank": 7,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.101,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 4,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.17,
+          "advance": 0.614,
+          "0-3": 0.079
+        },
+        "raw_fused_score": 0.43582428309945087,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.3835253691275168,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.04988999999999997,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "M80",
+        "category": "3-0",
+        "raw_rank": 9,
+        "adjusted_rank": 8,
+        "rank_delta": 1,
+        "selected": false,
+        "confidence": 0.074,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 14,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.609,
+        "model": {
+          "3-0": 0.105,
+          "advance": 0.501,
+          "0-3": 0.126
+        },
+        "raw_fused_score": 0.316161865569273,
+        "player_availability_multiplier": 0.904,
+        "status_adjusted_score": 0.2858103264746228,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.11160000000000006,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "THUNDER dOWNUNDER",
+        "category": "3-0",
+        "raw_rank": 8,
+        "adjusted_rank": 9,
+        "rank_delta": -1,
+        "selected": false,
+        "confidence": 0.079,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 11
+        },
+        "market_win_prob_r1": 0.312,
+        "model": {
+          "3-0": 0.158,
+          "advance": 0.58,
+          "0-3": 0.091
+        },
+        "raw_fused_score": 0.31857575757575757,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.2803466666666667,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.067425,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "SINNERS",
+        "category": "3-0",
+        "raw_rank": 10,
+        "adjusted_rank": 10,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.07,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 7,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.11,
+          "advance": 0.495,
+          "0-3": 0.124
+        },
+        "raw_fused_score": 0.3121454138702461,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.27468796420581654,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.023850000000000038,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Lynn Vision",
+        "category": "3-0",
+        "raw_rank": 11,
+        "adjusted_rank": 11,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.069,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 0,
+          "0-3": 2
+        },
+        "market_win_prob_r1": 0.391,
+        "model": {
+          "3-0": 0.107,
+          "advance": 0.449,
+          "0-3": 0.137
+        },
+        "raw_fused_score": 0.2248987404913331,
+        "player_availability_multiplier": 0.904,
+        "status_adjusted_score": 0.20330846140416511,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.25,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "FlyQuest",
+        "category": "3-0",
+        "raw_rank": 12,
+        "adjusted_rank": 12,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.05,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 6
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.1,
+          "advance": 0.443,
+          "0-3": 0.149
+        },
+        "raw_fused_score": 0.20373337400854183,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.1792853691275168,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.03340499999999999,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Sharks",
+        "category": "3-0",
+        "raw_rank": 13,
+        "adjusted_rank": 13,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.05,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 1,
+          "0-3": 4
+        },
+        "market_win_prob_r1": 0.368,
+        "model": {
+          "3-0": 0.101,
+          "advance": 0.468,
+          "0-3": 0.142
+        },
+        "raw_fused_score": 0.17436514648142554,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.15344132890365447,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.026204999999999944,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Liquid",
+        "category": "3-0",
+        "raw_rank": 14,
+        "adjusted_rank": 14,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.037,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 11,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.459,
+        "model": {
+          "3-0": 0.073,
+          "advance": 0.344,
+          "0-3": 0.178
+        },
+        "raw_fused_score": 0.1401233734511702,
+        "player_availability_multiplier": 0.904,
+        "status_adjusted_score": 0.12667152959985786,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.02250000000000002,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "category": "3-0",
+        "raw_rank": 15,
+        "adjusted_rank": 15,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.035,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 2,
+          "0-3": 8
+        },
+        "market_win_prob_r1": 0.312,
+        "model": {
+          "3-0": 0.069,
+          "advance": 0.342,
+          "0-3": 0.19
+        },
+        "raw_fused_score": 0.04963636363636363,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.04368,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": -0.0012000000000000344,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "NRG",
+        "category": "3-0",
+        "raw_rank": 16,
+        "adjusted_rank": 16,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.026,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 3,
+          "0-3": 4
+        },
+        "market_win_prob_r1": 0.343,
+        "model": {
+          "3-0": 0.053,
+          "advance": 0.305,
+          "0-3": 0.232
+        },
+        "raw_fused_score": 0.016190476190476193,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.014247619047619049,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.0026399999999999757,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      }
+    ],
+    "advance": [
+      {
+        "team": "BIG",
+        "category": "advance",
+        "raw_rank": 1,
+        "adjusted_rank": 1,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.736,
+        "tier": "High",
+        "signals_agree": 3,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 17,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.541,
+        "model": {
+          "3-0": 0.195,
+          "advance": 0.656,
+          "0-3": 0.069
+        },
+        "raw_fused_score": 0.9217554144276177,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.8848851978505129,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.183,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "BetBoom",
+        "category": "advance",
+        "raw_rank": 2,
+        "adjusted_rank": 2,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.705,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 7,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.688,
+        "model": {
+          "3-0": 0.143,
+          "advance": 0.536,
+          "0-3": 0.101
+        },
+        "raw_fused_score": 0.8068345669518409,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.7664928386042488,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.040200000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "B8",
+        "category": "advance",
+        "raw_rank": 3,
+        "adjusted_rank": 3,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.666,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 6,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.122,
+          "advance": 0.535,
+          "0-3": 0.114
+        },
+        "raw_fused_score": 0.7280018436113296,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6916017514307631,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": -0.006960000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "HEROIC",
+        "category": "advance",
+        "raw_rank": 4,
+        "adjusted_rank": 4,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.653,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 15,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.632,
+        "model": {
+          "3-0": 0.132,
+          "advance": 0.517,
+          "0-3": 0.105
+        },
+        "raw_fused_score": 0.7144690358126342,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6787455840220025,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.00048000000000001373,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "M80",
+        "category": "advance",
+        "raw_rank": 5,
+        "adjusted_rank": 5,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.593,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 14,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.609,
+        "model": {
+          "3-0": 0.105,
+          "advance": 0.501,
+          "0-3": 0.126
+        },
+        "raw_fused_score": 0.6301837688326705,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.6049764180793636,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.11160000000000006,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "TYLOO",
+        "category": "advance",
+        "raw_rank": 6,
+        "adjusted_rank": 6,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.471,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 4,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.17,
+          "advance": 0.614,
+          "0-3": 0.079
+        },
+        "raw_fused_score": 0.5718986574249776,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.5433037245537287,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.04988999999999997,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "SINNERS",
+        "category": "advance",
+        "raw_rank": 7,
+        "adjusted_rank": 7,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.473,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 7,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.11,
+          "advance": 0.495,
+          "0-3": 0.124
+        },
+        "raw_fused_score": 0.4909705216748436,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.4664219955911014,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.023850000000000038,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "THUNDER dOWNUNDER",
+        "category": "advance",
+        "raw_rank": 8,
+        "adjusted_rank": 8,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.352,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 11
+        },
+        "market_win_prob_r1": 0.312,
+        "model": {
+          "3-0": 0.158,
+          "advance": 0.58,
+          "0-3": 0.091
+        },
+        "raw_fused_score": 0.3771508218783044,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.35829328078438916,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.067425,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Liquid",
+        "category": "advance",
+        "raw_rank": 9,
+        "adjusted_rank": 9,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.438,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 11,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.459,
+        "model": {
+          "3-0": 0.073,
+          "advance": 0.344,
+          "0-3": 0.178
+        },
+        "raw_fused_score": 0.2519287960986981,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.24185164425475017,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.02250000000000002,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Sharks",
+        "category": "advance",
+        "raw_rank": 10,
+        "adjusted_rank": 10,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.323,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 1,
+          "0-3": 4
+        },
+        "market_win_prob_r1": 0.368,
+        "model": {
+          "3-0": 0.101,
+          "advance": 0.468,
+          "0-3": 0.142
+        },
+        "raw_fused_score": 0.24321068208250746,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.23105014797838208,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.026204999999999944,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Lynn Vision",
+        "category": "advance",
+        "raw_rank": 11,
+        "adjusted_rank": 11,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.318,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 0,
+          "0-3": 2
+        },
+        "market_win_prob_r1": 0.391,
+        "model": {
+          "3-0": 0.107,
+          "advance": 0.449,
+          "0-3": 0.137
+        },
+        "raw_fused_score": 0.2250312416821778,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.21602999201489068,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.25,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "FlyQuest",
+        "category": "advance",
+        "raw_rank": 12,
+        "adjusted_rank": 12,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.307,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 6
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.1,
+          "advance": 0.443,
+          "0-3": 0.149
+        },
+        "raw_fused_score": 0.21899185422549564,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.20804226151422084,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.03340499999999999,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      }
+    ],
+    "0-3": [
+      {
+        "team": "NRG",
+        "category": "0-3",
+        "raw_rank": 1,
+        "adjusted_rank": 1,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.311,
+        "tier": "High",
+        "signals_agree": 3,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 3,
+          "0-3": 4
+        },
+        "market_win_prob_r1": 0.343,
+        "model": {
+          "3-0": 0.053,
+          "advance": 0.305,
+          "0-3": 0.232
+        },
+        "raw_fused_score": 0.7929004329004329,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8246164502164502,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.0026399999999999757,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Gaimin Gladiators",
+        "category": "0-3",
+        "raw_rank": 2,
+        "adjusted_rank": 2,
+        "rank_delta": 0,
+        "selected": true,
+        "confidence": 0.359,
+        "tier": "High",
+        "signals_agree": 3,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 2,
+          "0-3": 8
+        },
+        "market_win_prob_r1": 0.312,
+        "model": {
+          "3-0": 0.069,
+          "advance": 0.342,
+          "0-3": 0.19
+        },
+        "raw_fused_score": 0.7889429794406618,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8205006986182883,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": -0.0012000000000000344,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "THUNDER dOWNUNDER",
+        "category": "0-3",
+        "raw_rank": 3,
+        "adjusted_rank": 3,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.357,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 11
+        },
+        "market_win_prob_r1": 0.312,
+        "model": {
+          "3-0": 0.158,
+          "advance": 0.58,
+          "0-3": 0.091
+        },
+        "raw_fused_score": 0.5677604293730178,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.5904708465479386,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.067425,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "FlyQuest",
+        "category": "0-3",
+        "raw_rank": 4,
+        "adjusted_rank": 4,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.284,
+        "tier": "High",
+        "signals_agree": 3,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 0,
+          "0-3": 6
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.1,
+          "advance": 0.443,
+          "0-3": 0.149
+        },
+        "raw_fused_score": 0.5488521198665348,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.5708062046611962,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.03340499999999999,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Sharks",
+        "category": "0-3",
+        "raw_rank": 5,
+        "adjusted_rank": 5,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.261,
+        "tier": "Medium",
+        "signals_agree": 2,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 1,
+          "0-3": 4
+        },
+        "market_win_prob_r1": 0.368,
+        "model": {
+          "3-0": 0.101,
+          "advance": 0.468,
+          "0-3": 0.142
+        },
+        "raw_fused_score": 0.5042958055615708,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.5244676377840337,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.026204999999999944,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Liquid",
+        "category": "0-3",
+        "raw_rank": 6,
+        "adjusted_rank": 6,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.213,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 11,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.459,
+        "model": {
+          "3-0": 0.073,
+          "advance": 0.344,
+          "0-3": 0.178
+        },
+        "raw_fused_score": 0.4838659070089568,
+        "player_availability_multiplier": 1.032,
+        "status_adjusted_score": 0.49934961603324346,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.02250000000000002,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "Lynn Vision",
+        "category": "0-3",
+        "raw_rank": 7,
+        "adjusted_rank": 7,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.222,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 0,
+          "0-3": 2
+        },
+        "market_win_prob_r1": 0.391,
+        "model": {
+          "3-0": 0.107,
+          "advance": 0.449,
+          "0-3": 0.137
+        },
+        "raw_fused_score": 0.4222706282386602,
+        "player_availability_multiplier": 1.032,
+        "status_adjusted_score": 0.43578328834229735,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.25,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "SINNERS",
+        "category": "0-3",
+        "raw_rank": 8,
+        "adjusted_rank": 8,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.163,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 7,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.11,
+          "advance": 0.495,
+          "0-3": 0.124
+        },
+        "raw_fused_score": 0.25840852020088734,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.26874486100892286,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.023850000000000038,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "M80",
+        "category": "0-3",
+        "raw_rank": 9,
+        "adjusted_rank": 9,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.141,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 0,
+          "advance": 14,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.609,
+        "model": {
+          "3-0": 0.105,
+          "advance": 0.501,
+          "0-3": 0.126
+        },
+        "raw_fused_score": 0.21785667553831428,
+        "player_availability_multiplier": 1.032,
+        "status_adjusted_score": 0.22482808915554034,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.11160000000000006,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "B8",
+        "category": "0-3",
+        "raw_rank": 10,
+        "adjusted_rank": 10,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.143,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 6,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.572,
+        "model": {
+          "3-0": 0.122,
+          "advance": 0.535,
+          "0-3": 0.114
+        },
+        "raw_fused_score": 0.2015554074682918,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.20961762376702348,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": -0.006960000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "TYLOO",
+        "category": "0-3",
+        "raw_rank": 11,
+        "adjusted_rank": 11,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.17,
+        "tier": "Low",
+        "signals_agree": 1,
+        "expert_votes": {
+          "3-0": 1,
+          "advance": 4,
+          "0-3": 1
+        },
+        "market_win_prob_r1": 0.428,
+        "model": {
+          "3-0": 0.17,
+          "advance": 0.614,
+          "0-3": 0.079
+        },
+        "raw_fused_score": 0.19835088896764602,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.20628492452635186,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.04988999999999997,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "HEROIC",
+        "category": "0-3",
+        "raw_rank": 12,
+        "adjusted_rank": 12,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.126,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 15,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.632,
+        "model": {
+          "3-0": 0.132,
+          "advance": 0.517,
+          "0-3": 0.105
+        },
+        "raw_fused_score": 0.13999881175085566,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.14559876422088988,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.00048000000000001373,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "BetBoom",
+        "category": "0-3",
+        "raw_rank": 13,
+        "adjusted_rank": 13,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.113,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 7,
+          "advance": 12,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.688,
+        "model": {
+          "3-0": 0.143,
+          "advance": 0.536,
+          "0-3": 0.101
+        },
+        "raw_fused_score": 0.0992925103683825,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.10326421078311782,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.0,
+        "substitute_flag": 0,
+        "player_form_score": 0.040200000000000034,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      },
+      {
+        "team": "BIG",
+        "category": "0-3",
+        "raw_rank": 14,
+        "adjusted_rank": 14,
+        "rank_delta": 0,
+        "selected": false,
+        "confidence": 0.126,
+        "tier": "Low",
+        "signals_agree": 0,
+        "expert_votes": {
+          "3-0": 2,
+          "advance": 17,
+          "0-3": 0
+        },
+        "market_win_prob_r1": 0.541,
+        "model": {
+          "3-0": 0.195,
+          "advance": 0.656,
+          "0-3": 0.069
+        },
+        "raw_fused_score": 0.07824458557238234,
+        "player_availability_multiplier": 1.032,
+        "status_adjusted_score": 0.08074841231069858,
+        "score_basis": "status_adjusted_score",
+        "player_sample_confidence": 0.2,
+        "substitute_flag": 0,
+        "player_form_score": 0.183,
+        "player_form_trend": 0.0,
+        "player_status_risk": true
+      }
+    ]
+  },
   "swing_slots": {}
 }
