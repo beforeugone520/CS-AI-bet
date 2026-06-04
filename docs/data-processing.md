@@ -271,7 +271,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。`policy_tradeoff_summary.recommended_policy_update` 会额外给出 `apply_forecast_policy_args` 和 `cli_flags`，便于把实际赛果里验证过的候选策略复用到下一轮 forecast。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。`policy_tradeoff_summary.recommended_policy_update` 会额外给出 `apply_forecast_policy_args` 和 `cli_flags`；如果结论是 `keep_current_policy`，也会回显原 forecast report 的 `decision_policy`，便于把实际赛果里验证过的当前策略复用到下一轮 forecast。
 
 ### 不重训策略重打标
 

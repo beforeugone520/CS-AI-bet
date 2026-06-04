@@ -1459,6 +1459,102 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["forecast_report_path"], forecast_path)
         self.assertEqual(report["results_path"], results_path)
 
+    def test_backtest_forecast_file_recommends_current_policy_flags_when_kept(self):
+        from cs2pickem.backtest import backtest_forecast_file
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            forecast_path = os.path.join(tmpdir, "forecast.json")
+            results_path = os.path.join(tmpdir, "results.csv")
+            output_path = os.path.join(tmpdir, "forecast-backtest.json")
+            with open(forecast_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "decision_policy": {
+                            "minimum_margin": 0.05,
+                            "bo1_minimum_margin": 0.05,
+                            "avoid_player_form_counter_signal": True,
+                            "player_form_counter_min_confidence": 0.4,
+                            "avoid_player_status_risk": True,
+                            "player_status_min_confidence": 0.4,
+                            "player_status_min_margin": 0.06,
+                        },
+                        "predictions": [
+                            {
+                                "date": "2026-06-02",
+                                "team1": "Alpha",
+                                "team2": "Bravo",
+                                "best_of": 1,
+                                "pick": "Alpha",
+                                "adjusted_probability_team1": 0.61,
+                                "confidence_margin": 0.11,
+                                "player_form_summary": {
+                                    "team1": {"sample_confidence": 0.9, "substitute_flag": 0},
+                                    "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                                    "diff": {"score": 0.04},
+                                },
+                            },
+                            {
+                                "date": "2026-06-02",
+                                "team1": "Charlie",
+                                "team2": "Delta",
+                                "best_of": 1,
+                                "pick": "Charlie",
+                                "adjusted_probability_team1": 0.62,
+                                "confidence_margin": 0.12,
+                                "player_form_summary": {
+                                    "team1": {"sample_confidence": 0.9, "substitute_flag": 0},
+                                    "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                                    "diff": {"score": 0.05},
+                                },
+                            },
+                        ],
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                results_path,
+                [
+                    {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha"},
+                    {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                ],
+            )
+
+            report = backtest_forecast_file(forecast_path, results_path, output_path)
+
+        update = report["policy_diagnostics"]["policy_tradeoff_summary"]["recommended_policy_update"]
+        self.assertEqual(update["action"], "keep_current_policy")
+        self.assertEqual(update["source"], "current_policy")
+        self.assertEqual(
+            update["apply_forecast_policy_args"],
+            {
+                "minimum_margin": 0.05,
+                "bo1_minimum_margin": 0.05,
+                "avoid_player_form_counter_signal": True,
+                "player_form_counter_min_confidence": 0.4,
+                "avoid_player_status_risk": True,
+                "player_status_min_confidence": 0.4,
+                "player_status_min_margin": 0.06,
+            },
+        )
+        self.assertEqual(
+            update["cli_flags"],
+            [
+                "--minimum-margin",
+                "0.05",
+                "--bo1-minimum-margin",
+                "0.05",
+                "--avoid-player-form-counter-signal",
+                "--player-form-counter-min-confidence",
+                "0.4",
+                "--avoid-player-status-risk",
+                "--player-status-min-confidence",
+                "0.4",
+                "--player-status-min-margin",
+                "0.06",
+            ],
+        )
+
     def test_backtest_cli_reads_final_fused_pickem_json(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

@@ -256,6 +256,7 @@ def merge_standings_file(
 def evaluate_forecast_result(
     predictions: Iterable[Mapping[str, Any]],
     result_rows: Iterable[Mapping[str, Any]],
+    decision_policy: Mapping[str, Any] | None = None,
 ) -> Dict[str, object]:
     materialized_predictions = [dict(row) for row in predictions]
     lookup = _forecast_result_lookup(result_rows)
@@ -366,7 +367,7 @@ def evaluate_forecast_result(
         "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
         "favorite_upset_diagnostics": _forecast_favorite_upset_diagnostics(match_reports),
         "swiss_pressure_diagnostics": _forecast_swiss_pressure_diagnostics(match_reports),
-        "policy_diagnostics": _forecast_policy_diagnostics(match_reports),
+        "policy_diagnostics": _forecast_policy_diagnostics(match_reports, decision_policy=decision_policy),
         "matches": match_reports,
     }
 
@@ -381,7 +382,12 @@ def backtest_forecast_file(
     predictions = payload.get("predictions", payload)
     if not isinstance(predictions, list):
         raise ValueError("forecast report must be a list or an object with a predictions list")
-    report = evaluate_forecast_result(predictions, read_matches_csv(results_path))
+    decision_policy = payload.get("decision_policy") if isinstance(payload, Mapping) else None
+    report = evaluate_forecast_result(
+        predictions,
+        read_matches_csv(results_path),
+        decision_policy=decision_policy if isinstance(decision_policy, Mapping) else None,
+    )
     report["forecast_report_path"] = forecast_report_path
     report["results_path"] = results_path
     if output_path:
@@ -1416,7 +1422,10 @@ def _forecast_swiss_pressure_bucket(rows: Iterable[Mapping[str, Any]]) -> Dict[s
     }
 
 
-def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
+def _forecast_policy_diagnostics(
+    match_reports: Iterable[Mapping[str, Any]],
+    decision_policy: Mapping[str, Any] | None = None,
+) -> Dict[str, object]:
     materialized = list(match_reports)
     current_actionable = [row for row in materialized if row.get("actionable")]
     current_policy = {
@@ -1460,6 +1469,7 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
             market_favorite_player_form_policy_candidates,
             player_status_policy_candidates,
             bo1_margin_policy_candidates,
+            decision_policy=decision_policy,
         ),
     }
 
@@ -1471,8 +1481,9 @@ def _policy_tradeoff_summary(
     market_favorite_player_form_policy_candidates: Iterable[Mapping[str, Any]],
     player_status_policy_candidates: Iterable[Mapping[str, Any]],
     bo1_margin_policy_candidates: Iterable[Mapping[str, Any]],
+    decision_policy: Mapping[str, Any] | None = None,
 ) -> Dict[str, object]:
-    current = _policy_tradeoff_candidate("current_policy", current_policy, {})
+    current = _policy_tradeoff_candidate("current_policy", current_policy, _current_policy_parameter(decision_policy))
     candidates = [current]
     candidates.extend(
         _policy_tradeoff_candidate(
@@ -1661,6 +1672,8 @@ def _policy_candidate_apply_args(candidate: Mapping[str, Any]) -> tuple[Dict[str
         parameter = {}
     args: Dict[str, object] = {}
     flags: List[str] = []
+    if source == "current_policy":
+        return _decision_policy_apply_args(parameter)
     if source == "threshold_candidates":
         minimum_margin = _optional_float(parameter.get("minimum_margin"))
         if minimum_margin is not None:
@@ -1694,6 +1707,70 @@ def _policy_candidate_apply_args(candidate: Mapping[str, Any]) -> tuple[Dict[str
         min_margin = _optional_float(parameter.get("player_status_min_margin"))
         args["avoid_player_status_risk"] = True
         flags.append("--avoid-player-status-risk")
+        if min_confidence is not None:
+            args["player_status_min_confidence"] = min_confidence
+            flags.extend(["--player-status-min-confidence", _format_cli_float(min_confidence)])
+        if min_margin is not None:
+            args["player_status_min_margin"] = min_margin
+            flags.extend(["--player-status-min-margin", _format_cli_float(min_margin)])
+    return args, flags
+
+
+def _current_policy_parameter(decision_policy: Mapping[str, Any] | None) -> Dict[str, object]:
+    if not isinstance(decision_policy, Mapping):
+        return {}
+    parameter: Dict[str, object] = {}
+    for key in (
+        "minimum_margin",
+        "bo1_minimum_margin",
+        "player_form_counter_min_confidence",
+        "market_favorite_counter_min_probability",
+        "player_status_min_confidence",
+        "player_status_min_margin",
+    ):
+        value = _optional_float(decision_policy.get(key))
+        if value is not None:
+            parameter[key] = value
+    for key in (
+        "avoid_player_form_counter_signal",
+        "avoid_market_favorite_player_form_counter_signal",
+        "avoid_player_status_risk",
+    ):
+        if key in decision_policy:
+            parameter[key] = _truthy(decision_policy.get(key))
+    return parameter
+
+
+def _decision_policy_apply_args(parameter: Mapping[str, Any]) -> tuple[Dict[str, object], List[str]]:
+    args: Dict[str, object] = {}
+    flags: List[str] = []
+    minimum_margin = _optional_float(parameter.get("minimum_margin"))
+    bo1_minimum_margin = _optional_float(parameter.get("bo1_minimum_margin"))
+    if minimum_margin is not None:
+        args["minimum_margin"] = minimum_margin
+        flags.extend(["--minimum-margin", _format_cli_float(minimum_margin)])
+    if bo1_minimum_margin is not None:
+        args["bo1_minimum_margin"] = bo1_minimum_margin
+        flags.extend(["--bo1-minimum-margin", _format_cli_float(bo1_minimum_margin)])
+    if _truthy(parameter.get("avoid_player_form_counter_signal")):
+        args["avoid_player_form_counter_signal"] = True
+        flags.append("--avoid-player-form-counter-signal")
+        min_confidence = _optional_float(parameter.get("player_form_counter_min_confidence"))
+        if min_confidence is not None:
+            args["player_form_counter_min_confidence"] = min_confidence
+            flags.extend(["--player-form-counter-min-confidence", _format_cli_float(min_confidence)])
+    if _truthy(parameter.get("avoid_market_favorite_player_form_counter_signal")):
+        args["avoid_market_favorite_player_form_counter_signal"] = True
+        flags.append("--avoid-market-favorite-player-form-counter-signal")
+        min_probability = _optional_float(parameter.get("market_favorite_counter_min_probability"))
+        if min_probability is not None:
+            args["market_favorite_counter_min_probability"] = min_probability
+            flags.extend(["--market-favorite-counter-min-probability", _format_cli_float(min_probability)])
+    if _truthy(parameter.get("avoid_player_status_risk")):
+        args["avoid_player_status_risk"] = True
+        flags.append("--avoid-player-status-risk")
+        min_confidence = _optional_float(parameter.get("player_status_min_confidence"))
+        min_margin = _optional_float(parameter.get("player_status_min_margin"))
         if min_confidence is not None:
             args["player_status_min_confidence"] = min_confidence
             flags.extend(["--player-status-min-confidence", _format_cli_float(min_confidence)])

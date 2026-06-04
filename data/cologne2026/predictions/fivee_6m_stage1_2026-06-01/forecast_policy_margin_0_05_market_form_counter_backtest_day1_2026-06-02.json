@@ -855,7 +855,13 @@
         "correct_actionable": 2,
         "coverage": 0.375,
         "missed_actionable": 1,
-        "parameter": {},
+        "parameter": {
+          "avoid_market_favorite_player_form_counter_signal": true,
+          "avoid_player_form_counter_signal": true,
+          "market_favorite_counter_min_probability": 0.6,
+          "minimum_margin": 0.05,
+          "player_form_counter_min_confidence": 0.4
+        },
         "source": "current_policy"
       },
       "highest_accuracy_candidate": {
@@ -866,7 +872,13 @@
         "correct_actionable": 2,
         "coverage": 0.375,
         "missed_actionable": 1,
-        "parameter": {},
+        "parameter": {
+          "avoid_market_favorite_player_form_counter_signal": true,
+          "avoid_player_form_counter_signal": true,
+          "market_favorite_counter_min_probability": 0.6,
+          "minimum_margin": 0.05,
+          "player_form_counter_min_confidence": 0.4
+        },
         "source": "current_policy"
       },
       "highest_correct_candidate": {
@@ -887,7 +899,13 @@
       "recommendation_basis": "current_policy_highest_accuracy",
       "recommended_policy_update": {
         "action": "keep_current_policy",
-        "apply_forecast_policy_args": {},
+        "apply_forecast_policy_args": {
+          "avoid_market_favorite_player_form_counter_signal": true,
+          "avoid_player_form_counter_signal": true,
+          "market_favorite_counter_min_probability": 0.6,
+          "minimum_margin": 0.05,
+          "player_form_counter_min_confidence": 0.4
+        },
         "basis": "current_policy_highest_accuracy",
         "candidate": {
           "actionable_accuracy": 0.6666666666666666,
@@ -895,8 +913,23 @@
           "correct_actionable": 2,
           "coverage": 0.375
         },
-        "cli_flags": [],
-        "parameter": {},
+        "cli_flags": [
+          "--minimum-margin",
+          "0.05",
+          "--avoid-player-form-counter-signal",
+          "--player-form-counter-min-confidence",
+          "0.4",
+          "--avoid-market-favorite-player-form-counter-signal",
+          "--market-favorite-counter-min-probability",
+          "0.6"
+        ],
+        "parameter": {
+          "avoid_market_favorite_player_form_counter_signal": true,
+          "avoid_player_form_counter_signal": true,
+          "market_favorite_counter_min_probability": 0.6,
+          "minimum_margin": 0.05,
+          "player_form_counter_min_confidence": 0.4
+        },
         "source": "current_policy"
       }
     },
