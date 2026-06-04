@@ -10,6 +10,21 @@ from .predictor import MatchPredictor
 from .strategy import adjust_probability_toward_market_probability, single_match_pick
 
 
+SWISS_PRESSURE_FIELDS = (
+    "swiss_round",
+    "team1_wins",
+    "team1_losses",
+    "team2_wins",
+    "team2_losses",
+    "team1_record",
+    "team2_record",
+    "team1_record_status",
+    "team2_record_status",
+    "standings_source",
+    "swiss_match_type",
+)
+
+
 def forecast_fixtures(
     history_rows: Iterable[Mapping[str, Any]],
     fixture_rows: Iterable[Mapping[str, Any]],
@@ -105,6 +120,7 @@ def forecast_fixtures(
                 "bp_applied": fixture.get("bp_applied", 0),
                 "bp_source": fixture.get("bp_source"),
                 "bp_confidence": fixture.get("bp_confidence"),
+                **_swiss_pressure_fields(fixture),
                 **map_details,
             }
         )
@@ -202,7 +218,9 @@ def apply_forecast_policy(
         updated = dict(prediction)
         fixture = _lookup_fixture(updated, fixture_lookup)
         if fixture is not None:
-            player_form_summary = _player_form_summary({**updated, **fixture})
+            aligned_fixture = _aligned_fixture_row(updated, fixture)
+            player_form_summary = _player_form_summary({**updated, **aligned_fixture})
+            updated.update(_swiss_pressure_fields(aligned_fixture))
             fixtures_augmented += 1
         else:
             player_form_summary = updated.get("player_form_summary")
@@ -283,6 +301,48 @@ def _num(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _swiss_pressure_fields(row: Mapping[str, Any]) -> Dict[str, object]:
+    return {
+        field: row[field]
+        for field in SWISS_PRESSURE_FIELDS
+        if field in row and row.get(field) not in (None, "")
+    }
+
+
+def _aligned_fixture_row(
+    prediction: Mapping[str, Any],
+    fixture: Mapping[str, Any],
+) -> Dict[str, object]:
+    direct = dict(fixture)
+    prediction_team1 = _team_key(prediction.get("team1"))
+    prediction_team2 = _team_key(prediction.get("team2"))
+    fixture_team1 = _team_key(fixture.get("team1"))
+    fixture_team2 = _team_key(fixture.get("team2"))
+    if prediction_team1 == fixture_team1 and prediction_team2 == fixture_team2:
+        return direct
+    if prediction_team1 != fixture_team2 or prediction_team2 != fixture_team1:
+        return direct
+    swapped: Dict[str, object] = {}
+    for key, value in direct.items():
+        if key == "team1":
+            swapped[key] = direct.get("team2", value)
+        elif key == "team2":
+            swapped[key] = direct.get("team1", value)
+        elif key.startswith("team1_"):
+            source_key = "team2_" + key[len("team1_"):]
+            swapped[key] = direct.get(source_key, value)
+        elif key.startswith("team2_"):
+            source_key = "team1_" + key[len("team2_"):]
+            swapped[key] = direct.get(source_key, value)
+        elif key == "odds_team1":
+            swapped[key] = direct.get("odds_team2", value)
+        elif key == "odds_team2":
+            swapped[key] = direct.get("odds_team1", value)
+        else:
+            swapped[key] = value
+    return swapped
 
 
 def _player_form_summary(row: Mapping[str, Any]) -> Dict[str, object]:

@@ -171,7 +171,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli pipeline \
 | `pipeline` | 串联 enrich→增强→merge→train→visualize→forecast→pickem→readiness 的一键离线工作流 |
 | `readiness` | 上线门槛审计：数据量 ≥8000、字段完整性、名单覆盖、模型指标、融合优势、回测通过率、数据源新鲜度等 |
 | `demo` | 用内置样例跑一遍核心链路演示 |
-| `backtest-forecast` | 单场 forecast 报告 vs 实际赛果 CSV，输出有效下注命中率、方向命中率、低置信规避、市场修正、favorite upset 和 player form 诊断 |
+| `backtest-forecast` | 单场 forecast 报告 vs 实际赛果 CSV，输出有效下注命中率、方向命中率、低置信规避、市场修正、favorite upset、player form 和 Swiss 压力诊断 |
 | `standings-from-results` | 从逐场赛果 CSV 自动推导 Swiss `team,wins,losses,status` standings，减少手写战绩表错误 |
 | `backtest-pickem` | Pick'em 报告 vs 最终 Swiss standings，计算命中数与是否达 pass threshold |
 | `checkpoint-pickem` | Pick'em 报告 vs 当前 Swiss standings，输出每个槽位 locked / alive / broken、下一场锁定/破损压力、状态/槽位 confidence 诊断，中途复盘不冒充最终打分 |
@@ -376,6 +376,8 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 
 Round 4 fixtures 已经落盘为 `stage1_round4_fixtures_2026-06-04.csv`；再用 `merge-standings` 合并 Round 3 standings 后，会生成 `stage1_round4_fixtures_with_standings_2026-06-04.csv`，其中每场都有 `team1_record/team2_record`、`team*_record_status`、`standings_source` 和 `swiss_match_type`。后续单场 forecast 或 Pick'em 复盘应优先用这个 processed 文件，避免把开赛前 `0-0` 的 fixtures 当成 Round 4 当前状态。
 
+`forecast` 现在会把这些 Swiss 压力字段保留进 prediction report；`apply-forecast-policy --fixtures` 也会把下一轮 fixtures 的压力字段补回旧 forecast，并按 prediction 的队伍方向对齐反向 fixture 里的 player form/status。等 Round 4 真实结果完整后，`backtest-forecast` 的 `swiss_pressure_diagnostics` 会按 `advancement / elimination / standard / unknown` 分组统计 actionable 命中、低置信规避和 directional 命中，用来判断模型在晋级战/淘汰战里的可靠性差异。
+
 <details>
 <summary>展开 Round 3 逐场结果</summary>
 
@@ -456,7 +458,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、`avoid_reason_diagnostics`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
 
 如果不需要重训，可以直接把 Day 1 诊断得到的策略阈值应用到既有 `forecast_report.json`：
 

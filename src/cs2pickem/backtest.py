@@ -293,6 +293,14 @@ def evaluate_forecast_result(
                 "date": prediction.get("date"),
                 "team1": team1,
                 "team2": team2,
+                "swiss_round": prediction.get("swiss_round"),
+                "team1_record": prediction.get("team1_record"),
+                "team2_record": prediction.get("team2_record"),
+                "team1_wins": prediction.get("team1_wins"),
+                "team1_losses": prediction.get("team1_losses"),
+                "team2_wins": prediction.get("team2_wins"),
+                "team2_losses": prediction.get("team2_losses"),
+                "swiss_match_type": _forecast_swiss_match_type(prediction),
                 "winner": winner,
                 "score": result.get("score"),
                 "map": result.get("map"),
@@ -347,6 +355,7 @@ def evaluate_forecast_result(
         "avoid_reason_diagnostics": _forecast_avoid_reason_diagnostics(match_reports),
         "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
         "favorite_upset_diagnostics": _forecast_favorite_upset_diagnostics(match_reports),
+        "swiss_pressure_diagnostics": _forecast_swiss_pressure_diagnostics(match_reports),
         "policy_diagnostics": _forecast_policy_diagnostics(match_reports),
         "matches": match_reports,
     }
@@ -821,6 +830,13 @@ def _swiss_match_type(row: Mapping[str, Any]) -> str:
     return "standard"
 
 
+def _forecast_swiss_match_type(row: Mapping[str, Any]) -> str:
+    raw = str(row.get("swiss_match_type") or "").strip().lower()
+    if raw in {"advancement", "elimination", "standard"}:
+        return raw
+    return _swiss_match_type(row)
+
+
 def _forecast_result_lookup(
     result_rows: Iterable[Mapping[str, Any]],
 ) -> Dict[tuple[str, str, str], List[Mapping[str, Any]]]:
@@ -1015,6 +1031,46 @@ def _forecast_player_form_diagnostics(match_reports: Iterable[Mapping[str, Any]]
         "directional_missed_avg_score_diff": _avg_player_form_value(directional_missed, "score"),
         "directional_missed_avg_trend_diff": _avg_player_form_value(directional_missed, "trend"),
         "directional_missed_avg_sample_confidence_diff": _avg_player_form_value(directional_missed, "sample_confidence"),
+    }
+
+
+def _forecast_swiss_pressure_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, Dict[str, object]]:
+    materialized = list(match_reports)
+    match_types = ["advancement", "elimination", "standard", "unknown"]
+    observed_types = sorted(
+        {
+            _forecast_swiss_match_type(row)
+            for row in materialized
+            if _forecast_swiss_match_type(row) not in match_types
+        }
+    )
+    return {
+        match_type: _forecast_swiss_pressure_bucket(
+            row
+            for row in materialized
+            if _forecast_swiss_match_type(row) == match_type
+        )
+        for match_type in [*match_types, *observed_types]
+    }
+
+
+def _forecast_swiss_pressure_bucket(rows: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
+    materialized = list(rows)
+    actionable = [row for row in materialized if row.get("actionable")]
+    avoid = [row for row in materialized if not row.get("actionable")]
+    correct_actionable = sum(1 for row in actionable if row.get("correct"))
+    directional_correct = sum(1 for row in materialized if row.get("directional_correct"))
+    return {
+        "matched": len(materialized),
+        "actionable_picks": len(actionable),
+        "correct_actionable": correct_actionable,
+        "missed_actionable": len(actionable) - correct_actionable,
+        "actionable_accuracy": correct_actionable / len(actionable) if actionable else 0.0,
+        "avoid_picks": len(avoid),
+        "low_confidence_avoids": sum(1 for row in avoid if row.get("low_confidence")),
+        "directional_correct": directional_correct,
+        "directional_accuracy": directional_correct / len(materialized) if materialized else 0.0,
+        "avg_confidence_margin": _avg_numeric(materialized, "confidence_margin"),
     }
 
 
@@ -1425,6 +1481,15 @@ def _avg_player_form_value(rows: Iterable[Mapping[str, Any]], key: str) -> float
         diff = row.get("player_form_diff")
         if isinstance(diff, Mapping) and diff.get(key) not in (None, ""):
             values.append(_float(diff.get(key), 0.0))
+    return sum(values) / len(values) if values else None
+
+
+def _avg_numeric(rows: Iterable[Mapping[str, Any]], key: str) -> float | None:
+    values = [
+        _float(row.get(key), 0.0)
+        for row in rows
+        if row.get(key) not in (None, "")
+    ]
     return sum(values) / len(values) if values else None
 
 

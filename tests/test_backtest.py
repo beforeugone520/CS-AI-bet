@@ -579,6 +579,69 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["matches"][1]["correct"], False)
         self.assertEqual(report["matches"][1]["directional_pick"], "Charlie")
 
+    def test_evaluate_forecast_result_reports_swiss_pressure_diagnostics(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-04",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.62,
+                    "confidence_margin": 0.12,
+                    "swiss_round": 4,
+                    "team1_record": "2-1",
+                    "team2_record": "2-1",
+                    "swiss_match_type": "advancement",
+                },
+                {
+                    "date": "2026-06-04",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.57,
+                    "confidence_margin": 0.07,
+                    "swiss_round": 4,
+                    "team1_record": "1-2",
+                    "team2_record": "1-2",
+                    "swiss_match_type": "elimination",
+                },
+                {
+                    "date": "2026-06-04",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "avoid",
+                    "adjusted_probability_team1": 0.51,
+                    "confidence_margin": 0.01,
+                    "low_confidence": True,
+                    "swiss_round": 4,
+                    "team1_record": "2-1",
+                    "team2_record": "2-1",
+                    "swiss_match_type": "advancement",
+                },
+            ],
+            [
+                {"date": "2026-06-04", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha"},
+                {"date": "2026-06-04", "team1": "Charlie", "team2": "Delta", "winner": "Delta"},
+                {"date": "2026-06-04", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+            ],
+        )
+
+        diagnostics = report["swiss_pressure_diagnostics"]
+        self.assertEqual(diagnostics["advancement"]["matched"], 2)
+        self.assertEqual(diagnostics["advancement"]["actionable_picks"], 1)
+        self.assertEqual(diagnostics["advancement"]["correct_actionable"], 1)
+        self.assertEqual(diagnostics["advancement"]["avoid_picks"], 1)
+        self.assertEqual(diagnostics["advancement"]["low_confidence_avoids"], 1)
+        self.assertAlmostEqual(diagnostics["advancement"]["actionable_accuracy"], 1.0)
+        self.assertEqual(diagnostics["elimination"]["matched"], 1)
+        self.assertEqual(diagnostics["elimination"]["missed_actionable"], 1)
+        self.assertAlmostEqual(diagnostics["elimination"]["actionable_accuracy"], 0.0)
+        self.assertEqual(report["matches"][0]["swiss_match_type"], "advancement")
+        self.assertEqual(report["matches"][1]["team1_record"], "1-2")
+
     def test_evaluate_forecast_result_reports_policy_threshold_candidates(self):
         from cs2pickem.backtest import evaluate_forecast_result
 

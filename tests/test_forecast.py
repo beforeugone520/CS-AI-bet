@@ -75,6 +75,17 @@ class ForecastTests(unittest.TestCase):
                 "team2": "Bravo",
                 "best_of": 1,
                 "map": "unknown",
+                "swiss_round": 4,
+                "team1_wins": 2,
+                "team1_losses": 1,
+                "team2_wins": 2,
+                "team2_losses": 1,
+                "team1_record": "2-1",
+                "team2_record": "2-1",
+                "team1_record_status": "alive",
+                "team2_record_status": "alive",
+                "standings_source": "unit",
+                "swiss_match_type": "advancement",
                 "team1_rank": 4,
                 "team2_rank": 20,
                 "team1_rmr_points": 900,
@@ -141,6 +152,11 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(prediction["player_form_summary"]["team2"]["substitute_flag"], 1)
         self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["score"], 0.11)
         self.assertAlmostEqual(prediction["player_form_summary"]["diff"]["trend"], 0.07)
+        self.assertEqual(prediction["swiss_round"], 4)
+        self.assertEqual(prediction["team1_record"], "2-1")
+        self.assertEqual(prediction["team2_record"], "2-1")
+        self.assertEqual(prediction["swiss_match_type"], "advancement")
+        self.assertEqual(prediction["standings_source"], "unit")
 
     def test_forecast_fixtures_applies_custom_single_match_policy(self):
         from cs2pickem.forecast import forecast_fixtures
@@ -228,6 +244,14 @@ class ForecastTests(unittest.TestCase):
                         "date": "2026-06-01",
                         "team1": "Charlie",
                         "team2": "Delta",
+                        "swiss_round": 4,
+                        "team1_wins": 1,
+                        "team1_losses": 2,
+                        "team2_wins": 1,
+                        "team2_losses": 2,
+                        "team1_record": "1-2",
+                        "team2_record": "1-2",
+                        "swiss_match_type": "elimination",
                         "team1_player_form_score": -0.04,
                         "team2_player_form_score": 0.04,
                         "team1_player_sample_confidence": 0.7,
@@ -278,6 +302,10 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["predictions"][0]["avoid_reason"], "low_confidence")
         self.assertEqual(report["predictions"][1]["avoid_reason"], "player_form_counter_signal")
         self.assertEqual(report["predictions"][1]["player_form_summary"]["diff"]["score"], -0.08)
+        self.assertEqual(report["predictions"][1]["swiss_round"], 4)
+        self.assertEqual(report["predictions"][1]["team1_record"], "1-2")
+        self.assertEqual(report["predictions"][1]["team2_record"], "1-2")
+        self.assertEqual(report["predictions"][1]["swiss_match_type"], "elimination")
         self.assertEqual(report["predictions"][2]["pick"], "Echo")
 
     def test_apply_forecast_policy_can_avoid_market_favorite_with_counter_player_form(self):
@@ -347,6 +375,54 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["predictions"][0]["avoid_reason"], "market_favorite_player_form_counter_signal")
         self.assertEqual(report["predictions"][1]["pick"], "Charlie")
         self.assertEqual(report["predictions"][2]["pick"], "Echo")
+
+    def test_apply_forecast_policy_aligns_reversed_fixture_player_form_and_swiss_state(self):
+        from cs2pickem.forecast import apply_forecast_policy
+
+        report = apply_forecast_policy(
+            {
+                "predictions": [
+                    {
+                        "date": "2026-06-04",
+                        "team1": "Alpha",
+                        "team2": "Bravo",
+                        "adjusted_probability_team1": 0.62,
+                        "pick": "Alpha",
+                    }
+                ]
+            },
+            fixture_rows=[
+                {
+                    "date": "2026-06-04",
+                    "team1": "Bravo",
+                    "team2": "Alpha",
+                    "team1_player_form_score": 0.04,
+                    "team2_player_form_score": -0.04,
+                    "team1_player_sample_confidence": 0.8,
+                    "team2_player_sample_confidence": 0.8,
+                    "team1_wins": 1,
+                    "team1_losses": 2,
+                    "team2_wins": 2,
+                    "team2_losses": 1,
+                    "team1_record": "1-2",
+                    "team2_record": "2-1",
+                    "swiss_round": 4,
+                    "swiss_match_type": "standard",
+                }
+            ],
+            minimum_margin=0.05,
+            avoid_player_form_counter_signal=True,
+            player_form_counter_min_confidence=0.4,
+        )
+
+        prediction = report["predictions"][0]
+        self.assertEqual(prediction["pick"], "avoid")
+        self.assertEqual(prediction["avoid_reason"], "player_form_counter_signal")
+        self.assertEqual(prediction["player_form_summary"]["team1"]["team"], "Alpha")
+        self.assertEqual(prediction["player_form_summary"]["team2"]["team"], "Bravo")
+        self.assertEqual(prediction["player_form_summary"]["diff"]["score"], -0.08)
+        self.assertEqual(prediction["team1_record"], "2-1")
+        self.assertEqual(prediction["team2_record"], "1-2")
 
     def test_apply_forecast_policy_can_avoid_fragile_player_status_pick(self):
         from cs2pickem.forecast import apply_forecast_policy
