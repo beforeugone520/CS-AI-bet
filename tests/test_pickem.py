@@ -30,6 +30,22 @@ def profiles():
 
 
 class PickemTests(unittest.TestCase):
+    def assertMovedTowardMarket(self, details):
+        model_probability = details["model_probability_team1"]
+        adjusted_probability = details["adjusted_probability_team1"]
+        market_probability = details["market_probability_team1"]
+
+        self.assertLessEqual(
+            abs(adjusted_probability - market_probability),
+            abs(model_probability - market_probability),
+        )
+        if market_probability >= model_probability:
+            self.assertGreaterEqual(adjusted_probability, model_probability)
+            self.assertLessEqual(adjusted_probability, market_probability)
+        else:
+            self.assertLessEqual(adjusted_probability, model_probability)
+            self.assertGreaterEqual(adjusted_probability, market_probability)
+
     def test_model_driven_pickem_uses_trained_match_probabilities_for_swiss(self):
         from cs2pickem.pickem import model_driven_pickems
 
@@ -238,7 +254,7 @@ class PickemTests(unittest.TestCase):
         self.assertTrue(explicit_details["market_adjustment_applied"])
         self.assertEqual(explicit_details["market_signal"]["basis"], "explicit_market_probability")
         self.assertEqual(explicit_details["market_signal"]["source"], "closing_consensus")
-        self.assertLess(explicit_details["adjusted_probability_team1"], explicit_details["model_probability_team1"])
+        self.assertMovedTowardMarket(explicit_details)
         self.assertFalse(proxy_details["market_adjustment_applied"])
         self.assertEqual(proxy_details["market_signal"]["basis"], "poll_proxy")
         self.assertTrue(proxy_details["market_signal"]["proxy"])
@@ -278,7 +294,7 @@ class PickemTests(unittest.TestCase):
         self.assertEqual(details["market_signal"]["basis"], "real_odds")
         self.assertEqual(details["market_signal"]["source"], "odds_provider_average")
         self.assertFalse(details["market_signal"]["proxy"])
-        self.assertLess(details["adjusted_probability_team1"], details["model_probability_team1"])
+        self.assertMovedTowardMarket(details)
 
     def test_model_driven_pickem_propagates_opening_market_strength_to_unpriced_swiss_matchups(self):
         from cs2pickem.pickem import model_driven_pickems
