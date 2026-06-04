@@ -70,13 +70,49 @@ class ExampleDataTests(unittest.TestCase):
         self.assertIn("player_sample_confidence", picks[("3-0", "MIBR")])
         self.assertIn("substitute_flag", picks[("3-0", "MIBR")])
         self.assertIn("player_status_risk", picks[("3-0", "MIBR")])
+        self.assertIn("status_adjusted_score", picks[("3-0", "MIBR")])
         self.assertEqual(picks[("3-0", "MIBR")]["player_sample_confidence"], 0.0)
         self.assertTrue(picks[("3-0", "MIBR")]["player_status_risk"])
+        self.assertLess(
+            picks[("3-0", "MIBR")]["status_adjusted_score"],
+            picks[("3-0", "MIBR")]["raw_fused_score"],
+        )
         self.assertGreater(report["category_diagnostics"]["3-0"]["player_status_risk_picks"], 0)
         self.assertEqual(
             report["category_diagnostics"]["advance"]["alive_status_risk_pressure_picks"],
             4,
         )
+
+    def test_cologne_final_fused_pickems_apply_player_status_to_scores(self):
+        import json
+
+        with open(
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "predictions",
+                "fivee_6m_stage1_2026-06-01",
+                "final_fused_pickem_2026-06-01.json",
+            ),
+            encoding="utf-8",
+        ) as handle:
+            report = json.load(handle)
+
+        mibr = report["picks"]["3-0"][0]
+        self.assertIn("raw_fused_score", mibr)
+        self.assertIn("player_availability_multiplier", mibr)
+        self.assertIn("status_adjusted_score", mibr)
+        self.assertLess(mibr["status_adjusted_score"], mibr["raw_fused_score"])
+        self.assertAlmostEqual(mibr["player_availability_multiplier"], 0.88)
+        self.assertAlmostEqual(
+            mibr["status_adjusted_score"],
+            mibr["raw_fused_score"] * mibr["player_availability_multiplier"],
+        )
+
+        risk_detail = report["pickem_risk_details"]["3-0"][0]
+        self.assertEqual(risk_detail["team"], mibr["team"])
+        self.assertEqual(risk_detail["status_adjusted_score"], mibr["status_adjusted_score"])
 
 
 if __name__ == "__main__":

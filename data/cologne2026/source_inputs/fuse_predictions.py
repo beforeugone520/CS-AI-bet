@@ -46,6 +46,24 @@ def player_status_fields(team):
         "player_status_risk": sample_confidence < 0.4 or substitute_flag >= 1,
     }
 
+def player_availability_multiplier(team, cat):
+    fields = player_status_fields(team)
+    if not fields:
+        return 1.0
+    sample_confidence = fields["player_sample_confidence"]
+    substitute_flag = fields["substitute_flag"]
+    if cat == "0-3":
+        return min(1.08, 1.0 + (1.0 - sample_confidence) * 0.04 + substitute_flag * 0.03)
+    if cat == "3-0":
+        return max(0.84, 1.0 - (1.0 - sample_confidence) * 0.12 - substitute_flag * 0.08)
+    return max(0.90, 1.0 - (1.0 - sample_confidence) * 0.05 - substitute_flag * 0.04)
+
+def apply_player_status(score_rows, cat):
+    return {
+        team: score * player_availability_multiplier(team, cat)
+        for team, score in score_rows.items()
+    }
+
 # ---- 1. Expert consensus (votes / N) ----
 def votes(team, cat):
     return sum(1 for b in ballots.values() if team in b[cat])
@@ -83,17 +101,21 @@ def fuse(e, k, m, keys):
 # 3-0 fusion: strength helps; 0-3 fusion: weakness (1-s) helps
 S_str = S
 S_weak = {t: 1 - S[t] for t in TEAMS}
-score30_all = fuse(E30, S_str, M30, TEAMS)
-score03_all = fuse(E03, S_weak, M03, TEAMS)
+raw_score30_all = fuse(E30, S_str, M30, TEAMS)
+score30_all = apply_player_status(raw_score30_all, "3-0")
 
 # ---- 5. Select 2 / 6 / 2 (no team in two categories) ----
 pick_30 = sorted(TEAMS, key=lambda t: score30_all[t], reverse=True)[:2]
 rem = [t for t in TEAMS if t not in pick_30]
-score03 = fuse(E03, {t: S_weak[t] for t in rem}, M03, rem)
+raw_score03 = fuse(E03, {t: S_weak[t] for t in rem}, M03, rem)
+score03 = apply_player_status(raw_score03, "0-3")
 pick_03 = sorted(rem, key=lambda t: score03[t], reverse=True)[:2]
 rem2 = [t for t in rem if t not in pick_03]
-scoreQ = fuse(EQ, {t: S_str[t] for t in rem2}, MQ, rem2)
+raw_scoreQ = fuse(EQ, {t: S_str[t] for t in rem2}, MQ, rem2)
+scoreQ = apply_player_status(raw_scoreQ, "advance")
 pick_adv = sorted(rem2, key=lambda t: scoreQ[t], reverse=True)[:6]
+RAW_SCORES = {"3-0": raw_score30_all, "advance": raw_scoreQ, "0-3": raw_score03}
+STATUS_ADJUSTED_SCORES = {"3-0": score30_all, "advance": scoreQ, "0-3": score03}
 
 # ---- 6. Confidence: blended probability + cross-signal agreement ----
 def agreement(team, cat):
@@ -133,16 +155,23 @@ for cat, picks in [("3-0", pick_30), ("advance", pick_adv), ("0-3", pick_03)]:
     for t in picks:
         b, a, tier = conf(t, cat)
         status_fields = player_status_fields(t)
+        raw_fused_score = RAW_SCORES[cat][t]
+        status_adjusted_score = STATUS_ADJUSTED_SCORES[cat][t]
+        availability_multiplier = player_availability_multiplier(t, cat)
         v30, v03, vadv = votes(t,"3-0"), votes(t,"0-3"), votes(t,"advance")
         line = (f"  {t:<18} conf={b:.3f} [{tier}, {a}/3 signals agree] | "
                 f"experts 3-0/adv/0-3={v30}/{vadv}/{v03} of {N} | "
-                f"market_win={S[t]:.2f} | model 3-0/adv/0-3={M30[t]:.2f}/{MQ[t]:.2f}/{M03[t]:.2f}")
+                f"market_win={S[t]:.2f} | model 3-0/adv/0-3={M30[t]:.2f}/{MQ[t]:.2f}/{M03[t]:.2f} | "
+                f"status_adj={status_adjusted_score:.3f}")
         print(line)
         pick_row = {
             "team": t, "confidence": b, "tier": tier, "signals_agree": a,
             "expert_votes": {"3-0": v30, "advance": vadv, "0-3": v03},
             "market_win_prob_r1": round(S[t], 3),
             "model": {"3-0": round(M30[t],3), "advance": round(MQ[t],3), "0-3": round(M03[t],3)},
+            "raw_fused_score": raw_fused_score,
+            "player_availability_multiplier": availability_multiplier,
+            "status_adjusted_score": status_adjusted_score,
         }
         pick_row.update(status_fields)
         result["picks"][cat].append(pick_row)
@@ -153,6 +182,9 @@ for cat, picks in [("3-0", pick_30), ("advance", pick_adv), ("0-3", pick_03)]:
             "tier": tier,
             "market_win_prob_r1": round(S[t], 3),
             "model": {"3-0": round(M30[t],3), "advance": round(MQ[t],3), "0-3": round(M03[t],3)},
+            "raw_fused_score": raw_fused_score,
+            "player_availability_multiplier": availability_multiplier,
+            "status_adjusted_score": status_adjusted_score,
         }
         risk_row.update(status_fields)
         result["pickem_risk_details"][cat].append(risk_row)
@@ -190,16 +222,22 @@ for cat, rows in [("3-0", rows30), ("advance", adv_rows), ("0-3", rows03)]:
     for r in rows:
         tag = " ⇄ SWING" if r["swing"] else ""
         alt = f"   alt: {r['alt']} ({sig(r['alt'])}) margin={r['margin']}" if r["swing"] else ""
-        print(f"{r['slot']:<12} {r['primary']:<18} | {sig(r['primary'])}{tag}")
+        print(f"{r['slot']:<12} {r['primary']:<18} | {sig(r['primary'])} | adj_margin={r['margin']}{tag}")
         if alt: print(alt)
         if r["swing"]:
-            result["swing_slots"][r["slot"]] = {"primary": r["primary"], "alternative": r["alt"], "fused_margin": r["margin"]}
+            result["swing_slots"][r["slot"]] = {
+                "primary": r["primary"],
+                "alternative": r["alt"],
+                "fused_margin": r["margin"],
+                "score_basis": "status_adjusted_score",
+            }
 
 # integrated CSV artifact
 with open(f"{OUT}/final_fused_pickem_table_2026-06-01.csv", "w", newline="") as fh:
     w = csv.writer(fh, lineterminator="\n")
     w.writerow(["slot","category","pick","alternative_if_swing","fused_margin","confidence","tier","signals_agree",
                 "expert_3-0","expert_advance","expert_0-3","market_win_r1","model_3-0","model_advance","model_0-3",
+                "raw_fused_score","player_availability_multiplier","status_adjusted_score",
                 "player_status_risk","player_sample_confidence","substitute_flag","player_form_score","player_form_trend"])
     for cat, rows in [("3-0", rows30), ("advance", adv_rows), ("0-3", rows03)]:
         for r in rows:
@@ -208,6 +246,9 @@ with open(f"{OUT}/final_fused_pickem_table_2026-06-01.csv", "w", newline="") as 
             w.writerow([r["slot"],cat,t, r["alt"] if r["swing"] else "", r["margin"] if r["swing"] else "",
                         b,tier,a, votes(t,"3-0"),votes(t,"advance"),votes(t,"0-3"),
                         round(S[t],3),round(M30[t],3),round(MQ[t],3),round(M03[t],3),
+                        RAW_SCORES[cat][t],
+                        player_availability_multiplier(t, cat),
+                        STATUS_ADJUSTED_SCORES[cat][t],
                         status_fields.get("player_status_risk"),
                         status_fields.get("player_sample_confidence"),
                         status_fields.get("substitute_flag"),

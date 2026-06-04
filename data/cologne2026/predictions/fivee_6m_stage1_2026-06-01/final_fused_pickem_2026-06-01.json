@@ -24,6 +24,9 @@
           "advance": 0.668,
           "0-3": 0.059
         },
+        "raw_fused_score": 0.78,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6864,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.04433999999999998,
@@ -46,6 +49,9 @@
           "advance": 0.548,
           "0-3": 0.102
         },
+        "raw_fused_score": 0.7592640692640693,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6681523809523809,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.028965000000000074,
@@ -70,6 +76,9 @@
           "advance": 0.656,
           "0-3": 0.069
         },
+        "raw_fused_score": 0.9217554144276177,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.8848851978505129,
         "player_sample_confidence": 0.2,
         "substitute_flag": 0,
         "player_form_score": 0.183,
@@ -92,6 +101,9 @@
           "advance": 0.536,
           "0-3": 0.101
         },
+        "raw_fused_score": 0.8068345669518409,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.7664928386042488,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.040200000000000034,
@@ -114,6 +126,9 @@
           "advance": 0.535,
           "0-3": 0.114
         },
+        "raw_fused_score": 0.7280018436113296,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6916017514307631,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": -0.006960000000000034,
@@ -136,6 +151,9 @@
           "advance": 0.517,
           "0-3": 0.105
         },
+        "raw_fused_score": 0.7144690358126342,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6787455840220025,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.00048000000000001373,
@@ -158,6 +176,9 @@
           "advance": 0.501,
           "0-3": 0.126
         },
+        "raw_fused_score": 0.6301837688326705,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.6049764180793636,
         "player_sample_confidence": 0.2,
         "substitute_flag": 0,
         "player_form_score": 0.11160000000000006,
@@ -180,6 +201,9 @@
           "advance": 0.614,
           "0-3": 0.079
         },
+        "raw_fused_score": 0.5718986574249776,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.5433037245537287,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.04988999999999997,
@@ -204,6 +228,9 @@
           "advance": 0.305,
           "0-3": 0.232
         },
+        "raw_fused_score": 0.7929004329004329,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8246164502164502,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.0026399999999999757,
@@ -226,6 +253,9 @@
           "advance": 0.342,
           "0-3": 0.19
         },
+        "raw_fused_score": 0.7889429794406618,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8205006986182883,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": -0.0012000000000000344,
@@ -247,6 +277,9 @@
           "advance": 0.668,
           "0-3": 0.059
         },
+        "raw_fused_score": 0.78,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6864,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.04433999999999998,
@@ -264,6 +297,9 @@
           "advance": 0.548,
           "0-3": 0.102
         },
+        "raw_fused_score": 0.7592640692640693,
+        "player_availability_multiplier": 0.88,
+        "status_adjusted_score": 0.6681523809523809,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.028965000000000074,
@@ -283,6 +319,9 @@
           "advance": 0.656,
           "0-3": 0.069
         },
+        "raw_fused_score": 0.9217554144276177,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.8848851978505129,
         "player_sample_confidence": 0.2,
         "substitute_flag": 0,
         "player_form_score": 0.183,
@@ -300,6 +339,9 @@
           "advance": 0.536,
           "0-3": 0.101
         },
+        "raw_fused_score": 0.8068345669518409,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.7664928386042488,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.040200000000000034,
@@ -317,6 +359,9 @@
           "advance": 0.535,
           "0-3": 0.114
         },
+        "raw_fused_score": 0.7280018436113296,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6916017514307631,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": -0.006960000000000034,
@@ -334,6 +379,9 @@
           "advance": 0.517,
           "0-3": 0.105
         },
+        "raw_fused_score": 0.7144690358126342,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.6787455840220025,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.00048000000000001373,
@@ -351,6 +399,9 @@
           "advance": 0.501,
           "0-3": 0.126
         },
+        "raw_fused_score": 0.6301837688326705,
+        "player_availability_multiplier": 0.96,
+        "status_adjusted_score": 0.6049764180793636,
         "player_sample_confidence": 0.2,
         "substitute_flag": 0,
         "player_form_score": 0.11160000000000006,
@@ -368,6 +419,9 @@
           "advance": 0.614,
           "0-3": 0.079
         },
+        "raw_fused_score": 0.5718986574249776,
+        "player_availability_multiplier": 0.95,
+        "status_adjusted_score": 0.5433037245537287,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.04988999999999997,
@@ -387,6 +441,9 @@
           "advance": 0.305,
           "0-3": 0.232
         },
+        "raw_fused_score": 0.7929004329004329,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8246164502164502,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": 0.0026399999999999757,
@@ -404,6 +461,9 @@
           "advance": 0.342,
           "0-3": 0.19
         },
+        "raw_fused_score": 0.7889429794406618,
+        "player_availability_multiplier": 1.04,
+        "status_adjusted_score": 0.8205006986182883,
         "player_sample_confidence": 0.0,
         "substitute_flag": 0,
         "player_form_score": -0.0012000000000000344,
