@@ -218,6 +218,93 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["status_diagnostics"]["broken"]["avg_confidence"], 0.8)
         self.assertEqual(report["status_diagnostics"]["locked"]["avg_confidence"], 0.4)
 
+    def test_checkpoint_pickem_cli_reports_player_status_diagnostics_from_risk_details(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pickems_path = os.path.join(tmpdir, "pickems.json")
+            standings_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "checkpoint.json")
+            with open(pickems_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "pickems": {
+                            "3-0": ["Alpha", "Bravo"],
+                            "advance": ["Charlie"],
+                            "0-3": [],
+                        },
+                        "pickem_risk_details": {
+                            "3-0": [
+                                {
+                                    "team": "Alpha",
+                                    "player_status_risk": True,
+                                    "player_sample_confidence": 0.2,
+                                    "substitute_flag": 0,
+                                    "player_form_score": -0.04,
+                                    "player_form_trend": -0.02,
+                                },
+                                {
+                                    "team": "Bravo",
+                                    "player_status_risk": True,
+                                    "player_sample_confidence": 0.9,
+                                    "substitute_flag": 1,
+                                    "player_form_score": 0.03,
+                                    "player_form_trend": 0.01,
+                                },
+                            ],
+                            "advance": [
+                                {
+                                    "team": "Charlie",
+                                    "player_status_risk": False,
+                                    "player_sample_confidence": 0.8,
+                                    "substitute_flag": 0,
+                                }
+                            ],
+                        },
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                standings_path,
+                [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 2, "losses": 1},
+                    {"team": "Charlie", "wins": 2, "losses": 1},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "checkpoint-pickem",
+                "--pickems",
+                pickems_path,
+                "--standings",
+                standings_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        picks = {(row["category"], row["team"]): row for row in report["picks"]}
+        self.assertTrue(picks[("3-0", "Alpha")]["player_status_risk"])
+        self.assertEqual(picks[("3-0", "Alpha")]["player_sample_confidence"], 0.2)
+        self.assertEqual(picks[("3-0", "Bravo")]["substitute_flag"], 1)
+        self.assertEqual(picks[("3-0", "Bravo")]["player_form_score"], 0.03)
+        self.assertFalse(picks[("advance", "Charlie")]["player_status_risk"])
+        three_zero = report["category_diagnostics"]["3-0"]
+        self.assertEqual(three_zero["player_status_risk_picks"], 2)
+        self.assertEqual(three_zero["broken_player_status_risk"], 1)
+        self.assertAlmostEqual(three_zero["player_status_risk_broken_rate"], 0.5)
+        self.assertIsNone(three_zero["non_status_risk_broken_rate"])
+
     def test_evaluate_pickem_checkpoint_reports_category_diagnostics(self):
         from cs2pickem.backtest import evaluate_pickem_checkpoint
 

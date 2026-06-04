@@ -558,6 +558,11 @@ def _checkpoint_detail_fields(detail: Mapping[str, Any]) -> Dict[str, object]:
         "expert_votes",
         "market_win_prob_r1",
         "model",
+        "player_status_risk",
+        "player_sample_confidence",
+        "substitute_flag",
+        "player_form_score",
+        "player_form_trend",
     )
     return {key: detail[key] for key in allowed if key in detail}
 
@@ -579,6 +584,10 @@ def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict
     materialized = list(picks)
     for category in PICKEM_CATEGORIES:
         category_rows = [row for row in materialized if row.get("category") == category]
+        status_risk_rows = [row for row in category_rows if _truthy(row.get("player_status_risk"))]
+        non_status_risk_rows = [row for row in category_rows if not _truthy(row.get("player_status_risk"))]
+        broken_status_risk = sum(1 for pick in status_risk_rows if pick.get("status") == "broken")
+        broken_non_status_risk = sum(1 for pick in non_status_risk_rows if pick.get("status") == "broken")
         row: Dict[str, object] = {
             "picks": len(category_rows),
             "avg_confidence": _checkpoint_avg_confidence(category_rows),
@@ -586,6 +595,18 @@ def _checkpoint_category_diagnostics(picks: Iterable[Mapping[str, Any]]) -> Dict
                 1
                 for pick in category_rows
                 if pick.get("status") == "broken" and str(pick.get("tier") or "").lower() == "high"
+            ),
+            "player_status_risk_picks": len(status_risk_rows),
+            "broken_player_status_risk": broken_status_risk,
+            "player_status_risk_broken_rate": (
+                broken_status_risk / len(status_risk_rows)
+                if status_risk_rows
+                else None
+            ),
+            "non_status_risk_broken_rate": (
+                broken_non_status_risk / len(non_status_risk_rows)
+                if non_status_risk_rows
+                else None
             ),
         }
         for status in ("locked", "alive", "broken", "missing"):
@@ -606,13 +627,14 @@ def _checkpoint_avg_confidence(rows: Iterable[Mapping[str, Any]]) -> float | Non
 
 
 def _pickem_detail_lookup(payload: Any) -> Dict[tuple[str, str], Mapping[str, Any]]:
-    details: Dict[tuple[str, str], Mapping[str, Any]] = {}
+    details: Dict[tuple[str, str], Dict[str, Any]] = {}
     if not isinstance(payload, Mapping):
         return details
     for category, item in _pickem_detail_items(payload):
         team = _pickem_team(item)
         if team and isinstance(item, Mapping):
-            details[(category, _team_key(team))] = item
+            key = (category, _team_key(team))
+            details.setdefault(key, {}).update(item)
     return details
 
 
@@ -628,6 +650,13 @@ def _pickem_detail_items(payload: Mapping[str, Any]) -> Iterable[tuple[str, Any]
                 category = str(item.get("category") or "").strip()
                 if category in PICKEM_CATEGORIES:
                     yield category, item
+    for detail_key in ("pickem_details", "pickem_risk_details"):
+        detail_section = payload.get(detail_key)
+        if not isinstance(detail_section, Mapping):
+            continue
+        for category in PICKEM_CATEGORIES:
+            for item in _pickem_items(detail_section.get(category, [])):
+                yield category, item
 
 
 def _ensure_record(records: Dict[str, Dict[str, object]], team: str) -> Dict[str, object]:
@@ -1433,6 +1462,16 @@ def _optional_probability(value: Any) -> float | None:
     if 0.0 <= probability <= 1.0:
         return probability
     return None
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return False
 
 
 def _int(value: Any) -> int:

@@ -250,6 +250,32 @@ class StageStrategyTests(unittest.TestCase):
         self.assertEqual(fragile["player_form_trend"], -0.06)
         self.assertTrue(fragile["player_status_risk"])
 
+    def test_three_zero_uses_stronger_player_status_penalty_than_advance(self):
+        from cs2pickem.strategy import describe_pickem_risk
+
+        probabilities = {
+            "StableCore": {"3-0": 0.30, "advance": 0.74, "0-3": 0.03},
+            "LowSampleUpside": {"3-0": 0.326, "advance": 0.78, "0-3": 0.04},
+        }
+        rankings = {"StableCore": 8, "LowSampleUpside": 9}
+        team_features = {
+            "StableCore": {"player_sample_confidence": 1.0, "substitute_flag": 0},
+            "LowSampleUpside": {"player_sample_confidence": 0.2, "substitute_flag": 0},
+        }
+
+        details = describe_pickem_risk(probabilities, rankings=rankings, team_features=team_features)
+        fragile_three_zero = next(entry for entry in details["3-0"] if entry["team"] == "LowSampleUpside")
+        fragile_advance = next(entry for entry in details["advance"] if entry["team"] == "LowSampleUpside")
+        stable_three_zero = next(entry for entry in details["3-0"] if entry["team"] == "StableCore")
+        stable_advance = next(entry for entry in details["advance"] if entry["team"] == "StableCore")
+
+        self.assertLess(
+            fragile_three_zero["player_availability_multiplier"],
+            fragile_advance["player_availability_multiplier"],
+        )
+        self.assertLess(fragile_three_zero["final_score"], stable_three_zero["final_score"])
+        self.assertGreater(fragile_advance["final_score"], stable_advance["final_score"])
+
     def test_describe_pickem_risk_reports_stage_and_upset_adjustments(self):
         from cs2pickem.strategy import describe_pickem_risk
 

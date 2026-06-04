@@ -324,6 +324,8 @@ def _player_availability_multiplier(key: str, features: Mapping[str, float]) -> 
     substitute_flag = 1.0 if _num(features.get("substitute_flag", features.get("player_substitute_flag", 0.0)), 0.0) >= 1.0 else 0.0
     if key == "0-3":
         return min(1.08, 1.0 + (1.0 - sample_confidence) * 0.04 + substitute_flag * 0.03)
+    if key == "3-0":
+        return max(0.84, 1.0 - (1.0 - sample_confidence) * 0.12 - substitute_flag * 0.08)
     return max(0.90, 1.0 - (1.0 - sample_confidence) * 0.05 - substitute_flag * 0.04)
 
 
