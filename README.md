@@ -423,6 +423,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 ### 当前诊断
 
 - 单场层面：首轮有效下注只命中 3/7，说明这版模型尚不能作为独立投注信号；`B8 vs TYLOO` 的低置信规避虽然方向偏对，但正确地避免把 50.9% 当成强信号。
+- 阈值调参：`forecast_backtest_day1_2026-06-02.json` 的 `policy_diagnostics` 显示，把赛前单场 minimum margin 从约 2% 提到 **5%** 后，方向命中可从 **4/8 = 50%** 变成 **3/5 = 60%**，会避开 2 个错单、同时放弃 1 个对单；样本仍很小，先作为 BO1 低置信降权方向，不直接当长期最优阈值。
 - 失误结构：MIBR、HEROIC、BIG 三个“模型 + 市场都偏看好”的强队同时爆冷，暴露出 BO1 方差、热门队低估下限、弱队短期状态冲击和选手状态波动没有被充分惩罚。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`，所以 Day 1 回测里的 `player_form_diagnostics.available_matches=0`；新补的 player-form fixtures 快照用于后续重跑 forecast，让错单能按 form 分差、趋势和样本置信度分组复盘。
 - Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
@@ -439,7 +440,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正和 player form 分差诊断。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、player form 分差，以及赛后 minimum-margin 阈值候选曲线。
 
 Stage 1 全部结束后，先整理最终瑞士轮战绩 CSV，字段至少包含 `team,wins,losses`。不要用 Round 3/Round 4 的中途战绩喂给最终回测。
 

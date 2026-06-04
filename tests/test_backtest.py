@@ -146,6 +146,71 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["matches"][1]["correct"], False)
         self.assertEqual(report["matches"][1]["directional_pick"], "Charlie")
 
+    def test_evaluate_forecast_result_reports_policy_threshold_candidates(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {"date": "2026-06-02", "team1": "A", "team2": "B", "pick": "A", "adjusted_probability_team1": 0.54},
+                {"date": "2026-06-02", "team1": "C", "team2": "D", "pick": "C", "adjusted_probability_team1": 0.56},
+                {"date": "2026-06-02", "team1": "E", "team2": "F", "pick": "E", "adjusted_probability_team1": 0.61},
+                {"date": "2026-06-02", "team1": "G", "team2": "H", "pick": "G", "adjusted_probability_team1": 0.67},
+            ],
+            [
+                {"date": "2026-06-02", "team1": "A", "team2": "B", "winner": "B"},
+                {"date": "2026-06-02", "team1": "C", "team2": "D", "winner": "C"},
+                {"date": "2026-06-02", "team1": "E", "team2": "F", "winner": "E"},
+                {"date": "2026-06-02", "team1": "G", "team2": "H", "winner": "H"},
+            ],
+        )
+
+        diagnostics = report["policy_diagnostics"]
+        self.assertEqual(diagnostics["current_policy"]["actionable_picks"], 4)
+        self.assertEqual(diagnostics["current_policy"]["correct_actionable"], 2)
+        threshold_rows = {row["minimum_margin"]: row for row in diagnostics["threshold_candidates"]}
+        self.assertEqual(threshold_rows[0.05]["actionable_picks"], 3)
+        self.assertEqual(threshold_rows[0.05]["correct_actionable"], 2)
+        self.assertAlmostEqual(threshold_rows[0.05]["actionable_accuracy"], 2 / 3)
+        self.assertEqual(threshold_rows[0.05]["avoided_losses"], 1)
+        self.assertEqual(diagnostics["recommended_minimum_margin"], 0.05)
+        self.assertEqual(diagnostics["recommendation_basis"], "highest_accuracy_with_minimum_two_picks")
+
+    def test_evaluate_forecast_result_reports_player_form_counter_signal_risk(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.58,
+                    "player_form_summary": {"diff": {"score": -0.06, "trend": -0.02, "sample_confidence": -0.2}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.62,
+                    "player_form_summary": {"diff": {"score": 0.04, "trend": 0.01, "sample_confidence": 0.2}},
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+            ],
+        )
+
+        risk = report["policy_diagnostics"]["player_form_counter_signal"]
+        self.assertEqual(risk["available_matches"], 2)
+        self.assertEqual(risk["counter_signal_matches"], 1)
+        self.assertEqual(risk["counter_signal_losses"], 1)
+        self.assertAlmostEqual(risk["counter_signal_loss_rate"], 1.0)
+        self.assertEqual(risk["aligned_matches"], 1)
+        self.assertEqual(risk["aligned_losses"], 0)
+
     def test_backtest_forecast_cli_reads_report_json_and_results_csv(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

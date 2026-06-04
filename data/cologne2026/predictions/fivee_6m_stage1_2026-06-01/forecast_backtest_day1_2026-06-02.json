@@ -184,6 +184,96 @@
     "directional_missed_avg_trend_diff": null,
     "missed_actionable_avg_score_diff": null
   },
+  "policy_diagnostics": {
+    "current_policy": {
+      "actionable_accuracy": 0.42857142857142855,
+      "actionable_picks": 7,
+      "correct_actionable": 3
+    },
+    "player_form_counter_signal": {
+      "aligned_loss_rate": 0.0,
+      "aligned_losses": 0,
+      "aligned_matches": 0,
+      "available_matches": 0,
+      "counter_signal_loss_rate": 0.0,
+      "counter_signal_losses": 0,
+      "counter_signal_matches": 0
+    },
+    "recommendation_basis": "highest_accuracy_with_minimum_two_picks",
+    "recommended_minimum_margin": 0.05,
+    "threshold_candidates": [
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 8,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 4,
+        "coverage": 1.0,
+        "minimum_margin": 0.0,
+        "missed_actionable": 4
+      },
+      {
+        "actionable_accuracy": 0.42857142857142855,
+        "actionable_picks": 7,
+        "avoided_losses": 0,
+        "avoided_wins": 1,
+        "correct_actionable": 3,
+        "coverage": 0.875,
+        "minimum_margin": 0.02,
+        "missed_actionable": 4
+      },
+      {
+        "actionable_accuracy": 0.6,
+        "actionable_picks": 5,
+        "avoided_losses": 2,
+        "avoided_wins": 1,
+        "correct_actionable": 3,
+        "coverage": 0.625,
+        "minimum_margin": 0.05,
+        "missed_actionable": 2
+      },
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 2,
+        "avoided_losses": 3,
+        "avoided_wins": 3,
+        "correct_actionable": 1,
+        "coverage": 0.25,
+        "minimum_margin": 0.08,
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 2,
+        "avoided_losses": 3,
+        "avoided_wins": 3,
+        "correct_actionable": 1,
+        "coverage": 0.25,
+        "minimum_margin": 0.1,
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.0,
+        "actionable_picks": 1,
+        "avoided_losses": 3,
+        "avoided_wins": 4,
+        "correct_actionable": 0,
+        "coverage": 0.125,
+        "minimum_margin": 0.12,
+        "missed_actionable": 1
+      },
+      {
+        "actionable_accuracy": 0.0,
+        "actionable_picks": 1,
+        "avoided_losses": 3,
+        "avoided_wins": 4,
+        "correct_actionable": 0,
+        "coverage": 0.125,
+        "minimum_margin": 0.15,
+        "missed_actionable": 1
+      }
+    ]
+  },
   "results_path": "data/cologne2026/source_inputs/stage1_day1_results_2026-06-02.csv",
   "unmatched": 0,
   "unmatched_predictions": []

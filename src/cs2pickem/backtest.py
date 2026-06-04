@@ -101,6 +101,7 @@ def evaluate_forecast_result(
         correct = actionable and _team_key(pick) == _team_key(winner)
         directional_correct = _team_key(directional_pick) == _team_key(winner)
         player_form_diff = _player_form_diff(prediction)
+        confidence_margin = _float(prediction.get("confidence_margin"), abs(probability_team1 - 0.5))
         match_reports.append(
             {
                 "date": prediction.get("date"),
@@ -117,7 +118,7 @@ def evaluate_forecast_result(
                 "directional_pick": directional_pick,
                 "directional_correct": directional_correct,
                 "adjusted_probability_team1": probability_team1,
-                "confidence_margin": prediction.get("confidence_margin"),
+                "confidence_margin": confidence_margin,
                 "low_confidence": bool(prediction.get("low_confidence")),
                 "market_adjustment_applied": bool(prediction.get("market_adjustment_applied")),
                 "player_form_diff": player_form_diff,
@@ -145,6 +146,7 @@ def evaluate_forecast_result(
         "low_confidence_avoids": sum(1 for row in avoid_matches if row["low_confidence"]),
         "market_adjusted_matches": sum(1 for row in match_reports if row["market_adjustment_applied"]),
         "player_form_diagnostics": _forecast_player_form_diagnostics(match_reports),
+        "policy_diagnostics": _forecast_policy_diagnostics(match_reports),
         "matches": match_reports,
     }
 
@@ -446,6 +448,105 @@ def _forecast_player_form_diagnostics(match_reports: Iterable[Mapping[str, Any]]
         "directional_missed_avg_trend_diff": _avg_player_form_value(directional_missed, "trend"),
         "directional_missed_avg_sample_confidence_diff": _avg_player_form_value(directional_missed, "sample_confidence"),
     }
+
+
+def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
+    materialized = list(match_reports)
+    current_actionable = [row for row in materialized if row.get("actionable")]
+    threshold_candidates = [
+        _forecast_threshold_candidate(materialized, threshold)
+        for threshold in (0.0, 0.02, 0.05, 0.08, 0.10, 0.12, 0.15)
+    ]
+    recommended = _recommended_threshold_candidate(threshold_candidates)
+    return {
+        "current_policy": {
+            "actionable_picks": len(current_actionable),
+            "correct_actionable": sum(1 for row in current_actionable if row.get("correct")),
+            "actionable_accuracy": (
+                sum(1 for row in current_actionable if row.get("correct")) / len(current_actionable)
+                if current_actionable
+                else 0.0
+            ),
+        },
+        "threshold_candidates": threshold_candidates,
+        "recommended_minimum_margin": recommended.get("minimum_margin"),
+        "recommendation_basis": (
+            "highest_accuracy_with_minimum_two_picks"
+            if recommended.get("actionable_picks", 0) >= 2
+            else "insufficient_actionable_sample"
+        ),
+        "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
+    }
+
+
+def _forecast_threshold_candidate(rows: Iterable[Mapping[str, Any]], minimum_margin: float) -> Dict[str, object]:
+    materialized = list(rows)
+    selected_indexes = {
+        index
+        for index, row in enumerate(materialized)
+        if _float(row.get("confidence_margin"), 0.0) >= minimum_margin
+    }
+    selected = [row for index, row in enumerate(materialized) if index in selected_indexes]
+    correct = sum(1 for row in selected if row.get("directional_correct"))
+    avoided = [row for index, row in enumerate(materialized) if index not in selected_indexes]
+    return {
+        "minimum_margin": minimum_margin,
+        "actionable_picks": len(selected),
+        "correct_actionable": correct,
+        "missed_actionable": len(selected) - correct,
+        "actionable_accuracy": correct / len(selected) if selected else 0.0,
+        "coverage": len(selected) / len(materialized) if materialized else 0.0,
+        "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
+        "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
+    }
+
+
+def _recommended_threshold_candidate(candidates: Iterable[Mapping[str, Any]]) -> Mapping[str, Any]:
+    eligible = [row for row in candidates if row.get("actionable_picks", 0) >= 2]
+    if not eligible:
+        return {"minimum_margin": None, "actionable_picks": 0}
+    return max(
+        eligible,
+        key=lambda row: (
+            _float(row.get("actionable_accuracy"), 0.0),
+            int(row.get("correct_actionable", 0)),
+            -_float(row.get("minimum_margin"), 0.0),
+        ),
+    )
+
+
+def _player_form_counter_signal_risk(rows: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
+    available = []
+    counter_signal = []
+    aligned = []
+    for row in rows:
+        diff = row.get("player_form_diff")
+        if not isinstance(diff, Mapping) or not diff:
+            continue
+        available.append(row)
+        directional_score = _directional_player_form_score(row, diff)
+        if directional_score < 0:
+            counter_signal.append(row)
+        else:
+            aligned.append(row)
+    counter_losses = sum(1 for row in counter_signal if not row.get("directional_correct"))
+    aligned_losses = sum(1 for row in aligned if not row.get("directional_correct"))
+    return {
+        "available_matches": len(available),
+        "counter_signal_matches": len(counter_signal),
+        "counter_signal_losses": counter_losses,
+        "counter_signal_loss_rate": counter_losses / len(counter_signal) if counter_signal else 0.0,
+        "aligned_matches": len(aligned),
+        "aligned_losses": aligned_losses,
+        "aligned_loss_rate": aligned_losses / len(aligned) if aligned else 0.0,
+    }
+
+
+def _directional_player_form_score(row: Mapping[str, Any], diff: Mapping[str, Any]) -> float:
+    score = _float(diff.get("score"), 0.0)
+    if _team_key(row.get("directional_pick")) == _team_key(row.get("team2")):
+        return -score
+    return score
 
 
 def _avg_player_form_value(rows: Iterable[Mapping[str, Any]], key: str) -> float | None:
