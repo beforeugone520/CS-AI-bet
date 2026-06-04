@@ -9,6 +9,7 @@ from .backtest import (
     backtest_pickem_suite_file,
     checkpoint_pickem_file,
     replay_pickem_backtest_suite_file,
+    standings_from_results_file,
 )
 from .bp import merge_bp_file
 from .data import read_matches_csv, read_teams_csv, write_json
@@ -102,6 +103,13 @@ def main() -> int:
     checkpoint_parser.add_argument("--pickems", required=True, help="pickem report JSON or raw pickems JSON")
     checkpoint_parser.add_argument("--standings", required=True, help="CSV with team,wins,losses current Swiss standings")
     checkpoint_parser.add_argument("--output", help="optional JSON output path")
+    standings_parser = subparsers.add_parser(
+        "standings-from-results",
+        help="derive current Swiss standings from match result rows",
+    )
+    standings_parser.add_argument("--results", required=True, help="CSV with team1,team2,winner match results")
+    standings_parser.add_argument("--source", help="optional source label copied into each standings row")
+    standings_parser.add_argument("--output", required=True, help="standings CSV output path")
     forecast_backtest_parser = subparsers.add_parser(
         "backtest-forecast",
         help="score single-match forecast report against actual match results",
@@ -368,6 +376,13 @@ def main() -> int:
             output_path=None,
         )
         return _emit(report, args.output)
+    if args.command == "standings-from-results":
+        standings_from_results_file(
+            results_path=args.results,
+            output_path=args.output,
+            source_label=args.source,
+        )
+        return 0
     if args.command == "backtest-forecast":
         report = backtest_forecast_file(
             forecast_report_path=args.forecast_report,

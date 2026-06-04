@@ -104,7 +104,7 @@ def write_matches_csv(path: str, rows: Iterable[Dict[str, Any]]) -> None:
     materialized = list(rows)
     fieldnames = _fieldnames(materialized)
     with open(path, "w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for row in materialized:
             writer.writerow(row)

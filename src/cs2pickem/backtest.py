@@ -4,7 +4,7 @@ import json
 import os
 from typing import Any, Dict, Iterable, List, Mapping
 
-from .data import read_matches_csv, read_teams_csv, write_json
+from .data import read_matches_csv, read_teams_csv, write_json, write_matches_csv
 from .pickem import model_driven_pickems
 
 
@@ -113,6 +113,54 @@ def checkpoint_pickem_file(
     if output_path:
         write_json(output_path, report)
     return report
+
+
+def standings_from_results(
+    result_rows: Iterable[Mapping[str, Any]],
+    source_label: str | None = None,
+) -> List[Dict[str, object]]:
+    records: Dict[str, Dict[str, object]] = {}
+    for row in result_rows:
+        team1 = _team_name(row.get("team1"))
+        team2 = _team_name(row.get("team2"))
+        winner = _team_name(row.get("winner"))
+        if not team1 or not team2 or not winner:
+            continue
+        if _team_key(winner) == _team_key(team1):
+            loser = team2
+        elif _team_key(winner) == _team_key(team2):
+            loser = team1
+        else:
+            continue
+        winner_record = _ensure_record(records, winner)
+        loser_record = _ensure_record(records, loser)
+        winner_record["wins"] = int(winner_record["wins"]) + 1
+        loser_record["losses"] = int(loser_record["losses"]) + 1
+    rows = []
+    for record in records.values():
+        wins = int(record["wins"])
+        losses = int(record["losses"])
+        row = {
+            "team": record["team"],
+            "wins": wins,
+            "losses": losses,
+            "status": _record_status(wins, losses),
+        }
+        if source_label:
+            row["source"] = source_label
+        rows.append(row)
+    return sorted(rows, key=lambda row: (-int(row["wins"]), int(row["losses"]), str(row["team"]).lower()))
+
+
+def standings_from_results_file(
+    results_path: str,
+    output_path: str | None = None,
+    source_label: str | None = None,
+) -> List[Dict[str, object]]:
+    rows = standings_from_results(read_matches_csv(results_path), source_label=source_label)
+    if output_path:
+        write_matches_csv(output_path, rows)
+    return rows
 
 
 def evaluate_forecast_result(
@@ -456,6 +504,21 @@ def _checkpoint_status(category: str, row: Mapping[str, Any] | None) -> str:
             return "locked"
         return "broken" if wins > 0 else "alive"
     return "missing"
+
+
+def _ensure_record(records: Dict[str, Dict[str, object]], team: str) -> Dict[str, object]:
+    key = _team_key(team)
+    if key not in records:
+        records[key] = {"team": team, "wins": 0, "losses": 0}
+    return records[key]
+
+
+def _record_status(wins: int, losses: int) -> str:
+    if wins >= 3:
+        return "advanced"
+    if losses >= 3:
+        return "eliminated"
+    return "alive"
 
 
 def _forecast_result_lookup(

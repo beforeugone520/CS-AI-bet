@@ -146,6 +146,55 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(statuses[("0-3", "Foxtrot")], "locked")
         self.assertEqual(statuses[("0-3", "Golf")], "alive")
 
+    def test_standings_from_results_cli_derives_current_swiss_records(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import read_matches_csv, write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            results_path = os.path.join(tmpdir, "results.csv")
+            output_path = os.path.join(tmpdir, "standings.csv")
+            write_matches_csv(
+                results_path,
+                [
+                    {"team1": "Alpha", "team2": "Bravo", "winner": "Alpha"},
+                    {"team1": "Alpha", "team2": "Charlie", "winner": "Alpha"},
+                    {"team1": "Alpha", "team2": "Delta", "winner": "Alpha"},
+                    {"team1": "Bravo", "team2": "Charlie", "winner": "Charlie"},
+                    {"team1": "Bravo", "team2": "Echo", "winner": "Echo"},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "standings-from-results",
+                "--results",
+                results_path,
+                "--source",
+                "unit-test",
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, "rb") as handle:
+                raw_output = handle.read()
+            standings = read_matches_csv(output_path)
+
+        self.assertEqual(exit_code, 0)
+        self.assertNotIn(b"\r\n", raw_output)
+        by_team = {row["team"]: row for row in standings}
+        self.assertEqual(by_team["Alpha"]["wins"], "3")
+        self.assertEqual(by_team["Alpha"]["losses"], "0")
+        self.assertEqual(by_team["Alpha"]["status"], "advanced")
+        self.assertEqual(by_team["Bravo"]["wins"], "0")
+        self.assertEqual(by_team["Bravo"]["losses"], "3")
+        self.assertEqual(by_team["Bravo"]["status"], "eliminated")
+        self.assertEqual(by_team["Bravo"]["source"], "unit-test")
+        self.assertEqual(by_team["Charlie"]["status"], "alive")
+
     def test_evaluate_forecast_result_reports_accuracy_and_player_form_diagnostics(self):
         from cs2pickem.backtest import evaluate_forecast_result
 
