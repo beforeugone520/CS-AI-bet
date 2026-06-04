@@ -1451,6 +1451,7 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
         "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
         "player_form_policy_candidates": player_form_policy_candidates,
         "market_favorite_player_form_policy_candidates": market_favorite_player_form_policy_candidates,
+        "player_status_signal_risk": _player_status_signal_risk(materialized),
         "player_status_policy_candidates": player_status_policy_candidates,
         "policy_tradeoff_summary": _policy_tradeoff_summary(
             current_policy,
@@ -1859,6 +1860,62 @@ def _player_status_policy_candidate(
         "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
         "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
     }
+
+
+def _player_status_signal_risk(
+    rows: Iterable[Mapping[str, Any]],
+    min_confidence: float = 0.4,
+) -> Dict[str, object]:
+    materialized = list(rows)
+    available = [row for row in materialized if _has_picked_player_status(row)]
+    missing = [row for row in materialized if not _has_picked_player_status(row)]
+    actionable = [row for row in available if row.get("actionable")]
+    avoid = [row for row in available if not row.get("actionable")]
+    status_risk_actionable = [row for row in actionable if _player_status_risk_row(row, min_confidence)]
+    non_status_risk_actionable = [row for row in actionable if not _player_status_risk_row(row, min_confidence)]
+    status_risk_avoid = [row for row in avoid if _player_status_risk_row(row, min_confidence)]
+    status_risk_correct = sum(1 for row in status_risk_actionable if row.get("correct"))
+    non_status_risk_correct = sum(1 for row in non_status_risk_actionable if row.get("correct"))
+    return {
+        "sample_confidence_threshold": min_confidence,
+        "available_matches": len(available),
+        "missing_status_matches": len(missing),
+        "available_actionable_matches": len(actionable),
+        "missing_status_actionable_matches": sum(1 for row in missing if row.get("actionable")),
+        "status_risk_actionable_matches": len(status_risk_actionable),
+        "low_sample_risk_actionable_matches": sum(
+            1 for row in status_risk_actionable if _player_status_low_sample(row, min_confidence)
+        ),
+        "substitute_risk_actionable_matches": sum(
+            1 for row in status_risk_actionable if _player_status_substitute(row)
+        ),
+        "status_risk_correct_actionable": status_risk_correct,
+        "status_risk_missed_actionable": len(status_risk_actionable) - status_risk_correct,
+        "status_risk_actionable_accuracy": (
+            status_risk_correct / len(status_risk_actionable)
+            if status_risk_actionable
+            else None
+        ),
+        "non_status_risk_actionable_matches": len(non_status_risk_actionable),
+        "non_status_risk_correct_actionable": non_status_risk_correct,
+        "non_status_risk_missed_actionable": len(non_status_risk_actionable) - non_status_risk_correct,
+        "non_status_risk_actionable_accuracy": (
+            non_status_risk_correct / len(non_status_risk_actionable)
+            if non_status_risk_actionable
+            else None
+        ),
+        "status_risk_avoid_picks": len(status_risk_avoid),
+        "status_risk_avoided_wins": sum(1 for row in status_risk_avoid if row.get("directional_correct")),
+        "status_risk_avoided_losses": sum(1 for row in status_risk_avoid if not row.get("directional_correct")),
+    }
+
+
+def _has_picked_player_status(row: Mapping[str, Any]) -> bool:
+    return row.get("picked_player_sample_confidence") is not None or row.get("picked_substitute_flag") is not None
+
+
+def _player_status_risk_row(row: Mapping[str, Any], min_confidence: float) -> bool:
+    return _player_status_low_sample(row, min_confidence) or _player_status_substitute(row)
 
 
 def _player_status_low_sample(row: Mapping[str, Any], min_confidence: float) -> bool:

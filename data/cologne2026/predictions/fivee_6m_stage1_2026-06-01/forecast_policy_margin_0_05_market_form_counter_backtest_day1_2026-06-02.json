@@ -822,6 +822,26 @@
         "substitute_risk_matches": 0
       }
     ],
+    "player_status_signal_risk": {
+      "available_actionable_matches": 3,
+      "available_matches": 8,
+      "low_sample_risk_actionable_matches": 3,
+      "missing_status_actionable_matches": 0,
+      "missing_status_matches": 0,
+      "non_status_risk_actionable_accuracy": null,
+      "non_status_risk_actionable_matches": 0,
+      "non_status_risk_correct_actionable": 0,
+      "non_status_risk_missed_actionable": 0,
+      "sample_confidence_threshold": 0.4,
+      "status_risk_actionable_accuracy": 0.6666666666666666,
+      "status_risk_actionable_matches": 3,
+      "status_risk_avoid_picks": 5,
+      "status_risk_avoided_losses": 3,
+      "status_risk_avoided_wins": 2,
+      "status_risk_correct_actionable": 2,
+      "status_risk_missed_actionable": 1,
+      "substitute_risk_actionable_matches": 0
+    },
     "policy_tradeoff_summary": {
       "accuracy_gain_over_current": 0.0,
       "actionable_pick_delta_vs_current": 0,

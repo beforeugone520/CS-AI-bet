@@ -1190,6 +1190,93 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(candidate["substitute_risk_matches"], 1)
         self.assertEqual(candidate["low_sample_risk_matches"], 1)
 
+    def test_evaluate_forecast_result_reports_player_status_signal_risk(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.57,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.2, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.61,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.2, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Foxtrot",
+                    "adjusted_probability_team1": 0.43,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.9, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 1},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Golf",
+                    "team2": "Hotel",
+                    "pick": "Golf",
+                    "adjusted_probability_team1": 0.62,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.8, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "India",
+                    "team2": "Juliet",
+                    "pick": "avoid",
+                    "adjusted_probability_team1": 0.59,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.1, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+                {"date": "2026-06-02", "team1": "Golf", "team2": "Hotel", "winner": "Golf"},
+                {"date": "2026-06-02", "team1": "India", "team2": "Juliet", "winner": "India"},
+            ],
+        )
+
+        risk = report["policy_diagnostics"]["player_status_signal_risk"]
+        self.assertEqual(risk["sample_confidence_threshold"], 0.4)
+        self.assertEqual(risk["available_matches"], 5)
+        self.assertEqual(risk["available_actionable_matches"], 4)
+        self.assertEqual(risk["status_risk_actionable_matches"], 3)
+        self.assertEqual(risk["low_sample_risk_actionable_matches"], 2)
+        self.assertEqual(risk["substitute_risk_actionable_matches"], 1)
+        self.assertEqual(risk["status_risk_correct_actionable"], 1)
+        self.assertEqual(risk["status_risk_missed_actionable"], 2)
+        self.assertAlmostEqual(risk["status_risk_actionable_accuracy"], 1 / 3)
+        self.assertEqual(risk["non_status_risk_actionable_matches"], 1)
+        self.assertEqual(risk["non_status_risk_correct_actionable"], 1)
+        self.assertAlmostEqual(risk["non_status_risk_actionable_accuracy"], 1.0)
+        self.assertEqual(risk["status_risk_avoid_picks"], 1)
+        self.assertEqual(risk["status_risk_avoided_wins"], 1)
+        self.assertEqual(risk["status_risk_avoided_losses"], 0)
+
     def test_evaluate_forecast_result_reports_avoid_reason_diagnostics(self):
         from cs2pickem.backtest import evaluate_forecast_result
 
