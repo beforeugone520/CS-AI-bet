@@ -1,0 +1,82 @@
+{
+  "pickems_path": "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json",
+  "picks": [
+    {
+      "category": "3-0",
+      "losses": 1,
+      "status": "broken",
+      "team": "MIBR",
+      "wins": 2
+    },
+    {
+      "category": "3-0",
+      "losses": 1,
+      "status": "broken",
+      "team": "GamerLegion",
+      "wins": 2
+    },
+    {
+      "category": "advance",
+      "losses": 1,
+      "status": "alive",
+      "team": "BIG",
+      "wins": 2
+    },
+    {
+      "category": "advance",
+      "losses": 0,
+      "status": "locked",
+      "team": "BetBoom",
+      "wins": 3
+    },
+    {
+      "category": "advance",
+      "losses": 0,
+      "status": "locked",
+      "team": "B8",
+      "wins": 3
+    },
+    {
+      "category": "advance",
+      "losses": 2,
+      "status": "alive",
+      "team": "HEROIC",
+      "wins": 1
+    },
+    {
+      "category": "advance",
+      "losses": 1,
+      "status": "alive",
+      "team": "M80",
+      "wins": 2
+    },
+    {
+      "category": "advance",
+      "losses": 2,
+      "status": "alive",
+      "team": "TYLOO",
+      "wins": 1
+    },
+    {
+      "category": "0-3",
+      "losses": 1,
+      "status": "broken",
+      "team": "NRG",
+      "wins": 2
+    },
+    {
+      "category": "0-3",
+      "losses": 3,
+      "status": "locked",
+      "team": "Gaimin Gladiators",
+      "wins": 0
+    }
+  ],
+  "standings_path": "data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv",
+  "summary": {
+    "alive": 4,
+    "broken": 3,
+    "locked": 3,
+    "missing": 0
+  }
+}

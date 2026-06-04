@@ -75,6 +75,46 @@ def backtest_pickem_file(
     return report
 
 
+def evaluate_pickem_checkpoint(
+    pickems: Mapping[str, Iterable[str]],
+    standings_rows: Iterable[Mapping[str, Any]],
+) -> Dict[str, object]:
+    normalized_pickems = {category: [str(team) for team in teams] for category, teams in pickems.items()}
+    standings = {_team_name(row.get("team") or row.get("name") or row.get("team_name")): row for row in standings_rows}
+    pick_reports: List[Dict[str, object]] = []
+    summary = {"locked": 0, "alive": 0, "broken": 0, "missing": 0}
+    for category in PICKEM_CATEGORIES:
+        for team in normalized_pickems.get(category, []):
+            row = standings.get(_team_name(team))
+            status = _checkpoint_status(category, row)
+            summary[status] += 1
+            pick_reports.append(
+                {
+                    "category": category,
+                    "team": team,
+                    "wins": _int(row.get("wins")) if row else None,
+                    "losses": _int(row.get("losses")) if row else None,
+                    "status": status,
+                }
+            )
+    return {"summary": summary, "picks": pick_reports}
+
+
+def checkpoint_pickem_file(
+    pickems_path: str,
+    standings_path: str,
+    output_path: str | None = None,
+) -> Dict[str, object]:
+    with open(pickems_path, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    report = evaluate_pickem_checkpoint(_extract_pickems(payload), read_matches_csv(standings_path))
+    report["pickems_path"] = pickems_path
+    report["standings_path"] = standings_path
+    if output_path:
+        write_json(output_path, report)
+    return report
+
+
 def evaluate_forecast_result(
     predictions: Iterable[Mapping[str, Any]],
     result_rows: Iterable[Mapping[str, Any]],
@@ -396,6 +436,26 @@ def _copy_optional_replay_settings(case: Mapping[str, Any], output: Dict[str, ob
 
 def _resolve_suite_path(path: str, base_dir: str) -> str:
     return path if os.path.isabs(path) else os.path.abspath(os.path.join(base_dir, path))
+
+
+def _checkpoint_status(category: str, row: Mapping[str, Any] | None) -> str:
+    if row is None:
+        return "missing"
+    wins = _int(row.get("wins"))
+    losses = _int(row.get("losses"))
+    if category == "3-0":
+        if wins >= 3 and losses == 0:
+            return "locked"
+        return "broken" if losses > 0 else "alive"
+    if category == "advance":
+        if wins >= 3:
+            return "locked"
+        return "broken" if losses >= 3 else "alive"
+    if category == "0-3":
+        if losses >= 3 and wins == 0:
+            return "locked"
+        return "broken" if wins > 0 else "alive"
+    return "missing"
 
 
 def _forecast_result_lookup(

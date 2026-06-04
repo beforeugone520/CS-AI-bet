@@ -7,6 +7,7 @@ from .backtest import (
     backtest_forecast_file,
     backtest_pickem_file,
     backtest_pickem_suite_file,
+    checkpoint_pickem_file,
     replay_pickem_backtest_suite_file,
 )
 from .bp import merge_bp_file
@@ -94,6 +95,13 @@ def main() -> int:
     backtest_parser.add_argument("--results", required=True, help="CSV with team,wins,losses final Swiss standings")
     backtest_parser.add_argument("--pass-threshold", type=int, default=5, help="minimum correct picks considered a pass")
     backtest_parser.add_argument("--output", help="optional JSON output path")
+    checkpoint_parser = subparsers.add_parser(
+        "checkpoint-pickem",
+        help="classify Pick'em slots as locked, alive, or broken against current Swiss standings",
+    )
+    checkpoint_parser.add_argument("--pickems", required=True, help="pickem report JSON or raw pickems JSON")
+    checkpoint_parser.add_argument("--standings", required=True, help="CSV with team,wins,losses current Swiss standings")
+    checkpoint_parser.add_argument("--output", help="optional JSON output path")
     forecast_backtest_parser = subparsers.add_parser(
         "backtest-forecast",
         help="score single-match forecast report against actual match results",
@@ -351,6 +359,13 @@ def main() -> int:
             results_path=args.results,
             output_path=None,
             pass_threshold=args.pass_threshold,
+        )
+        return _emit(report, args.output)
+    if args.command == "checkpoint-pickem":
+        report = checkpoint_pickem_file(
+            pickems_path=args.pickems,
+            standings_path=args.standings,
+            output_path=None,
         )
         return _emit(report, args.output)
     if args.command == "backtest-forecast":

@@ -87,6 +87,65 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["correct"], 3)
         self.assertTrue(report["passed"])
 
+    def test_checkpoint_pickem_cli_reports_locked_alive_and_broken_slots(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pickems_path = os.path.join(tmpdir, "pickems.json")
+            standings_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "checkpoint.json")
+            with open(pickems_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "pickems": {
+                            "3-0": ["Alpha", "Bravo"],
+                            "advance": ["Charlie", "Delta", "Echo"],
+                            "0-3": ["Foxtrot", "Golf"],
+                        }
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                standings_path,
+                [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 2, "losses": 1},
+                    {"team": "Charlie", "wins": 3, "losses": 1},
+                    {"team": "Delta", "wins": 2, "losses": 1},
+                    {"team": "Echo", "wins": 0, "losses": 3},
+                    {"team": "Foxtrot", "wins": 0, "losses": 3},
+                    {"team": "Golf", "wins": 0, "losses": 2},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "checkpoint-pickem",
+                "--pickems",
+                pickems_path,
+                "--standings",
+                standings_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["summary"], {"locked": 3, "alive": 2, "broken": 2, "missing": 0})
+        statuses = {(row["category"], row["team"]): row["status"] for row in report["picks"]}
+        self.assertEqual(statuses[("3-0", "Alpha")], "locked")
+        self.assertEqual(statuses[("3-0", "Bravo")], "broken")
+        self.assertEqual(statuses[("advance", "Delta")], "alive")
+        self.assertEqual(statuses[("0-3", "Foxtrot")], "locked")
+        self.assertEqual(statuses[("0-3", "Golf")], "alive")
+
     def test_evaluate_forecast_result_reports_accuracy_and_player_form_diagnostics(self):
         from cs2pickem.backtest import evaluate_forecast_result
 
