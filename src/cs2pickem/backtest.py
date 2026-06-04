@@ -1554,6 +1554,12 @@ def _policy_tradeoff_summary(
         highest_accuracy,
         highest_correct,
     )
+    recommended_candidate = _policy_tradeoff_recommended_candidate(
+        recommendation,
+        current,
+        highest_accuracy,
+        highest_correct,
+    )
     return {
         "minimum_actionable_picks": 2,
         "current_policy": current,
@@ -1565,6 +1571,11 @@ def _policy_tradeoff_summary(
         "coverage_delta_vs_current": actionable_delta / current_actionable if current_actionable else 0.0,
         "recommendation": recommendation,
         "recommendation_basis": recommendation_basis,
+        "recommended_policy_update": _recommended_policy_update(
+            recommendation,
+            recommendation_basis,
+            recommended_candidate,
+        ),
     }
 
 
@@ -1605,6 +1616,95 @@ def _policy_tradeoff_recommendation(
     if int(highest_correct.get("correct_actionable", 0)) > int(current.get("correct_actionable", 0)):
         return "review_highest_correct_candidate", "higher_total_correct_available"
     return "keep_current_policy", "no_candidate_improves_current_policy"
+
+
+def _policy_tradeoff_recommended_candidate(
+    recommendation: str,
+    current: Mapping[str, Any],
+    highest_accuracy: Mapping[str, Any],
+    highest_correct: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    if recommendation == "promote_highest_accuracy_candidate":
+        return highest_accuracy
+    if recommendation == "review_highest_correct_candidate":
+        return highest_correct
+    return current
+
+
+def _recommended_policy_update(
+    action: str,
+    basis: str,
+    candidate: Mapping[str, Any],
+) -> Dict[str, object]:
+    apply_args, cli_flags = _policy_candidate_apply_args(candidate)
+    parameter = candidate.get("parameter", {})
+    return {
+        "action": action,
+        "basis": basis,
+        "source": candidate.get("source"),
+        "parameter": dict(parameter) if isinstance(parameter, Mapping) else {},
+        "apply_forecast_policy_args": apply_args,
+        "cli_flags": cli_flags,
+        "candidate": {
+            "actionable_picks": int(candidate.get("actionable_picks", 0)),
+            "correct_actionable": int(candidate.get("correct_actionable", 0)),
+            "actionable_accuracy": _float(candidate.get("actionable_accuracy"), 0.0),
+            "coverage": _optional_float(candidate.get("coverage")),
+        },
+    }
+
+
+def _policy_candidate_apply_args(candidate: Mapping[str, Any]) -> tuple[Dict[str, object], List[str]]:
+    source = candidate.get("source")
+    parameter = candidate.get("parameter", {})
+    if not isinstance(parameter, Mapping):
+        parameter = {}
+    args: Dict[str, object] = {}
+    flags: List[str] = []
+    if source == "threshold_candidates":
+        minimum_margin = _optional_float(parameter.get("minimum_margin"))
+        if minimum_margin is not None:
+            args["minimum_margin"] = minimum_margin
+            flags.extend(["--minimum-margin", _format_cli_float(minimum_margin)])
+    elif source == "bo1_margin_policy_candidates":
+        minimum_margin = _optional_float(parameter.get("minimum_margin"))
+        bo1_minimum_margin = _optional_float(parameter.get("bo1_minimum_margin"))
+        if minimum_margin is not None:
+            args["minimum_margin"] = minimum_margin
+            flags.extend(["--minimum-margin", _format_cli_float(minimum_margin)])
+        if bo1_minimum_margin is not None:
+            args["bo1_minimum_margin"] = bo1_minimum_margin
+            flags.extend(["--bo1-minimum-margin", _format_cli_float(bo1_minimum_margin)])
+    elif source == "player_form_policy_candidates":
+        min_confidence = _optional_float(parameter.get("player_form_counter_min_confidence"))
+        args["avoid_player_form_counter_signal"] = True
+        flags.append("--avoid-player-form-counter-signal")
+        if min_confidence is not None:
+            args["player_form_counter_min_confidence"] = min_confidence
+            flags.extend(["--player-form-counter-min-confidence", _format_cli_float(min_confidence)])
+    elif source == "market_favorite_player_form_policy_candidates":
+        min_probability = _optional_float(parameter.get("market_favorite_min_probability"))
+        args["avoid_market_favorite_player_form_counter_signal"] = True
+        flags.append("--avoid-market-favorite-player-form-counter-signal")
+        if min_probability is not None:
+            args["market_favorite_counter_min_probability"] = min_probability
+            flags.extend(["--market-favorite-counter-min-probability", _format_cli_float(min_probability)])
+    elif source == "player_status_policy_candidates":
+        min_confidence = _optional_float(parameter.get("player_status_min_confidence"))
+        min_margin = _optional_float(parameter.get("player_status_min_margin"))
+        args["avoid_player_status_risk"] = True
+        flags.append("--avoid-player-status-risk")
+        if min_confidence is not None:
+            args["player_status_min_confidence"] = min_confidence
+            flags.extend(["--player-status-min-confidence", _format_cli_float(min_confidence)])
+        if min_margin is not None:
+            args["player_status_min_margin"] = min_margin
+            flags.extend(["--player-status-min-margin", _format_cli_float(min_margin)])
+    return args, flags
+
+
+def _format_cli_float(value: float) -> str:
+    return f"{value:g}"
 
 
 def _forecast_threshold_candidate(rows: Iterable[Mapping[str, Any]], minimum_margin: float) -> Dict[str, object]:

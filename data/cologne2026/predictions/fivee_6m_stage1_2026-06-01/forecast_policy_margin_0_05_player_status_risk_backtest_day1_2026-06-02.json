@@ -884,7 +884,21 @@
       },
       "minimum_actionable_picks": 2,
       "recommendation": "keep_current_policy",
-      "recommendation_basis": "current_policy_highest_accuracy"
+      "recommendation_basis": "current_policy_highest_accuracy",
+      "recommended_policy_update": {
+        "action": "keep_current_policy",
+        "apply_forecast_policy_args": {},
+        "basis": "current_policy_highest_accuracy",
+        "candidate": {
+          "actionable_accuracy": 0.6666666666666666,
+          "actionable_picks": 3,
+          "correct_actionable": 2,
+          "coverage": 0.375
+        },
+        "cli_flags": [],
+        "parameter": {},
+        "source": "current_policy"
+      }
     },
     "recommendation_basis": "highest_accuracy_with_minimum_two_picks",
     "recommended_minimum_margin": 0.05,

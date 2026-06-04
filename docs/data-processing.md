@@ -256,7 +256,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 当前策略诊断结论：
 
 - Day 1 首轮有效下注只命中 `3/7`，说明这版单场模型尚不能作为独立投注信号；`B8 vs TYLOO` 的低置信规避虽然方向偏对，但正确避免把 50.9% 当成强信号。
-- 把赛前单场 minimum margin 提到 `0.05` 后，Day 1 有效 pick 变成 `3/5`；`--bo1-minimum-margin 0.05` 可只收紧 BO1，不把 BO3 一起收紧。
+- 把赛前单场 minimum margin 提到 `0.05` 后，Day 1 有效 pick 变成 `3/5`；`policy_tradeoff_summary.recommended_policy_update` 会把原始 Day 1 回测的候选直接翻译成 `apply-forecast-policy` 参数和 CLI flags，例如 `--minimum-margin 0.05`。`--bo1-minimum-margin 0.05` 可只收紧 BO1，不把 BO3 一起收紧。
 - `market favorite ≥0.60 且 player form 反向则 avoid` 能提高百分比但覆盖太低，只作为低覆盖候选，不作为默认策略。
 - `player_status_signal_risk` 会把实际赛果按被选中一侧的低样本/替补风险拆开。原始赛前 `forecast_report.json` 没有 player status 字段；补入 player-form fixtures 后，5%+player form 的 5 个有效 pick 全部带低样本状态风险，命中 `3/5`，状态规避版本降到 3 个有效 pick，命中 `2/3`。因此 `--avoid-player-status-risk` 只作为审查信号，不替换 5%+player form 默认策略。
 - Pick'em 层面，BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
@@ -271,7 +271,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、被选中一侧的 player status、Swiss `swiss_match_type` 压力类型、`avoid_reason_diagnostics`、`swiss_pressure_diagnostics`、`bo1_margin_policy_candidates`、`player_status_signal_risk`、`player_status_policy_candidates`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。`policy_tradeoff_summary.recommended_policy_update` 会额外给出 `apply_forecast_policy_args` 和 `cli_flags`，便于把实际赛果里验证过的候选策略复用到下一轮 forecast。
 
 ### 不重训策略重打标
 

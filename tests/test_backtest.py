@@ -1190,6 +1190,88 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(candidate["substitute_risk_matches"], 1)
         self.assertEqual(candidate["low_sample_risk_matches"], 1)
 
+    def test_policy_tradeoff_summary_recommends_player_status_cli_flags(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.57,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.3, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.56,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.9, "substitute_flag": 1},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.57,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.8, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Golf",
+                    "team2": "Hotel",
+                    "pick": "Golf",
+                    "adjusted_probability_team1": 0.61,
+                    "player_form_summary": {
+                        "team1": {"sample_confidence": 0.8, "substitute_flag": 0},
+                        "team2": {"sample_confidence": 0.9, "substitute_flag": 0},
+                    },
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Delta"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+                {"date": "2026-06-02", "team1": "Golf", "team2": "Hotel", "winner": "Golf"},
+            ],
+        )
+
+        summary = report["policy_diagnostics"]["policy_tradeoff_summary"]
+        self.assertEqual(summary["recommendation"], "promote_highest_accuracy_candidate")
+        update = summary["recommended_policy_update"]
+        self.assertEqual(update["action"], "promote_highest_accuracy_candidate")
+        self.assertEqual(update["source"], "player_status_policy_candidates")
+        self.assertEqual(
+            update["apply_forecast_policy_args"],
+            {
+                "avoid_player_status_risk": True,
+                "player_status_min_confidence": 0.4,
+                "player_status_min_margin": 0.08,
+            },
+        )
+        self.assertEqual(
+            update["cli_flags"],
+            [
+                "--avoid-player-status-risk",
+                "--player-status-min-confidence",
+                "0.4",
+                "--player-status-min-margin",
+                "0.08",
+            ],
+        )
+
     def test_evaluate_forecast_result_reports_player_status_signal_risk(self):
         from cs2pickem.backtest import evaluate_forecast_result
 
