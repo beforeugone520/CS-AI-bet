@@ -726,12 +726,14 @@ def _candidate_scoreboard_policy_diagnostics(
     for category in PICKEM_CATEGORIES:
         category_rows = [row for row in materialized if row.get("category") == category]
         slot_count = sum(1 for row in category_rows if _truthy(row.get("selected")))
+        policy_reports = [
+            _candidate_policy_report(category, category_rows, slot_count, policy)
+            for policy in _candidate_policy_names()
+        ]
         diagnostics[category] = {
             "slot_count": slot_count,
-            "policies": [
-                _candidate_policy_report(category, category_rows, slot_count, policy)
-                for policy in _candidate_policy_names()
-            ],
+            "policies": policy_reports,
+            "recommendation": _candidate_policy_recommendation(policy_reports),
         }
     return diagnostics
 
@@ -768,6 +770,75 @@ def _candidate_policy_report(
         "selected_overlap": sum(1 for row in top_rows if _truthy(row.get("selected"))),
         "locked_teams": [str(row.get("team")) for row in top_rows if row.get("status") == "locked"],
     }
+
+
+def _candidate_policy_recommendation(
+    policy_reports: List[Mapping[str, Any]],
+) -> Dict[str, object]:
+    baseline = next(
+        (row for row in policy_reports if row.get("policy") == "status_adjusted_score"),
+        None,
+    )
+    if baseline is None:
+        return {
+            "baseline_policy": "status_adjusted_score",
+            "recommended_policy": None,
+            "action": "insufficient_data",
+            "locked_delta_vs_baseline": None,
+            "broken_delta_vs_baseline": None,
+            "reason": "baseline policy missing",
+        }
+    best = min(
+        policy_reports,
+        key=lambda row: _candidate_policy_recommendation_sort_key(row),
+    )
+    locked_delta = _int(best.get("top_k_locked")) - _int(baseline.get("top_k_locked"))
+    broken_delta = _int(best.get("top_k_broken")) - _int(baseline.get("top_k_broken"))
+    improves = (locked_delta > 0 and broken_delta <= 0) or (locked_delta >= 0 and broken_delta < 0)
+    return {
+        "baseline_policy": baseline.get("policy"),
+        "recommended_policy": best.get("policy") if improves else baseline.get("policy"),
+        "action": "review_candidate_policy" if improves else "keep_current_policy",
+        "locked_delta_vs_baseline": locked_delta if improves else 0,
+        "broken_delta_vs_baseline": broken_delta if improves else 0,
+        "reason": _candidate_policy_recommendation_reason(best, baseline, improves),
+    }
+
+
+def _candidate_policy_recommendation_sort_key(row: Mapping[str, Any]) -> tuple[int, int, int, int]:
+    return (
+        -_int(row.get("top_k_locked")),
+        _int(row.get("top_k_broken")),
+        -_int(row.get("top_k_alive")),
+        _candidate_policy_preference_rank(str(row.get("policy") or "")),
+    )
+
+
+def _candidate_policy_preference_rank(policy: str) -> int:
+    order = {
+        "extreme_consensus_composite": 0,
+        "status_model_market_composite": 1,
+        "status_adjusted_score": 2,
+        "raw_fused_score": 3,
+        "confidence": 4,
+        "expert_category_votes": 5,
+        "market_category_signal": 6,
+        "model_category_probability": 7,
+    }
+    return order.get(policy, 100)
+
+
+def _candidate_policy_recommendation_reason(
+    best: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    improves: bool,
+) -> str:
+    if improves:
+        return (
+            f"{best.get('policy')} improves top-k locked/broken profile versus "
+            f"{baseline.get('policy')}"
+        )
+    return "no candidate policy improves the baseline locked/broken profile"
 
 
 def _rank_candidate_policy(

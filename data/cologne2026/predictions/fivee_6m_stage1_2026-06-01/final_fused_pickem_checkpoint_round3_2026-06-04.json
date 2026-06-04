@@ -1862,6 +1862,14 @@
           ]
         }
       ],
+      "recommendation": {
+        "action": "keep_current_policy",
+        "baseline_policy": "status_adjusted_score",
+        "broken_delta_vs_baseline": 0,
+        "locked_delta_vs_baseline": 0,
+        "reason": "no candidate policy improves the baseline locked/broken profile",
+        "recommended_policy": "status_adjusted_score"
+      },
       "slot_count": 2
     },
     "3-0": {
@@ -1987,6 +1995,14 @@
           ]
         }
       ],
+      "recommendation": {
+        "action": "review_candidate_policy",
+        "baseline_policy": "status_adjusted_score",
+        "broken_delta_vs_baseline": -1,
+        "locked_delta_vs_baseline": 1,
+        "reason": "extreme_consensus_composite improves top-k locked/broken profile versus status_adjusted_score",
+        "recommended_policy": "extreme_consensus_composite"
+      },
       "slot_count": 2
     },
     "advance": {
@@ -2160,6 +2176,14 @@
           ]
         }
       ],
+      "recommendation": {
+        "action": "keep_current_policy",
+        "baseline_policy": "status_adjusted_score",
+        "broken_delta_vs_baseline": 0,
+        "locked_delta_vs_baseline": 0,
+        "reason": "no candidate policy improves the baseline locked/broken profile",
+        "recommended_policy": "status_adjusted_score"
+      },
       "slot_count": 6
     }
   },

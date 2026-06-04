@@ -411,6 +411,12 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(policy_rows["extreme_consensus_composite"]["top_k_teams"], ["Bravo"])
         self.assertEqual(policy_rows["extreme_consensus_composite"]["top_k_locked"], 1)
         self.assertIn("status_model_market_composite", policy_rows)
+        recommendation = report["candidate_scoreboard_policy_diagnostics"]["3-0"]["recommendation"]
+        self.assertEqual(recommendation["baseline_policy"], "status_adjusted_score")
+        self.assertEqual(recommendation["recommended_policy"], "extreme_consensus_composite")
+        self.assertEqual(recommendation["action"], "review_candidate_policy")
+        self.assertEqual(recommendation["locked_delta_vs_baseline"], 1)
+        self.assertEqual(recommendation["broken_delta_vs_baseline"], -1)
 
     def test_evaluate_pickem_checkpoint_reports_category_diagnostics(self):
         from cs2pickem.backtest import evaluate_pickem_checkpoint
