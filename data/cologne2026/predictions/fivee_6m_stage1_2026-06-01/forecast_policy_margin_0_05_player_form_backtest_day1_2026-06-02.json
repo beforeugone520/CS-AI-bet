@@ -405,7 +405,8 @@
     "current_policy": {
       "actionable_accuracy": 0.6,
       "actionable_picks": 5,
-      "correct_actionable": 3
+      "correct_actionable": 3,
+      "coverage": 0.625
     },
     "market_favorite_player_form_policy_candidates": [
       {
@@ -519,6 +520,52 @@
         "player_form_counter_min_confidence": 0.8
       }
     ],
+    "policy_tradeoff_summary": {
+      "accuracy_gain_over_current": 0.06666666666666665,
+      "actionable_pick_delta_vs_current": -2,
+      "correct_pick_delta_vs_current": -1,
+      "coverage_delta_vs_current": -0.4,
+      "current_policy": {
+        "actionable_accuracy": 0.6,
+        "actionable_picks": 5,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 3,
+        "coverage": 0.625,
+        "missed_actionable": 2,
+        "parameter": {},
+        "source": "current_policy"
+      },
+      "highest_accuracy_candidate": {
+        "actionable_accuracy": 0.6666666666666666,
+        "actionable_picks": 3,
+        "avoided_losses": 3,
+        "avoided_wins": 2,
+        "correct_actionable": 2,
+        "coverage": 0.375,
+        "missed_actionable": 1,
+        "parameter": {
+          "player_form_counter_min_confidence": 0.0
+        },
+        "source": "player_form_policy_candidates"
+      },
+      "highest_correct_candidate": {
+        "actionable_accuracy": 0.5,
+        "actionable_picks": 8,
+        "avoided_losses": 0,
+        "avoided_wins": 0,
+        "correct_actionable": 4,
+        "coverage": 1.0,
+        "missed_actionable": 4,
+        "parameter": {
+          "minimum_margin": 0.0
+        },
+        "source": "threshold_candidates"
+      },
+      "minimum_actionable_picks": 2,
+      "recommendation": "keep_current_policy",
+      "recommendation_basis": "accuracy_gain_reduces_total_correct"
+    },
     "recommendation_basis": "highest_accuracy_with_minimum_two_picks",
     "recommended_minimum_margin": 0.05,
     "threshold_candidates": [

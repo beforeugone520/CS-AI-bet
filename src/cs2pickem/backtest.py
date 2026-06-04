@@ -840,21 +840,25 @@ def _forecast_player_form_diagnostics(match_reports: Iterable[Mapping[str, Any]]
 def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> Dict[str, object]:
     materialized = list(match_reports)
     current_actionable = [row for row in materialized if row.get("actionable")]
+    current_policy = {
+        "actionable_picks": len(current_actionable),
+        "correct_actionable": sum(1 for row in current_actionable if row.get("correct")),
+        "actionable_accuracy": (
+            sum(1 for row in current_actionable if row.get("correct")) / len(current_actionable)
+            if current_actionable
+            else 0.0
+        ),
+        "coverage": len(current_actionable) / len(materialized) if materialized else 0.0,
+    }
     threshold_candidates = [
         _forecast_threshold_candidate(materialized, threshold)
         for threshold in (0.0, 0.02, 0.05, 0.08, 0.10, 0.12, 0.15)
     ]
+    player_form_policy_candidates = _player_form_policy_candidates(materialized)
+    market_favorite_player_form_policy_candidates = _market_favorite_player_form_policy_candidates(materialized)
     recommended = _recommended_threshold_candidate(threshold_candidates)
     return {
-        "current_policy": {
-            "actionable_picks": len(current_actionable),
-            "correct_actionable": sum(1 for row in current_actionable if row.get("correct")),
-            "actionable_accuracy": (
-                sum(1 for row in current_actionable if row.get("correct")) / len(current_actionable)
-                if current_actionable
-                else 0.0
-            ),
-        },
+        "current_policy": current_policy,
         "threshold_candidates": threshold_candidates,
         "recommended_minimum_margin": recommended.get("minimum_margin"),
         "recommendation_basis": (
@@ -863,11 +867,134 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
             else "insufficient_actionable_sample"
         ),
         "player_form_counter_signal": _player_form_counter_signal_risk(materialized),
-        "player_form_policy_candidates": _player_form_policy_candidates(materialized),
-        "market_favorite_player_form_policy_candidates": (
-            _market_favorite_player_form_policy_candidates(materialized)
+        "player_form_policy_candidates": player_form_policy_candidates,
+        "market_favorite_player_form_policy_candidates": market_favorite_player_form_policy_candidates,
+        "policy_tradeoff_summary": _policy_tradeoff_summary(
+            current_policy,
+            threshold_candidates,
+            player_form_policy_candidates,
+            market_favorite_player_form_policy_candidates,
         ),
     }
+
+
+def _policy_tradeoff_summary(
+    current_policy: Mapping[str, Any],
+    threshold_candidates: Iterable[Mapping[str, Any]],
+    player_form_policy_candidates: Iterable[Mapping[str, Any]],
+    market_favorite_player_form_policy_candidates: Iterable[Mapping[str, Any]],
+) -> Dict[str, object]:
+    current = _policy_tradeoff_candidate("current_policy", current_policy, {})
+    candidates = [current]
+    candidates.extend(
+        _policy_tradeoff_candidate(
+            "threshold_candidates",
+            row,
+            {"minimum_margin": row.get("minimum_margin")},
+        )
+        for row in threshold_candidates
+    )
+    candidates.extend(
+        _policy_tradeoff_candidate(
+            "player_form_policy_candidates",
+            row,
+            {"player_form_counter_min_confidence": row.get("player_form_counter_min_confidence")},
+        )
+        for row in player_form_policy_candidates
+    )
+    candidates.extend(
+        _policy_tradeoff_candidate(
+            "market_favorite_player_form_policy_candidates",
+            row,
+            {"market_favorite_min_probability": row.get("market_favorite_min_probability")},
+        )
+        for row in market_favorite_player_form_policy_candidates
+    )
+    eligible = [row for row in candidates if int(row.get("actionable_picks", 0)) >= 2]
+    if not eligible:
+        eligible = candidates
+    highest_accuracy = max(
+        eligible,
+        key=lambda row: (
+            _float(row.get("actionable_accuracy"), 0.0),
+            int(row.get("correct_actionable", 0)),
+            int(row.get("actionable_picks", 0)),
+        ),
+    )
+    highest_correct = max(
+        eligible,
+        key=lambda row: (
+            int(row.get("correct_actionable", 0)),
+            _float(row.get("actionable_accuracy"), 0.0),
+            int(row.get("actionable_picks", 0)),
+        ),
+    )
+    current_correct = int(current.get("correct_actionable", 0))
+    current_actionable = int(current.get("actionable_picks", 0))
+    highest_accuracy_correct = int(highest_accuracy.get("correct_actionable", 0))
+    highest_accuracy_actionable = int(highest_accuracy.get("actionable_picks", 0))
+    accuracy_gain = _float(highest_accuracy.get("actionable_accuracy"), 0.0) - _float(
+        current.get("actionable_accuracy"),
+        0.0,
+    )
+    correct_delta = highest_accuracy_correct - current_correct
+    actionable_delta = highest_accuracy_actionable - current_actionable
+    recommendation, recommendation_basis = _policy_tradeoff_recommendation(
+        current,
+        highest_accuracy,
+        highest_correct,
+    )
+    return {
+        "minimum_actionable_picks": 2,
+        "current_policy": current,
+        "highest_accuracy_candidate": highest_accuracy,
+        "highest_correct_candidate": highest_correct,
+        "accuracy_gain_over_current": accuracy_gain,
+        "correct_pick_delta_vs_current": correct_delta,
+        "actionable_pick_delta_vs_current": actionable_delta,
+        "coverage_delta_vs_current": actionable_delta / current_actionable if current_actionable else 0.0,
+        "recommendation": recommendation,
+        "recommendation_basis": recommendation_basis,
+    }
+
+
+def _policy_tradeoff_candidate(
+    source: str,
+    row: Mapping[str, Any],
+    parameter: Mapping[str, Any],
+) -> Dict[str, object]:
+    actionable_picks = int(row.get("actionable_picks", 0))
+    correct_actionable = int(row.get("correct_actionable", 0))
+    return {
+        "source": source,
+        "parameter": dict(parameter),
+        "actionable_picks": actionable_picks,
+        "correct_actionable": correct_actionable,
+        "missed_actionable": int(row.get("missed_actionable", max(actionable_picks - correct_actionable, 0))),
+        "actionable_accuracy": _float(row.get("actionable_accuracy"), 0.0),
+        "coverage": _optional_float(row.get("coverage")),
+        "avoided_wins": int(row.get("avoided_wins", 0)),
+        "avoided_losses": int(row.get("avoided_losses", 0)),
+    }
+
+
+def _policy_tradeoff_recommendation(
+    current: Mapping[str, Any],
+    highest_accuracy: Mapping[str, Any],
+    highest_correct: Mapping[str, Any],
+) -> tuple[str, str]:
+    if highest_accuracy.get("source") == "current_policy":
+        return "keep_current_policy", "current_policy_highest_accuracy"
+    if int(highest_accuracy.get("correct_actionable", 0)) < int(current.get("correct_actionable", 0)):
+        return "keep_current_policy", "accuracy_gain_reduces_total_correct"
+    if _float(highest_accuracy.get("actionable_accuracy"), 0.0) > _float(
+        current.get("actionable_accuracy"),
+        0.0,
+    ):
+        return "promote_highest_accuracy_candidate", "accuracy_gain_without_losing_correct_picks"
+    if int(highest_correct.get("correct_actionable", 0)) > int(current.get("correct_actionable", 0)):
+        return "review_highest_correct_candidate", "higher_total_correct_available"
+    return "keep_current_policy", "no_candidate_improves_current_policy"
 
 
 def _forecast_threshold_candidate(rows: Iterable[Mapping[str, Any]], minimum_margin: float) -> Dict[str, object]:
@@ -1171,6 +1298,13 @@ def _float(value: Any, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _optional_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _optional_probability(value: Any) -> float | None:

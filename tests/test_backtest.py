@@ -621,6 +621,83 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(candidates[0.65]["avoided_wins"], 0)
         self.assertAlmostEqual(candidates[0.65]["actionable_accuracy"], 2 / 3)
 
+    def test_evaluate_forecast_result_summarizes_policy_tradeoffs(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {
+                    "date": "2026-06-02",
+                    "team1": "Alpha",
+                    "team2": "Bravo",
+                    "pick": "Alpha",
+                    "adjusted_probability_team1": 0.66,
+                    "market_signal": {"probability_team1": 0.60, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.08}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Charlie",
+                    "team2": "Delta",
+                    "pick": "Charlie",
+                    "adjusted_probability_team1": 0.62,
+                    "market_signal": {"probability_team1": 0.60, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.04}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Echo",
+                    "team2": "Foxtrot",
+                    "pick": "Echo",
+                    "adjusted_probability_team1": 0.64,
+                    "market_signal": {"probability_team1": 0.64, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": 0.05}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "Golf",
+                    "team2": "Hotel",
+                    "pick": "Golf",
+                    "adjusted_probability_team1": 0.63,
+                    "market_signal": {"probability_team1": 0.63, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": 0.06}},
+                },
+                {
+                    "date": "2026-06-02",
+                    "team1": "India",
+                    "team2": "Juliet",
+                    "pick": "India",
+                    "adjusted_probability_team1": 0.63,
+                    "market_signal": {"probability_team1": 0.52, "basis": "real_odds"},
+                    "player_form_summary": {"diff": {"score": -0.02}},
+                },
+            ],
+            [
+                {"date": "2026-06-02", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo"},
+                {"date": "2026-06-02", "team1": "Charlie", "team2": "Delta", "winner": "Charlie"},
+                {"date": "2026-06-02", "team1": "Echo", "team2": "Foxtrot", "winner": "Echo"},
+                {"date": "2026-06-02", "team1": "Golf", "team2": "Hotel", "winner": "Golf"},
+                {"date": "2026-06-02", "team1": "India", "team2": "Juliet", "winner": "India"},
+            ],
+        )
+
+        summary = report["policy_diagnostics"]["policy_tradeoff_summary"]
+        self.assertEqual(summary["current_policy"]["correct_actionable"], 4)
+        self.assertAlmostEqual(summary["current_policy"]["coverage"], 1.0)
+        self.assertEqual(
+            summary["highest_accuracy_candidate"]["source"],
+            "market_favorite_player_form_policy_candidates",
+        )
+        self.assertEqual(summary["highest_accuracy_candidate"]["parameter"], {"market_favorite_min_probability": 0.55})
+        self.assertEqual(summary["highest_accuracy_candidate"]["correct_actionable"], 3)
+        self.assertAlmostEqual(summary["highest_accuracy_candidate"]["actionable_accuracy"], 1.0)
+        self.assertEqual(summary["highest_correct_candidate"]["correct_actionable"], 4)
+        self.assertEqual(summary["correct_pick_delta_vs_current"], -1)
+        self.assertAlmostEqual(summary["accuracy_gain_over_current"], 0.2)
+        self.assertAlmostEqual(summary["coverage_delta_vs_current"], -0.4)
+        self.assertEqual(summary["recommendation"], "keep_current_policy")
+        self.assertEqual(summary["recommendation_basis"], "accuracy_gain_reduces_total_correct")
+
     def test_evaluate_forecast_result_reports_avoid_reason_diagnostics(self):
         from cs2pickem.backtest import evaluate_forecast_result
 

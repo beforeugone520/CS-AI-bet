@@ -433,6 +433,7 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 - 阈值调参：`forecast_backtest_day1_2026-06-02.json` 的 `policy_diagnostics` 显示，把赛前单场 minimum margin 从约 2% 提到 **5%** 后，方向命中可从 **4/8 = 50%** 变成 **3/5 = 60%**，会避开 2 个错单、同时放弃 1 个对单；`forecast_policy_margin_0_05_player_form_backtest_day1_2026-06-02.json` 已按这个策略落盘，实际有效 pick 为 **3/5 = 60%**。
 - 失误结构：新增 `favorite_upset_diagnostics` 后，原始 Day 1 回测显示 adjusted favorite 输掉 **2/5 = 40%**，market favorite 输掉 **3/7 ≈ 43%**；5%+player form 版本把市场热门爆冷样例列为 SINNERS→FlyQuest、MIBR→THUNDER dOWNUNDER、HEROIC→Sharks，三场的 player form directional score 都为负值。这说明“市场热门 + 短期状态反向”要进入下轮惩罚项，而不是继续只按市场概率加权。
 - 高精度候选：`market_favorite_player_form_policy_candidates` 显示，在 5%+player form 版本上叠加 “market favorite ≥0.60 且 player form 反向则 avoid”，会避开 1 个错单和 1 个对单，actionable 从 5 降到 3，命中从 **3/5 = 60%** 变成 **2/3 ≈ 67%**。新增 `avoid_reason_diagnostics` 后可以看到，5% 阈值的 `low_confidence` 规避避开 2 个错单、放弃 1 个对单；market favorite + form 反向规避又额外避开 HEROIC 错单、放弃 M80 对单。因此 `forecast_policy_margin_0_05_market_form_counter_2026-06-04.json` 只能作为低覆盖候选，不作为默认策略。
+- 策略取舍：新增 `policy_tradeoff_summary` 后，原始 Day 1 回测会把 5% margin 标为可升级候选：准确率 +17.1 个百分点、总命中不降、覆盖从 7 个 actionable 降到 5 个。到了 5%+player form 版本，最高准确率候选虽然能到 **2/3 ≈ 67%**，但总命中从 3 降到 2、覆盖再降 **40%**，因此机器建议为 `keep_current_policy / accuracy_gain_reduces_total_correct`。这条诊断专门防止只看百分比、忽略总命中数和覆盖率。
 - player form 边界：原始 `forecast_report.json` 是 2026-06-01 赛前归档，不含 `player_form_summary`；重打标版本已从 player-form fixtures 补齐 8 场 form diff。新增的 `player_form_policy_candidates` 显示，如果把所有低样本反向 form 都拿来规避，可以避开 3 个错向但会误伤 2 个对向；从 0.2 样本置信门槛开始又只误伤不避错。因此当前继续保留 `--player-form-counter-min-confidence 0.4`，等更多真实赛果补足样本后再让 player form 自动改判。
 - Pick'em 层面：BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。`final_fused_pickem_checkpoint_round3_2026-06-04.json` 现在保留每个槽位的赛前 `confidence/tier/market/model` 信号，并新增 `category_diagnostics`：`3-0` 为 **0 locked / 0 alive / 2 broken**，`advance` 为 **2 locked / 4 alive / 0 broken**，`0-3` 为 **1 locked / 0 alive / 1 broken**。这说明当前最需要调低的是极端槽位的 BO1/短期状态方差权重，而不是晋级槽主体选择。
 - 下一轮改进方向：把 BO1 爆冷风险单独校准，降低 52%-57% 区间的强制 pick 倾向；对“传统强队 + 市场热门”加入近期赛果、地图池、短期 player form、替补和样本不足惩罚；最终回测必须等 Stage 1 完赛后用 standings 统一打分。
@@ -448,7 +449,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli backtest-forecast \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json
 ```
 
-`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、`avoid_reason_diagnostics`，以及赛后 minimum-margin 阈值候选曲线。
+`backtest-forecast` 会按日期 + 无序队伍匹配赛果，逐场输出 pick、directional pick、实际 winner、比分、地图、低置信规避、市场修正、favorite/model/market favorite、player form 分差、`avoid_reason_diagnostics`、`policy_tradeoff_summary`，以及赛后 minimum-margin 阈值候选曲线。
 
 如果不需要重训，可以直接把 Day 1 诊断得到的策略阈值应用到既有 `forecast_report.json`：
 
