@@ -671,6 +671,42 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(diagnostics["recommended_minimum_margin"], 0.05)
         self.assertEqual(diagnostics["recommendation_basis"], "highest_accuracy_with_minimum_two_picks")
 
+    def test_evaluate_forecast_result_reports_bo1_margin_policy_candidates(self):
+        from cs2pickem.backtest import evaluate_forecast_result
+
+        report = evaluate_forecast_result(
+            [
+                {"date": "2026-06-02", "team1": "A", "team2": "B", "best_of": 1, "pick": "A", "adjusted_probability_team1": 0.54},
+                {"date": "2026-06-02", "team1": "C", "team2": "D", "best_of": 1, "pick": "C", "adjusted_probability_team1": 0.56},
+                {"date": "2026-06-02", "team1": "E", "team2": "F", "best_of": 3, "pick": "E", "adjusted_probability_team1": 0.54},
+                {"date": "2026-06-02", "team1": "G", "team2": "H", "best_of": 3, "pick": "G", "adjusted_probability_team1": 0.56},
+            ],
+            [
+                {"date": "2026-06-02", "team1": "A", "team2": "B", "winner": "B"},
+                {"date": "2026-06-02", "team1": "C", "team2": "D", "winner": "C"},
+                {"date": "2026-06-02", "team1": "E", "team2": "F", "winner": "E"},
+                {"date": "2026-06-02", "team1": "G", "team2": "H", "winner": "H"},
+            ],
+        )
+
+        self.assertIn("bo1_margin_policy_candidates", report["policy_diagnostics"])
+        candidates = {
+            row["bo1_minimum_margin"]: row
+            for row in report["policy_diagnostics"]["bo1_margin_policy_candidates"]
+        }
+        self.assertEqual(candidates[0.05]["minimum_margin"], 0.02)
+        self.assertEqual(candidates[0.05]["bo1_matches"], 2)
+        self.assertEqual(candidates[0.05]["bo1_avoids"], 1)
+        self.assertEqual(candidates[0.05]["actionable_picks"], 3)
+        self.assertEqual(candidates[0.05]["correct_actionable"], 2)
+        self.assertEqual(candidates[0.05]["avoided_losses"], 1)
+        self.assertEqual(candidates[0.05]["avoided_wins"], 0)
+        self.assertAlmostEqual(candidates[0.05]["actionable_accuracy"], 2 / 3)
+        self.assertEqual(
+            report["policy_diagnostics"]["policy_tradeoff_summary"]["highest_accuracy_candidate"]["source"],
+            "bo1_margin_policy_candidates",
+        )
+
     def test_evaluate_forecast_result_reports_player_form_counter_signal_risk(self):
         from cs2pickem.backtest import evaluate_forecast_result
 

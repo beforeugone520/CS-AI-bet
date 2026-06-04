@@ -14,6 +14,7 @@ FAVORITE_UPSET_MIN_PROBABILITY = 0.55
 MARKET_FAVORITE_FORM_COUNTER_PROBABILITY_CANDIDATES = (0.55, 0.60, 0.65, 0.70)
 PLAYER_STATUS_CONFIDENCE_CANDIDATES = (0.2, 0.4, 0.6)
 PLAYER_STATUS_MARGIN_CANDIDATES = (0.06, 0.08, 0.10)
+BO1_MINIMUM_MARGIN_CANDIDATES = (0.02, 0.05, 0.08, 0.10, 0.12, 0.15)
 
 
 def evaluate_pickem_result(
@@ -293,6 +294,7 @@ def evaluate_forecast_result(
                 "date": prediction.get("date"),
                 "team1": team1,
                 "team2": team2,
+                "best_of": _best_of(prediction),
                 "swiss_round": prediction.get("swiss_round"),
                 "team1_record": prediction.get("team1_record"),
                 "team2_record": prediction.get("team2_record"),
@@ -1094,10 +1096,12 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
     player_form_policy_candidates = _player_form_policy_candidates(materialized)
     market_favorite_player_form_policy_candidates = _market_favorite_player_form_policy_candidates(materialized)
     player_status_policy_candidates = _player_status_policy_candidates(materialized)
+    bo1_margin_policy_candidates = _bo1_margin_policy_candidates(materialized)
     recommended = _recommended_threshold_candidate(threshold_candidates)
     return {
         "current_policy": current_policy,
         "threshold_candidates": threshold_candidates,
+        "bo1_margin_policy_candidates": bo1_margin_policy_candidates,
         "recommended_minimum_margin": recommended.get("minimum_margin"),
         "recommendation_basis": (
             "highest_accuracy_with_minimum_two_picks"
@@ -1114,6 +1118,7 @@ def _forecast_policy_diagnostics(match_reports: Iterable[Mapping[str, Any]]) -> 
             player_form_policy_candidates,
             market_favorite_player_form_policy_candidates,
             player_status_policy_candidates,
+            bo1_margin_policy_candidates,
         ),
     }
 
@@ -1124,6 +1129,7 @@ def _policy_tradeoff_summary(
     player_form_policy_candidates: Iterable[Mapping[str, Any]],
     market_favorite_player_form_policy_candidates: Iterable[Mapping[str, Any]],
     player_status_policy_candidates: Iterable[Mapping[str, Any]],
+    bo1_margin_policy_candidates: Iterable[Mapping[str, Any]],
 ) -> Dict[str, object]:
     current = _policy_tradeoff_candidate("current_policy", current_policy, {})
     candidates = [current]
@@ -1161,6 +1167,17 @@ def _policy_tradeoff_summary(
             },
         )
         for row in player_status_policy_candidates
+    )
+    candidates.extend(
+        _policy_tradeoff_candidate(
+            "bo1_margin_policy_candidates",
+            row,
+            {
+                "minimum_margin": row.get("minimum_margin"),
+                "bo1_minimum_margin": row.get("bo1_minimum_margin"),
+            },
+        )
+        for row in bo1_margin_policy_candidates
     )
     eligible = [row for row in candidates if int(row.get("actionable_picks", 0)) >= 2]
     if not eligible:
@@ -1261,6 +1278,53 @@ def _forecast_threshold_candidate(rows: Iterable[Mapping[str, Any]], minimum_mar
     avoided = [row for index, row in enumerate(materialized) if index not in selected_indexes]
     return {
         "minimum_margin": minimum_margin,
+        "actionable_picks": len(selected),
+        "correct_actionable": correct,
+        "missed_actionable": len(selected) - correct,
+        "actionable_accuracy": correct / len(selected) if selected else 0.0,
+        "coverage": len(selected) / len(materialized) if materialized else 0.0,
+        "avoided_wins": sum(1 for row in avoided if row.get("directional_correct")),
+        "avoided_losses": sum(1 for row in avoided if not row.get("directional_correct")),
+    }
+
+
+def _bo1_margin_policy_candidates(
+    rows: Iterable[Mapping[str, Any]],
+    minimum_margin: float = 0.02,
+) -> List[Dict[str, object]]:
+    materialized = list(rows)
+    return [
+        _bo1_margin_policy_candidate(materialized, minimum_margin, bo1_minimum_margin)
+        for bo1_minimum_margin in BO1_MINIMUM_MARGIN_CANDIDATES
+    ]
+
+
+def _bo1_margin_policy_candidate(
+    rows: Iterable[Mapping[str, Any]],
+    minimum_margin: float,
+    bo1_minimum_margin: float,
+) -> Dict[str, object]:
+    materialized = list(rows)
+    selected_indexes = set()
+    bo1_matches = 0
+    bo1_avoids = 0
+    for index, row in enumerate(materialized):
+        is_bo1 = _best_of(row) == 1
+        required_margin = bo1_minimum_margin if is_bo1 else minimum_margin
+        if is_bo1:
+            bo1_matches += 1
+        if _float(row.get("confidence_margin"), 0.0) >= required_margin:
+            selected_indexes.add(index)
+        elif is_bo1:
+            bo1_avoids += 1
+    selected = [row for index, row in enumerate(materialized) if index in selected_indexes]
+    avoided = [row for index, row in enumerate(materialized) if index not in selected_indexes]
+    correct = sum(1 for row in selected if row.get("directional_correct"))
+    return {
+        "minimum_margin": minimum_margin,
+        "bo1_minimum_margin": bo1_minimum_margin,
+        "bo1_matches": bo1_matches,
+        "bo1_avoids": bo1_avoids,
         "actionable_picks": len(selected),
         "correct_actionable": correct,
         "missed_actionable": len(selected) - correct,
@@ -1673,6 +1737,11 @@ def _optional_int(value: Any) -> int | None:
         return int(float(value))
     except (TypeError, ValueError):
         return None
+
+
+def _best_of(row: Mapping[str, Any]) -> int:
+    parsed = _int(row.get("best_of") or 1)
+    return parsed if parsed > 0 else 1
 
 
 def _optional_probability(value: Any) -> float | None:
