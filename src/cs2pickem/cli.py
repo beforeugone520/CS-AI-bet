@@ -8,6 +8,7 @@ from .backtest import (
     backtest_pickem_file,
     backtest_pickem_suite_file,
     checkpoint_pickem_file,
+    merge_standings_file,
     replay_pickem_backtest_suite_file,
     standings_from_results_file,
 )
@@ -178,6 +179,10 @@ def main() -> int:
     bp_parser.add_argument("--fixtures", required=True, help="upcoming fixture CSV")
     bp_parser.add_argument("--bp", required=True, help="BP intel CSV with date,team1,team2,map/source/confidence")
     bp_parser.add_argument("--output", required=True, help="augmented fixture CSV output path")
+    standings_merge_parser = subparsers.add_parser("merge-standings", help="merge current Swiss standings into upcoming fixture CSV")
+    standings_merge_parser.add_argument("--fixtures", required=True, help="upcoming fixture CSV")
+    standings_merge_parser.add_argument("--standings", required=True, help="CSV with team,wins,losses current Swiss standings")
+    standings_merge_parser.add_argument("--output", required=True, help="augmented fixture CSV output path")
     readiness_parser = subparsers.add_parser("readiness", help="audit whether data and training metrics satisfy production Pick'em gates")
     readiness_parser.add_argument("--matches", required=True, help="training match CSV")
     readiness_parser.add_argument("--training-report", required=True, help="JSON output from train command")
@@ -469,6 +474,10 @@ def main() -> int:
         return 0
     if args.command == "merge-bp":
         report = merge_bp_file(args.fixtures, args.bp, args.output)
+        print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
+    if args.command == "merge-standings":
+        report = merge_standings_file(args.fixtures, args.standings, args.output)
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     if args.command == "readiness":

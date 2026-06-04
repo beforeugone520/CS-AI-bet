@@ -122,7 +122,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli pipeline \
 
 ## 命令总览
 
-共 28 个子命令，按职责分组：
+共 29 个子命令，按职责分组：
 
 ### 数据采集（本地 HTML 或 `--url` 抓取）
 
@@ -144,6 +144,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli pipeline \
 | `merge-odds` | 合并十进制赔率、5E 别名或美式赔率；优先按 `source_match_url`，否则按日期+无序队伍匹配，输出市场概率与匹配审计 |
 | `merge-players` | 只读赛前窗口内选手行，合并 Rating/KD/首杀/残局/明星/替补，并生成短期 player form，避免未来泄漏 |
 | `merge-bp` | 按日期+无序队伍合并赛前地图 BP 情报（确认地图、双方禁/选图、来源、置信度） |
+| `merge-standings` | 把当前 Swiss standings 写回下一轮 fixtures，补齐 `team*_record` 与 `swiss_match_type`，避免中途预测沿用赛前 0-0 状态 |
 
 ### 建模 / 评估
 
@@ -315,6 +316,7 @@ CS-AI-bet/
 - `data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_report.json` / `pickem_report.json` / `pickem_answer_sheet.json` —— 当前主报告使用真实市场赔率版本。
 - `data/cologne2026/source_inputs/stage1_day1_results_2026-06-02.csv` / `data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_backtest_day1_2026-06-02.json` —— Day 1 首轮真实赛果和 `backtest-forecast` 机器回测产物。
 - `data/cologne2026/source_inputs/stage1_round1_3_results_2026-06-04.csv` / `data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv` / `final_fused_pickem_checkpoint_round3_2026-06-04.json` —— Round 1-3 已复核赛果、Round 3 standings 和 `checkpoint-pickem` 中途状态报告。
+- `data/cologne2026/source_inputs/stage1_round4_fixtures_2026-06-04.csv` / `data/cologne2026/processed/stage1_round4_fixtures_with_standings_2026-06-04.csv` —— Round 4 最新赛程快照，以及把 Round 3 standings 合并进去后的晋级/淘汰压力 fixtures。
 - `forecast_policy_margin_0_05_player_form_2026-06-04.json` / `forecast_policy_margin_0_05_player_form_backtest_day1_2026-06-02.json` —— 不重训的策略重打标版本：补入 player form fixtures、使用 5% minimum margin 和 player form 样本置信门槛。
 - `forecast_policy_margin_0_05_market_form_counter_2026-06-04.json` / `forecast_policy_margin_0_05_market_form_counter_backtest_day1_2026-06-02.json` —— 高精度/低覆盖候选：在 5% margin 基础上，当真实市场热门且短期 player form 反向时额外规避。
 - `forecast_policy_margin_0_05_player_status_risk_2026-06-04.json` / `forecast_policy_margin_0_05_player_status_risk_backtest_day1_2026-06-02.json` —— 选手状态候选：在 5%+player form 基础上，当被选中一侧低样本或替补且 margin 不足 6% 时额外规避。
@@ -334,7 +336,7 @@ CS-AI-bet/
 
 ### 当前进度快照（Round 3 后，2026-06-04）
 
-2026-06-03 Stage 1 Round 3 已结束，两个 `2-0` 晋级名额和两个 `0-2` 淘汰名额已经决出；Round 4 将进入全 BO3 的 `2-1` 晋级战与 `1-2` 淘汰战。以下赛程以 [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 的 Stage 1 results/schedule 更新为主，并用 [HLTV Major hub](https://www.hltv.org/major) 交叉核对。
+2026-06-03 Stage 1 Round 3 已结束，两个 `2-0` 晋级名额和两个 `0-2` 淘汰名额已经决出；2026-06-04 的 Round 4 进入全 BO3 的 `2-1` 晋级战与 `1-2` 淘汰战。以下赛程以 [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 的 Stage 1 results/schedule 更新为主，并用 [HLTV Major hub](https://www.hltv.org/major) 交叉核对；实时比分状态以源站为准，本仓库保留的是可复核的赛程/战绩快照。
 
 <div align="center">
 
@@ -363,14 +365,16 @@ Round 3 后战绩池：
 
 | 战绩池 | 对阵 | 赛制 | Pick'em 关注点 |
 | --- | --- | --- | --- |
-| `2-1` 晋级战 | GamerLegion vs BIG | BO3 | BIG 是 `晋级` 关键战；GamerLegion 的 `3-0` 已失效 |
-| `2-1` 晋级战 | M80 vs NRG | BO3 | M80 `晋级` 需要赢；NRG `0-3` 已失效 |
-| `2-1` 晋级战 | MIBR vs Lynn Vision | BO3 | MIBR 的 `3-0` 已失效，只影响晋级池竞争 |
-| `1-2` 淘汰战 | TYLOO vs Sharks | BO3 | TYLOO `晋级` 必须连赢两轮，从这里开始 |
-| `1-2` 淘汰战 | Team Liquid vs HEROIC | BO3 | HEROIC `晋级` 必须连赢两轮，从这里开始 |
 | `1-2` 淘汰战 | THUNDER dOWNUNDER vs FlyQuest | BO3 | 非 Pick'em 直接项，但影响最终晋级名额 |
+| `1-2` 淘汰战 | TYLOO vs Sharks | BO3 | TYLOO `晋级` 必须连赢两轮，从这里开始 |
+| `2-1` 晋级战 | GamerLegion vs BIG | BO3 | BIG 是 `晋级` 关键战；GamerLegion 的 `3-0` 已失效 |
+| `2-1` 晋级战 | MIBR vs Lynn Vision | BO3 | MIBR 的 `3-0` 已失效，只影响晋级池竞争 |
+| `1-2` 淘汰战 | Team Liquid vs HEROIC | BO3 | HEROIC `晋级` 必须连赢两轮，从这里开始 |
+| `2-1` 晋级战 | M80 vs NRG | BO3 | M80 `晋级` 需要赢；NRG `0-3` 已失效 |
 
 Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HEROIC 四支活着，其中 M80/BIG 一场 BO3 即可兑现，TYLOO/HEROIC 必须先活过淘汰战再打 Round 5。Round 4 结束后会再确定 3 支晋级队和 3 支淘汰队，剩余 `2-2` 队伍进入 2026-06-05 的 Round 5。
+
+Round 4 fixtures 已经落盘为 `stage1_round4_fixtures_2026-06-04.csv`；再用 `merge-standings` 合并 Round 3 standings 后，会生成 `stage1_round4_fixtures_with_standings_2026-06-04.csv`，其中每场都有 `team1_record/team2_record`、`team*_record_status`、`standings_source` 和 `swiss_match_type`。后续单场 forecast 或 Pick'em 复盘应优先用这个 processed 文件，避免把开赛前 `0-0` 的 fixtures 当成 Round 4 当前状态。
 
 <details>
 <summary>展开 Round 3 逐场结果</summary>
@@ -518,6 +522,11 @@ PYTHONPATH=src python3 -m cs2pickem.cli standings-from-results \
   --results data/cologne2026/source_inputs/stage1_round1_3_results_2026-06-04.csv \
   --source esports.gg+dfrag \
   --output data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv
+
+PYTHONPATH=src python3 -m cs2pickem.cli merge-standings \
+  --fixtures data/cologne2026/source_inputs/stage1_round4_fixtures_2026-06-04.csv \
+  --standings data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv \
+  --output data/cologne2026/processed/stage1_round4_fixtures_with_standings_2026-06-04.csv
 
 PYTHONPATH=src python3 -m cs2pickem.cli checkpoint-pickem \
   --pickems data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json \

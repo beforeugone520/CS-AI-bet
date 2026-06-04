@@ -446,6 +446,80 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(by_team["Bravo"]["source"], "unit-test")
         self.assertEqual(by_team["Charlie"]["status"], "alive")
 
+    def test_merge_standings_cli_overwrites_fixture_swiss_state(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import read_matches_csv, write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fixtures_path = os.path.join(tmpdir, "round4_fixtures.csv")
+            standings_path = os.path.join(tmpdir, "standings.csv")
+            output_path = os.path.join(tmpdir, "fixtures_with_standings.csv")
+            write_matches_csv(
+                fixtures_path,
+                [
+                    {
+                        "date": "2026-06-04",
+                        "event": "IEM Cologne Major 2026 Stage 1",
+                        "team1": "Alpha",
+                        "team2": "Bravo",
+                        "best_of": 3,
+                        "swiss_round": 1,
+                        "team1_wins": 0,
+                        "team1_losses": 0,
+                        "team2_wins": 0,
+                        "team2_losses": 0,
+                    },
+                    {
+                        "date": "2026-06-04",
+                        "event": "IEM Cologne Major 2026 Stage 1",
+                        "team1": "Charlie",
+                        "team2": "Ghost",
+                        "best_of": 3,
+                    },
+                ],
+            )
+            write_matches_csv(
+                standings_path,
+                [
+                    {"team": "Alpha", "wins": 2, "losses": 1, "status": "alive", "source": "unit"},
+                    {"team": "Bravo", "wins": 1, "losses": 2, "status": "alive", "source": "unit"},
+                    {"team": "Charlie", "wins": 2, "losses": 1, "status": "alive", "source": "unit"},
+                ],
+            )
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "merge-standings",
+                "--fixtures",
+                fixtures_path,
+                "--standings",
+                standings_path,
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            rows = read_matches_csv(output_path)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(rows[0]["team1_wins"], 2)
+        self.assertEqual(rows[0]["team1_losses"], 1)
+        self.assertEqual(rows[0]["team2_wins"], 1)
+        self.assertEqual(rows[0]["team2_losses"], 2)
+        self.assertEqual(rows[0]["team1_record_status"], "alive")
+        self.assertEqual(rows[0]["team2_record_status"], "alive")
+        self.assertEqual(rows[0]["team1_record"], "2-1")
+        self.assertEqual(rows[0]["team2_record"], "1-2")
+        self.assertEqual(rows[0]["swiss_round"], 4)
+        self.assertEqual(rows[0]["swiss_match_type"], "standard")
+        self.assertEqual(rows[0]["standings_source"], "unit")
+        self.assertEqual(rows[1]["team1_wins"], 2)
+        self.assertIsNone(rows[1]["team2_wins"])
+        self.assertEqual(rows[1]["swiss_round"], 4)
+
     def test_evaluate_forecast_result_reports_accuracy_and_player_form_diagnostics(self):
         from cs2pickem.backtest import evaluate_forecast_result
 

@@ -179,6 +179,71 @@ def standings_from_results_file(
     return rows
 
 
+def merge_standings_into_fixtures(
+    fixture_rows: Iterable[Mapping[str, Any]],
+    standings_rows: Iterable[Mapping[str, Any]],
+) -> tuple[List[Dict[str, object]], Dict[str, object]]:
+    standings = {
+        _team_key(row.get("team") or row.get("name") or row.get("team_name")): row
+        for row in standings_rows
+    }
+    merged: List[Dict[str, object]] = []
+    matched_fixtures = 0
+    partially_matched_fixtures = 0
+    unmatched_sides = 0
+    for fixture in fixture_rows:
+        copied = dict(fixture)
+        matched_sides = 0
+        rounds_played = []
+        sources = set()
+        for prefix in ("team1", "team2"):
+            team = _team_name(copied.get(prefix))
+            standing = standings.get(_team_key(team))
+            if standing is None:
+                unmatched_sides += 1
+                continue
+            wins = _int(standing.get("wins"))
+            losses = _int(standing.get("losses"))
+            copied[f"{prefix}_wins"] = wins
+            copied[f"{prefix}_losses"] = losses
+            copied[f"{prefix}_record"] = f"{wins}-{losses}"
+            copied[f"{prefix}_record_status"] = str(standing.get("status") or _record_status(wins, losses))
+            rounds_played.append(wins + losses)
+            matched_sides += 1
+            if standing.get("source"):
+                sources.add(str(standing["source"]))
+        if rounds_played:
+            copied["swiss_round"] = max(rounds_played) + 1
+        if sources:
+            copied["standings_source"] = "+".join(sorted(sources))
+        copied["swiss_match_type"] = _swiss_match_type(copied)
+        if matched_sides == 2:
+            matched_fixtures += 1
+        elif matched_sides == 1:
+            partially_matched_fixtures += 1
+        merged.append(copied)
+    return merged, {
+        "fixtures": len(merged),
+        "matched_fixtures": matched_fixtures,
+        "partially_matched_fixtures": partially_matched_fixtures,
+        "unmatched_sides": unmatched_sides,
+        "standings_teams": len(standings),
+    }
+
+
+def merge_standings_file(
+    fixtures_path: str,
+    standings_path: str,
+    output_path: str,
+) -> Dict[str, object]:
+    merged, report = merge_standings_into_fixtures(
+        read_matches_csv(fixtures_path),
+        read_matches_csv(standings_path),
+    )
+    write_matches_csv(output_path, merged)
+    return report
+
+
 def evaluate_forecast_result(
     predictions: Iterable[Mapping[str, Any]],
     result_rows: Iterable[Mapping[str, Any]],
@@ -740,6 +805,20 @@ def _record_status(wins: int, losses: int) -> str:
     if losses >= 3:
         return "eliminated"
     return "alive"
+
+
+def _swiss_match_type(row: Mapping[str, Any]) -> str:
+    team1_wins = _optional_int(row.get("team1_wins"))
+    team2_wins = _optional_int(row.get("team2_wins"))
+    team1_losses = _optional_int(row.get("team1_losses"))
+    team2_losses = _optional_int(row.get("team2_losses"))
+    if None in (team1_wins, team2_wins, team1_losses, team2_losses):
+        return "unknown"
+    if team1_wins == 2 and team2_wins == 2:
+        return "advancement"
+    if team1_losses == 2 and team2_losses == 2:
+        return "elimination"
+    return "standard"
 
 
 def _forecast_result_lookup(
@@ -1518,6 +1597,15 @@ def _float(value: Any, default: float) -> float:
 def _optional_float(value: Any) -> float | None:
     try:
         return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_int(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(float(value))
     except (TypeError, ValueError):
         return None
 
