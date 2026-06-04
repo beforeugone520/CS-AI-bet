@@ -2,7 +2,7 @@
 
 # CS2 Major Pick'em 机器学习预测系统
 
-<img src="docs/images/banner.png" width="900" />
+<img src="docs/images/readme-hero-v2.png" width="900" />
 
 **离线可运行的 CS2 Major Pick'em 全链路预测工具**
 数据清洗 → 无泄漏特征 → Elo/校准 → 融合模型 → 市场信号审计 → 瑞士轮蒙特卡洛 → Pick'em 策略
@@ -35,6 +35,10 @@
 - **一键编排（pipeline）** —— 采集后数据 → 训练 → 预测 → 模拟 → 审计 → 最终答案单，全流程串联。
 
 ## 处理链路
+
+<p align="center">
+  <img src="docs/images/pipeline-overview.png" width="900" alt="CS2 Pick'em offline prediction pipeline visual" />
+</p>
 
 | 阶段 | 模块 | 说明 |
 | --- | --- | --- |
@@ -400,6 +404,10 @@ Round 4 的核心看点很集中：`晋级` 槽位还剩 M80、BIG、TYLOO、HER
 ## 回测记录与诊断
 
 这里把回测拆成三层，避免把“单场胜负预测”“Pick'em 槽位中途状态”和“最终 Pick'em 命中”混在一起。Day 1 逐场赛果以 [Liquipedia](https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2026/Cologne/Stage_1) 为准，并经 [dfrag.gg](https://dfrag.gg/counterstrike/news/iem-cologne-major-2026-schedule-results-streams-standings/) / [esports.gg](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/) 赛后 recap 交叉核对；Round 3/Round 4 状态沿用上文赛程源。
+
+<p align="center">
+  <img src="docs/images/backtest-diagnostics.png" width="900" alt="CS2 Pick'em backtest diagnostics dashboard visual" />
+</p>
 
 ### 回测口径
 
