@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import sys
@@ -179,6 +181,104 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(report["decision_policy"]["minimum_margin"], 0.5)
         self.assertTrue(report["decision_policy"]["avoid_player_form_counter_signal"])
         self.assertEqual(report["decision_summary"]["avoid_picks"], 1)
+
+    def test_apply_forecast_policy_file_adds_fixture_player_form_without_retraining(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            forecast_path = os.path.join(tmpdir, "forecast.json")
+            fixtures_path = os.path.join(tmpdir, "fixtures.csv")
+            output_path = os.path.join(tmpdir, "policy.json")
+            with open(forecast_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "trained_matches": 8,
+                        "predictions": [
+                            {
+                                "date": "2026-06-01",
+                                "team1": "Alpha",
+                                "team2": "Bravo",
+                                "adjusted_probability_team1": 0.54,
+                                "pick": "Alpha",
+                            },
+                            {
+                                "date": "2026-06-01",
+                                "team1": "Charlie",
+                                "team2": "Delta",
+                                "adjusted_probability_team1": 0.62,
+                                "pick": "Charlie",
+                            },
+                            {
+                                "date": "2026-06-01",
+                                "team1": "Echo",
+                                "team2": "Foxtrot",
+                                "adjusted_probability_team1": 0.62,
+                                "pick": "Echo",
+                            },
+                        ],
+                    },
+                    handle,
+                )
+            write_matches_csv(
+                fixtures_path,
+                [
+                    {"date": "2026-06-01", "team1": "Alpha", "team2": "Bravo"},
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Charlie",
+                        "team2": "Delta",
+                        "team1_player_form_score": -0.04,
+                        "team2_player_form_score": 0.04,
+                        "team1_player_sample_confidence": 0.7,
+                        "team2_player_sample_confidence": 0.7,
+                    },
+                    {
+                        "date": "2026-06-01",
+                        "team1": "Echo",
+                        "team2": "Foxtrot",
+                        "team1_player_form_score": 0.05,
+                        "team2_player_form_score": -0.01,
+                        "team1_player_sample_confidence": 0.7,
+                        "team2_player_sample_confidence": 0.7,
+                    },
+                ],
+            )
+
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "apply-forecast-policy",
+                "--forecast-report",
+                forecast_path,
+                "--fixtures",
+                fixtures_path,
+                "--minimum-margin",
+                "0.05",
+                "--avoid-player-form-counter-signal",
+                "--player-form-counter-min-confidence",
+                "0.4",
+                "--output",
+                output_path,
+            ]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = main()
+            finally:
+                sys.argv = old_argv
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["decision_policy"]["minimum_margin"], 0.05)
+        self.assertEqual(report["decision_policy"]["player_form_counter_min_confidence"], 0.4)
+        self.assertEqual(report["decision_summary"]["avoid_picks"], 2)
+        self.assertEqual(report["decision_summary"]["low_confidence_avoids"], 1)
+        self.assertEqual(report["decision_summary"]["player_form_counter_signal_avoids"], 1)
+        self.assertEqual(report["predictions"][0]["avoid_reason"], "low_confidence")
+        self.assertEqual(report["predictions"][1]["avoid_reason"], "player_form_counter_signal")
+        self.assertEqual(report["predictions"][1]["player_form_summary"]["diff"]["score"], -0.08)
+        self.assertEqual(report["predictions"][2]["pick"], "Echo")
 
     def test_match_predictor_applies_training_cutoff_elo_to_future_rows_without_elo_columns(self):
         from cs2pickem.predictor import MatchPredictor

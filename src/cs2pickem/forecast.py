@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from .bp import merge_bp_into_fixtures
-from .data import read_matches_csv
+from .data import read_matches_csv, write_json
 from .odds import market_probability_from_row
 from .predictor import MatchPredictor
 from .strategy import adjust_probability_toward_market_probability, single_match_pick
@@ -21,6 +22,7 @@ def forecast_fixtures(
     ensemble_weights: Optional[Mapping[str, float]] = None,
     minimum_margin: float = 0.02,
     avoid_player_form_counter_signal: bool = False,
+    player_form_counter_min_confidence: float = 0.4,
 ) -> Dict[str, object]:
     fixtures = [dict(row) for row in fixture_rows]
     bp_report = None
@@ -54,6 +56,8 @@ def forecast_fixtures(
             str(fixture.get("team2")),
             minimum_margin=minimum_margin,
             player_form_score_diff=_num(player_form_summary.get("diff", {}).get("score"), 0.0),
+            player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
+            player_form_counter_min_confidence=player_form_counter_min_confidence,
             avoid_player_form_counter_signal=avoid_player_form_counter_signal,
         )
         avoid_reason = _avoid_reason(
@@ -62,6 +66,7 @@ def forecast_fixtures(
             minimum_margin=minimum_margin,
             player_form_summary=player_form_summary,
             avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+            player_form_counter_min_confidence=player_form_counter_min_confidence,
         )
         predictions.append(
             {
@@ -99,6 +104,7 @@ def forecast_fixtures(
         "decision_policy": {
             "minimum_margin": minimum_margin,
             "avoid_player_form_counter_signal": avoid_player_form_counter_signal,
+            "player_form_counter_min_confidence": player_form_counter_min_confidence,
         },
         "bp_report": bp_report,
         "predictions": predictions,
@@ -118,6 +124,7 @@ def forecast_fixtures_file(
     ensemble_weights: Optional[Mapping[str, float]] = None,
     minimum_margin: float = 0.02,
     avoid_player_form_counter_signal: bool = False,
+    player_form_counter_min_confidence: float = 0.4,
 ) -> Dict[str, object]:
     profiles: Optional[Mapping[str, Mapping[str, Any]]] = None
     if profiles_path:
@@ -137,7 +144,82 @@ def forecast_fixtures_file(
         ensemble_weights=ensemble_weights,
         minimum_margin=minimum_margin,
         avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        player_form_counter_min_confidence=player_form_counter_min_confidence,
     )
+
+
+def apply_forecast_policy(
+    forecast_report: Mapping[str, Any],
+    fixture_rows: Optional[Iterable[Mapping[str, Any]]] = None,
+    minimum_margin: float = 0.02,
+    avoid_player_form_counter_signal: bool = False,
+    player_form_counter_min_confidence: float = 0.4,
+) -> Dict[str, object]:
+    raw_predictions = forecast_report.get("predictions", [])
+    if not isinstance(raw_predictions, list):
+        raise ValueError("forecast report must contain a predictions list")
+    fixture_lookup = _fixture_lookup(fixture_rows or [])
+    predictions = []
+    fixtures_augmented = 0
+    for prediction in raw_predictions:
+        updated = dict(prediction)
+        fixture = _lookup_fixture(updated, fixture_lookup)
+        if fixture is not None:
+            player_form_summary = _player_form_summary({**updated, **fixture})
+            fixtures_augmented += 1
+        else:
+            player_form_summary = updated.get("player_form_summary")
+            if not isinstance(player_form_summary, Mapping):
+                player_form_summary = _player_form_summary(updated)
+        _apply_decision_policy_to_prediction(
+            updated,
+            player_form_summary=player_form_summary,
+            minimum_margin=minimum_margin,
+            avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+            player_form_counter_min_confidence=player_form_counter_min_confidence,
+        )
+        predictions.append(updated)
+    report = dict(forecast_report)
+    report["predictions"] = predictions
+    report["decision_policy"] = {
+        "minimum_margin": minimum_margin,
+        "avoid_player_form_counter_signal": avoid_player_form_counter_signal,
+        "player_form_counter_min_confidence": player_form_counter_min_confidence,
+    }
+    report["decision_summary"] = _decision_summary(predictions)
+    report["policy_application"] = {
+        "basis": "posthoc_forecast_policy",
+        "fixtures_augmented": fixtures_augmented,
+    }
+    return report
+
+
+def apply_forecast_policy_file(
+    forecast_report_path: str,
+    fixtures_path: Optional[str] = None,
+    output_path: Optional[str] = None,
+    minimum_margin: float = 0.02,
+    avoid_player_form_counter_signal: bool = False,
+    player_form_counter_min_confidence: float = 0.4,
+) -> Dict[str, object]:
+    with open(forecast_report_path, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if not isinstance(payload, Mapping):
+        raise ValueError("forecast report must be a JSON object")
+    report = apply_forecast_policy(
+        payload,
+        fixture_rows=read_matches_csv(fixtures_path) if fixtures_path else None,
+        minimum_margin=minimum_margin,
+        avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        player_form_counter_min_confidence=player_form_counter_min_confidence,
+    )
+    report["forecast_report_path"] = forecast_report_path
+    if fixtures_path:
+        report["fixtures_path"] = fixtures_path
+    if output_path:
+        write_json(output_path, report)
+    return report
+
 
 def _num(value: Any, default: float) -> float:
     try:
@@ -177,6 +259,7 @@ def _avoid_reason(
     minimum_margin: float,
     player_form_summary: Mapping[str, Any],
     avoid_player_form_counter_signal: bool,
+    player_form_counter_min_confidence: float,
 ) -> str | None:
     if pick != "avoid":
         return None
@@ -185,9 +268,79 @@ def _avoid_reason(
     diff = player_form_summary.get("diff", {})
     form_score_diff = _num(diff.get("score") if isinstance(diff, Mapping) else None, 0.0)
     directional_form_score = form_score_diff if adjusted_probability_team1 >= 0.5 else -form_score_diff
-    if avoid_player_form_counter_signal and directional_form_score < 0:
+    if (
+        avoid_player_form_counter_signal
+        and _player_form_sample_confidence(player_form_summary) >= player_form_counter_min_confidence
+        and directional_form_score < 0
+    ):
         return "player_form_counter_signal"
     return "avoid"
+
+
+def _apply_decision_policy_to_prediction(
+    prediction: Dict[str, Any],
+    player_form_summary: Mapping[str, Any],
+    minimum_margin: float,
+    avoid_player_form_counter_signal: bool,
+    player_form_counter_min_confidence: float,
+) -> None:
+    adjusted = _num(
+        prediction.get("adjusted_probability_team1"),
+        _num(prediction.get("model_probability_team1"), 0.5),
+    )
+    prediction["previous_pick"] = prediction.get("pick")
+    prediction["confidence_margin"] = abs(adjusted - 0.5)
+    prediction["player_form_summary"] = player_form_summary
+    prediction["pick"] = single_match_pick(
+        adjusted,
+        str(prediction.get("team1")),
+        str(prediction.get("team2")),
+        minimum_margin=minimum_margin,
+        player_form_score_diff=_num(player_form_summary.get("diff", {}).get("score"), 0.0),
+        player_form_sample_confidence=_player_form_sample_confidence(player_form_summary),
+        player_form_counter_min_confidence=player_form_counter_min_confidence,
+        avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+    )
+    prediction["avoid_reason"] = _avoid_reason(
+        pick=str(prediction["pick"]),
+        adjusted_probability_team1=adjusted,
+        minimum_margin=minimum_margin,
+        player_form_summary=player_form_summary,
+        avoid_player_form_counter_signal=avoid_player_form_counter_signal,
+        player_form_counter_min_confidence=player_form_counter_min_confidence,
+    )
+    prediction["low_confidence"] = prediction["avoid_reason"] == "low_confidence"
+
+
+def _player_form_sample_confidence(player_form_summary: Mapping[str, Any]) -> float:
+    team1 = player_form_summary.get("team1", {})
+    team2 = player_form_summary.get("team2", {})
+    if not isinstance(team1, Mapping) or not isinstance(team2, Mapping):
+        return 0.0
+    return min(_num(team1.get("sample_confidence"), 0.0), _num(team2.get("sample_confidence"), 0.0))
+
+
+def _fixture_lookup(fixture_rows: Iterable[Mapping[str, Any]]) -> Dict[tuple[str, str, str], Mapping[str, Any]]:
+    lookup: Dict[tuple[str, str, str], Mapping[str, Any]] = {}
+    for fixture in fixture_rows:
+        lookup[_match_key(fixture)] = fixture
+    return lookup
+
+
+def _lookup_fixture(
+    prediction: Mapping[str, Any],
+    fixture_lookup: Mapping[tuple[str, str, str], Mapping[str, Any]],
+) -> Mapping[str, Any] | None:
+    return fixture_lookup.get(_match_key(prediction))
+
+
+def _match_key(row: Mapping[str, Any]) -> tuple[str, str, str]:
+    teams = sorted((_team_key(row.get("team1")), _team_key(row.get("team2"))))
+    return (str(row.get("date") or "")[:10], teams[0], teams[1])
+
+
+def _team_key(value: Any) -> str:
+    return str(value or "").strip().lower().replace(" ", "")
 
 
 def _decision_summary(predictions: Iterable[Mapping[str, Any]]) -> Dict[str, int]:

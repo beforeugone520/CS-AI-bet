@@ -13,7 +13,7 @@ from .bp import merge_bp_file
 from .data import read_matches_csv, read_teams_csv, write_json
 from .export import build_pickem_answer_sheet_file
 from .fivee import collect_fivee_match_results, collect_fivee_team_pages, read_urls
-from .forecast import forecast_fixtures_file
+from .forecast import apply_forecast_policy_file, forecast_fixtures_file
 from .odds import merge_odds_file
 from .pickem import model_driven_pickems_file
 from .pipeline import enrich_matches_file, run_demo, simulate_from_team_rows, train_evaluate
@@ -130,7 +130,15 @@ def main() -> int:
     forecast_parser.add_argument("--max-age-days", type=int, default=90, help="freshness window for training rows")
     forecast_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
     forecast_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
+    forecast_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
     forecast_parser.add_argument("--output", help="optional JSON output path")
+    apply_forecast_policy_parser = subparsers.add_parser("apply-forecast-policy", help="apply single-match decision policy to an existing forecast report without retraining")
+    apply_forecast_policy_parser.add_argument("--forecast-report", required=True, help="JSON output from forecast command")
+    apply_forecast_policy_parser.add_argument("--fixtures", help="optional fixture CSV with player form fields to merge into predictions")
+    apply_forecast_policy_parser.add_argument("--minimum-margin", type=float, default=0.02, help="minimum probability margin above 50%% required for an actionable single-match pick")
+    apply_forecast_policy_parser.add_argument("--avoid-player-form-counter-signal", action="store_true", help="avoid actionable picks when short-term player form points against the predicted side")
+    apply_forecast_policy_parser.add_argument("--player-form-counter-min-confidence", type=float, default=0.4, help="minimum player form sample confidence required for counter-signal avoidance")
+    apply_forecast_policy_parser.add_argument("--output", help="optional JSON output path")
     odds_parser = subparsers.add_parser("merge-odds", help="merge multi-provider decimal odds into match/fixture CSV")
     odds_parser.add_argument("--matches", required=True, help="match or fixture CSV")
     odds_parser.add_argument("--odds", required=True, help="odds CSV with date,provider,team1,team2,odds_team1,odds_team2")
@@ -388,6 +396,17 @@ def main() -> int:
             max_age_days=args.max_age_days,
             minimum_margin=args.minimum_margin,
             avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
+            player_form_counter_min_confidence=args.player_form_counter_min_confidence,
+        )
+        return _emit(report, args.output)
+    if args.command == "apply-forecast-policy":
+        report = apply_forecast_policy_file(
+            forecast_report_path=args.forecast_report,
+            fixtures_path=args.fixtures,
+            output_path=None,
+            minimum_margin=args.minimum_margin,
+            avoid_player_form_counter_signal=args.avoid_player_form_counter_signal,
+            player_form_counter_min_confidence=args.player_form_counter_min_confidence,
         )
         return _emit(report, args.output)
     if args.command == "merge-odds":

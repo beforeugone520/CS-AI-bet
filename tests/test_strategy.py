@@ -60,6 +60,36 @@ class StageStrategyTests(unittest.TestCase):
             "Alpha",
         )
 
+    def test_single_match_pick_counter_signal_can_require_sample_confidence(self):
+        from cs2pickem.strategy import single_match_pick
+
+        self.assertEqual(
+            single_match_pick(
+                0.61,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                player_form_score_diff=-0.06,
+                player_form_sample_confidence=0.2,
+                player_form_counter_min_confidence=0.4,
+                avoid_player_form_counter_signal=True,
+            ),
+            "Alpha",
+        )
+        self.assertEqual(
+            single_match_pick(
+                0.61,
+                "Alpha",
+                "Bravo",
+                minimum_margin=0.05,
+                player_form_score_diff=-0.06,
+                player_form_sample_confidence=0.6,
+                player_form_counter_min_confidence=0.4,
+                avoid_player_form_counter_signal=True,
+            ),
+            "avoid",
+        )
+
     def test_challengers_stage_prefers_bo1_map_profile_when_probabilities_are_close(self):
         from cs2pickem.strategy import choose_pickems
 

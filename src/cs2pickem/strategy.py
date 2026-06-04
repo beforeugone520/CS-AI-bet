@@ -33,17 +33,18 @@ def single_match_pick(
     threshold: float = 0.52,
     minimum_margin: float | None = None,
     player_form_score_diff: float | None = None,
+    player_form_sample_confidence: float | None = None,
+    player_form_counter_min_confidence: float = 0.0,
     avoid_player_form_counter_signal: bool = False,
 ) -> str:
     effective_threshold = 0.5 + max(0.0, minimum_margin) if minimum_margin is not None else threshold
     if max(probability_team1, 1.0 - probability_team1) <= effective_threshold:
         return "avoid"
     if avoid_player_form_counter_signal and player_form_score_diff is not None:
+        sample_confidence = 1.0 if player_form_sample_confidence is None else _num(player_form_sample_confidence, 0.0)
         directional_form_score = player_form_score_diff if probability_team1 >= 0.5 else -player_form_score_diff
-        if directional_form_score < 0:
+        if sample_confidence >= player_form_counter_min_confidence and directional_form_score < 0:
             return "avoid"
-    if max(probability_team1, 1.0 - probability_team1) <= threshold:
-        return "avoid"
     return team1 if probability_team1 >= 0.5 else team2
 
 
