@@ -99,6 +99,7 @@ def audit_readiness(
     source_reference_time: str | None = None,
     maximum_source_age_hours: int | None = None,
     require_validation_tuned_weights: bool = False,
+    minimum_player_status_features: int | None = None,
 ) -> Dict[str, object]:
     materialized = [dict(row) for row in rows]
     teams = {str(row.get("team1")) for row in materialized} | {str(row.get("team2")) for row in materialized}
@@ -133,6 +134,8 @@ def audit_readiness(
         checks["forecast_low_confidence_avoidance"] = _forecast_low_confidence_avoidance_check(forecast_report or {})
     if require_validation_tuned_weights:
         checks["validation_tuned_weights"] = _validation_tuned_weights_check(training_report)
+    if minimum_player_status_features is not None:
+        checks["player_status_features"] = _player_status_features_check(training_report, minimum_player_status_features)
     if source_manifests is not None:
         checks["source_freshness"] = _source_freshness_check(
             source_manifests,
@@ -174,6 +177,7 @@ def audit_readiness_file(
     source_reference_time: str | None = None,
     maximum_source_age_hours: int | None = None,
     require_validation_tuned_weights: bool = False,
+    minimum_player_status_features: int | None = None,
 ) -> Dict[str, object]:
     with open(training_report_path, encoding="utf-8") as handle:
         report = json.load(handle)
@@ -216,6 +220,7 @@ def audit_readiness_file(
         source_reference_time=source_reference_time,
         maximum_source_age_hours=maximum_source_age_hours,
         require_validation_tuned_weights=require_validation_tuned_weights,
+        minimum_player_status_features=minimum_player_status_features,
     )
 
 
@@ -455,6 +460,35 @@ def _validation_tuned_weights_check(report: Mapping[str, Any]) -> Dict[str, obje
     }
 
 
+def _player_status_features_check(report: Mapping[str, Any], minimum_selected: int) -> Dict[str, object]:
+    feature_selection = report.get("feature_selection", {})
+    if not isinstance(feature_selection, Mapping):
+        feature_selection = {}
+    required = feature_selection.get("required_features", {})
+    if not isinstance(required, Mapping):
+        required = {}
+    requested = _string_list(required.get("requested"))
+    available = _string_list(required.get("available"))
+    selected = _string_list(required.get("selected"))
+    unavailable = _string_list(required.get("unavailable"))
+    actual = {
+        "requested": requested,
+        "available": available,
+        "selected": selected,
+        "unavailable": unavailable,
+        "selected_count": len(selected),
+    }
+    return {
+        "passed": len(selected) >= minimum_selected,
+        "actual": actual,
+        "target": {
+            "minimum_selected": minimum_selected,
+            "source": "training_report.feature_selection.required_features.selected",
+        },
+        "detail": "selected player-status modeling features",
+    }
+
+
 def _source_freshness_check(
     manifests: Iterable[Mapping[str, Any]],
     required_sources: Iterable[str] | None,
@@ -611,6 +645,14 @@ def _team_list(value: Any) -> List[str]:
         return [str(item) for item in value if str(item)]
     except TypeError:
         return []
+
+
+def _string_list(value: Any) -> List[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if not isinstance(value, Iterable):
+        return []
+    return [str(item) for item in value if str(item)]
 
 
 def _read_team_names(path: str) -> List[str]:

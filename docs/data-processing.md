@@ -220,6 +220,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 - 默认清洗窗口 90 天；赛前六个月训练传 `--max-age-days 180`。
 - 严格复现目标日历切分时，加 `--train-end-date 2026-04-30 --validation-end-date 2026-05-15`。显式拆分要求 train/val/test 三段都有数据，避免被错误边界切成伪评估。
 - 生产级 `readiness` 会强制校验：日历拆分、采集行级范围、验证集调权、50%-52% 低置信单场全部 `avoid`、≥10 万次模拟、完整 `3-0/晋级/0-3` 槽位、每个入选项 ≥4% 选择边际、至少 1 个 Swiss matchup 使用真实赔率、关键数据源不超过赛前窗口快照。
+- 如果要强制确认选手状态已经进入训练层，而不是只存在于赛前 fixtures 或赛后风险报告里，给 `readiness` 加 `--minimum-player-status-features N`。它会读取 `training_report.feature_selection.required_features.selected`，低于 N 时把 `player_status_features` 标为失败。当前 2026-06-04 logistic-only 诊断中 selected 为 0，说明六个月历史训练集还没有可学习的状态特征方差。
 
 ## IEM Cologne 2026 数据资产
 

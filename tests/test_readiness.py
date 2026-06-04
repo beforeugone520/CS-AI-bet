@@ -258,6 +258,43 @@ class ReadinessTests(unittest.TestCase):
         self.assertTrue(compliant["checks"]["validation_tuned_weights"]["passed"])
         self.assertAlmostEqual(compliant["checks"]["validation_tuned_weights"]["actual"]["weight_sum"], 1.0)
 
+    def test_audit_readiness_can_require_player_status_features(self):
+        from cs2pickem.readiness import audit_readiness
+
+        report = audit_readiness(
+            rows(12),
+            training_report(),
+            minimum_rows=10,
+            required_teams=6,
+            minimum_player_status_features=2,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["player_status_features"]["passed"])
+        self.assertEqual(report["checks"]["player_status_features"]["actual"]["selected_count"], 0)
+        self.assertIn("player_status_features", report["failed_checks"])
+
+        status_ready = training_report()
+        status_ready["feature_selection"] = {
+            "required_features": {
+                "requested": ["rating_diff", "player_form_score_diff", "player_sample_confidence_diff"],
+                "available": ["rating_diff", "player_form_score_diff"],
+                "selected": ["rating_diff", "player_form_score_diff"],
+                "unavailable": ["player_sample_confidence_diff"],
+            }
+        }
+        compliant = audit_readiness(
+            rows(12),
+            status_ready,
+            minimum_rows=10,
+            required_teams=6,
+            minimum_player_status_features=2,
+        )
+
+        self.assertTrue(compliant["ready"])
+        self.assertTrue(compliant["checks"]["player_status_features"]["passed"])
+        self.assertEqual(compliant["checks"]["player_status_features"]["actual"]["selected_count"], 2)
+
     def test_readiness_file_workflow_reads_csv_and_report_json(self):
         from cs2pickem.data import write_matches_csv
         from cs2pickem.readiness import audit_readiness_file
@@ -629,6 +666,46 @@ class ReadinessTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertTrue(report["checks"]["source_freshness"]["passed"])
+
+    def test_readiness_cli_accepts_player_status_feature_gate(self):
+        from cs2pickem.cli import main
+        from cs2pickem.data import write_json, write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            matches_path = os.path.join(tmpdir, "matches.csv")
+            training_report_path = os.path.join(tmpdir, "training.json")
+            output_path = os.path.join(tmpdir, "readiness.json")
+            write_matches_csv(matches_path, rows(12))
+            write_json(training_report_path, training_report())
+
+            old_argv = sys.argv
+            sys.argv = [
+                "cs2pickem",
+                "readiness",
+                "--matches",
+                matches_path,
+                "--training-report",
+                training_report_path,
+                "--minimum-rows",
+                "10",
+                "--required-teams",
+                "6",
+                "--minimum-player-status-features",
+                "1",
+                "--output",
+                output_path,
+            ]
+            try:
+                exit_code = main()
+            finally:
+                sys.argv = old_argv
+
+            with open(output_path, encoding="utf-8") as handle:
+                report = json.load(handle)
+
+        self.assertEqual(exit_code, 0)
+        self.assertFalse(report["checks"]["player_status_features"]["passed"])
+        self.assertIn("player_status_features", report["failed_checks"])
 
     def test_readiness_file_expands_daily_update_manifest_job_reports(self):
         from cs2pickem.data import write_json, write_matches_csv

@@ -211,6 +211,7 @@ def main() -> int:
     readiness_parser.add_argument("--source-reference-time", help="ISO timestamp used to evaluate source freshness; defaults to current UTC")
     readiness_parser.add_argument("--maximum-source-age-hours", type=int, help="maximum allowed age for each supplied source manifest; defaults to 24 when source manifests are supplied")
     readiness_parser.add_argument("--require-validation-tuned-weights", action="store_true", help="require validation log-loss tuned ensemble weights in the training report")
+    readiness_parser.add_argument("--minimum-player-status-features", type=int, help="require at least this many selected player-status features in the training report")
     readiness_parser.add_argument("--output", help="optional JSON output path")
     visualize_parser = subparsers.add_parser("visualize", help="render training report feature and probability charts")
     visualize_parser.add_argument("--training-report", required=True, help="JSON output from train command")
@@ -511,6 +512,7 @@ def main() -> int:
             source_reference_time=args.source_reference_time,
             maximum_source_age_hours=args.maximum_source_age_hours,
             require_validation_tuned_weights=args.require_validation_tuned_weights,
+            minimum_player_status_features=args.minimum_player_status_features,
         )
         return _emit(report, args.output)
     if args.command == "visualize":
