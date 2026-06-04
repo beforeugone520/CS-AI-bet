@@ -329,6 +329,11 @@ class PickemBacktestTests(unittest.TestCase):
                                     "raw_rank": 1,
                                     "adjusted_rank": 1,
                                     "selected": True,
+                                    "confidence": 0.4,
+                                    "expert_votes": {"3-0": 1, "advance": 2, "0-3": 0},
+                                    "market_win_prob_r1": 0.6,
+                                    "model": {"3-0": 0.2, "advance": 0.5, "0-3": 0.1},
+                                    "raw_fused_score": 0.95,
                                     "status_adjusted_score": 0.9,
                                     "player_status_risk": True,
                                 },
@@ -338,6 +343,11 @@ class PickemBacktestTests(unittest.TestCase):
                                     "raw_rank": 2,
                                     "adjusted_rank": 2,
                                     "selected": False,
+                                    "confidence": 0.8,
+                                    "expert_votes": {"3-0": 5, "advance": 0, "0-3": 0},
+                                    "market_win_prob_r1": 0.55,
+                                    "model": {"3-0": 0.1, "advance": 0.4, "0-3": 0.1},
+                                    "raw_fused_score": 0.8,
                                     "status_adjusted_score": 0.8,
                                     "player_status_risk": True,
                                 },
@@ -387,6 +397,17 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(diagnostics["unselected_locked_candidates"], 1)
         self.assertEqual(diagnostics["selected_broken_candidates"], 1)
         self.assertEqual(diagnostics["best_unselected_locked_adjusted_rank"], 2)
+        self.assertIn("candidate_scoreboard_policy_diagnostics", report)
+        policy_rows = {
+            row["policy"]: row
+            for row in report["candidate_scoreboard_policy_diagnostics"]["3-0"]["policies"]
+        }
+        self.assertEqual(policy_rows["status_adjusted_score"]["top_k_teams"], ["Alpha"])
+        self.assertEqual(policy_rows["status_adjusted_score"]["top_k_locked"], 0)
+        self.assertEqual(policy_rows["status_adjusted_score"]["top_k_broken"], 1)
+        self.assertEqual(policy_rows["confidence"]["top_k_teams"], ["Bravo"])
+        self.assertEqual(policy_rows["confidence"]["top_k_locked"], 1)
+        self.assertEqual(policy_rows["expert_category_votes"]["top_k_teams"], ["Bravo"])
 
     def test_evaluate_pickem_checkpoint_reports_category_diagnostics(self):
         from cs2pickem.backtest import evaluate_pickem_checkpoint

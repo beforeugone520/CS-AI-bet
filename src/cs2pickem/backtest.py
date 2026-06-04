@@ -116,6 +116,7 @@ def evaluate_pickem_checkpoint(
         candidate_reports = _checkpoint_candidate_scoreboard(candidate_scoreboard, standings)
         report["candidate_scoreboard_checkpoint"] = candidate_reports
         report["candidate_scoreboard_diagnostics"] = _candidate_scoreboard_diagnostics(candidate_reports)
+        report["candidate_scoreboard_policy_diagnostics"] = _candidate_scoreboard_policy_diagnostics(candidate_reports)
     return report
 
 
@@ -715,6 +716,99 @@ def _candidate_scoreboard_diagnostics(
             row[status] = len(status_rows)
         diagnostics[category] = row
     return diagnostics
+
+
+def _candidate_scoreboard_policy_diagnostics(
+    candidates: Iterable[Mapping[str, Any]],
+) -> Dict[str, Dict[str, object]]:
+    diagnostics: Dict[str, Dict[str, object]] = {}
+    materialized = list(candidates)
+    for category in PICKEM_CATEGORIES:
+        category_rows = [row for row in materialized if row.get("category") == category]
+        slot_count = sum(1 for row in category_rows if _truthy(row.get("selected")))
+        diagnostics[category] = {
+            "slot_count": slot_count,
+            "policies": [
+                _candidate_policy_report(category, category_rows, slot_count, policy)
+                for policy in _candidate_policy_names()
+            ],
+        }
+    return diagnostics
+
+
+def _candidate_policy_names() -> tuple[str, ...]:
+    return (
+        "status_adjusted_score",
+        "raw_fused_score",
+        "confidence",
+        "expert_category_votes",
+        "model_category_probability",
+        "market_category_signal",
+    )
+
+
+def _candidate_policy_report(
+    category: str,
+    rows: Iterable[Mapping[str, Any]],
+    slot_count: int,
+    policy: str,
+) -> Dict[str, object]:
+    ranked = sorted(
+        rows,
+        key=lambda row: _candidate_policy_sort_key(category, policy, row),
+    )
+    top_rows = ranked[:slot_count]
+    return {
+        "policy": policy,
+        "top_k": slot_count,
+        "top_k_teams": [str(row.get("team")) for row in top_rows],
+        "top_k_locked": sum(1 for row in top_rows if row.get("status") == "locked"),
+        "top_k_alive": sum(1 for row in top_rows if row.get("status") == "alive"),
+        "top_k_broken": sum(1 for row in top_rows if row.get("status") == "broken"),
+        "top_k_missing": sum(1 for row in top_rows if row.get("status") == "missing"),
+        "selected_overlap": sum(1 for row in top_rows if _truthy(row.get("selected"))),
+        "locked_teams": [str(row.get("team")) for row in top_rows if row.get("status") == "locked"],
+    }
+
+
+def _candidate_policy_sort_key(
+    category: str,
+    policy: str,
+    row: Mapping[str, Any],
+) -> tuple[bool, float, int, str]:
+    score = _candidate_policy_score(category, policy, row)
+    adjusted_rank = _optional_int(row.get("adjusted_rank"))
+    return (
+        score is None,
+        -score if score is not None else 0.0,
+        adjusted_rank if adjusted_rank is not None else 1_000_000,
+        _team_key(row.get("team")),
+    )
+
+
+def _candidate_policy_score(
+    category: str,
+    policy: str,
+    row: Mapping[str, Any],
+) -> float | None:
+    if policy in {"status_adjusted_score", "raw_fused_score", "confidence"}:
+        return _optional_float(row.get(policy))
+    if policy == "expert_category_votes":
+        expert_votes = row.get("expert_votes")
+        if isinstance(expert_votes, Mapping):
+            return _optional_float(expert_votes.get(category))
+        return None
+    if policy == "model_category_probability":
+        model = row.get("model")
+        if isinstance(model, Mapping):
+            return _optional_float(model.get(category))
+        return None
+    if policy == "market_category_signal":
+        market_win = _optional_float(row.get("market_win_prob_r1"))
+        if market_win is None:
+            return None
+        return 1.0 - market_win if category == "0-3" else market_win
+    return None
 
 
 def _best_adjusted_rank(candidates: Iterable[Mapping[str, Any]]) -> int | None:

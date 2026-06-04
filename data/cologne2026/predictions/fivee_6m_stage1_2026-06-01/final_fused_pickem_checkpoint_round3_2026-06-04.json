@@ -1730,6 +1730,335 @@
       "unselected_locked_teams": []
     }
   },
+  "candidate_scoreboard_policy_diagnostics": {
+    "0-3": {
+      "policies": [
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "status_adjusted_score",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "NRG",
+            "Gaimin Gladiators"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "raw_fused_score",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "NRG",
+            "Gaimin Gladiators"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "confidence",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "Gaimin Gladiators",
+            "THUNDER dOWNUNDER"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "expert_category_votes",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "THUNDER dOWNUNDER",
+            "Gaimin Gladiators"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "model_category_probability",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "NRG",
+            "Gaimin Gladiators"
+          ]
+        },
+        {
+          "locked_teams": [
+            "Gaimin Gladiators"
+          ],
+          "policy": "market_category_signal",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "Gaimin Gladiators",
+            "THUNDER dOWNUNDER"
+          ]
+        }
+      ],
+      "slot_count": 2
+    },
+    "3-0": {
+      "policies": [
+        {
+          "locked_teams": [],
+          "policy": "status_adjusted_score",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 2,
+          "top_k_locked": 0,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "MIBR",
+            "GamerLegion"
+          ]
+        },
+        {
+          "locked_teams": [],
+          "policy": "raw_fused_score",
+          "selected_overlap": 2,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 2,
+          "top_k_locked": 0,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "MIBR",
+            "GamerLegion"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom"
+          ],
+          "policy": "confidence",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "GamerLegion",
+            "BetBoom"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom"
+          ],
+          "policy": "expert_category_votes",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "GamerLegion",
+            "BetBoom"
+          ]
+        },
+        {
+          "locked_teams": [],
+          "policy": "model_category_probability",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 2,
+          "top_k_locked": 0,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "MIBR",
+            "BIG"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom"
+          ],
+          "policy": "market_category_signal",
+          "selected_overlap": 1,
+          "top_k": 2,
+          "top_k_alive": 0,
+          "top_k_broken": 1,
+          "top_k_locked": 1,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "MIBR",
+            "BetBoom"
+          ]
+        }
+      ],
+      "slot_count": 2
+    },
+    "advance": {
+      "policies": [
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "status_adjusted_score",
+          "selected_overlap": 6,
+          "top_k": 6,
+          "top_k_alive": 4,
+          "top_k_broken": 0,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "BetBoom",
+            "B8",
+            "HEROIC",
+            "M80",
+            "TYLOO"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "raw_fused_score",
+          "selected_overlap": 6,
+          "top_k": 6,
+          "top_k_alive": 4,
+          "top_k_broken": 0,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "BetBoom",
+            "B8",
+            "HEROIC",
+            "M80",
+            "TYLOO"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "confidence",
+          "selected_overlap": 5,
+          "top_k": 6,
+          "top_k_alive": 3,
+          "top_k_broken": 1,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "BetBoom",
+            "B8",
+            "HEROIC",
+            "M80",
+            "SINNERS"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "expert_category_votes",
+          "selected_overlap": 5,
+          "top_k": 6,
+          "top_k_alive": 4,
+          "top_k_broken": 0,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "HEROIC",
+            "M80",
+            "BetBoom",
+            "B8",
+            "Liquid"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "model_category_probability",
+          "selected_overlap": 5,
+          "top_k": 6,
+          "top_k_alive": 4,
+          "top_k_broken": 0,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BIG",
+            "TYLOO",
+            "THUNDER dOWNUNDER",
+            "BetBoom",
+            "B8",
+            "HEROIC"
+          ]
+        },
+        {
+          "locked_teams": [
+            "BetBoom",
+            "B8"
+          ],
+          "policy": "market_category_signal",
+          "selected_overlap": 5,
+          "top_k": 6,
+          "top_k_alive": 3,
+          "top_k_broken": 1,
+          "top_k_locked": 2,
+          "top_k_missing": 0,
+          "top_k_teams": [
+            "BetBoom",
+            "HEROIC",
+            "M80",
+            "B8",
+            "SINNERS",
+            "BIG"
+          ]
+        }
+      ],
+      "slot_count": 6
+    }
+  },
   "category_diagnostics": {
     "0-3": {
       "alive": 0,
