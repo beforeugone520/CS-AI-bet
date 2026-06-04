@@ -45,6 +45,39 @@ class ExampleDataTests(unittest.TestCase):
         self.assertGreaterEqual(report["pass_rate"], 0.38)
         self.assertTrue(report["meets_pass_rate_target"])
 
+    def test_cologne_final_fused_checkpoint_keeps_player_status_fields(self):
+        from cs2pickem.backtest import checkpoint_pickem_file
+
+        report = checkpoint_pickem_file(
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "predictions",
+                "fivee_6m_stage1_2026-06-01",
+                "final_fused_pickem_2026-06-01.json",
+            ),
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "source_inputs",
+                "stage1_round3_standings_2026-06-04.csv",
+            ),
+        )
+
+        picks = {(row["category"], row["team"]): row for row in report["picks"]}
+        self.assertIn("player_sample_confidence", picks[("3-0", "MIBR")])
+        self.assertIn("substitute_flag", picks[("3-0", "MIBR")])
+        self.assertIn("player_status_risk", picks[("3-0", "MIBR")])
+        self.assertEqual(picks[("3-0", "MIBR")]["player_sample_confidence"], 0.0)
+        self.assertTrue(picks[("3-0", "MIBR")]["player_status_risk"])
+        self.assertGreater(report["category_diagnostics"]["3-0"]["player_status_risk_picks"], 0)
+        self.assertEqual(
+            report["category_diagnostics"]["advance"]["alive_status_risk_pressure_picks"],
+            4,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,14 +1,50 @@
 """Fuse corrected model + 19-expert consensus + market into one high-confidence Pick'em table."""
-import json, sys
+import csv, json, sys
 
 OUT = "data/cologne2026/predictions/fivee_6m_stage1_2026-06-01"
 SRC = "data/cologne2026/source_inputs/expert_predictions_2026-06-01.json"
+PLAYER_STATUS_SOURCE = "data/cologne2026/processed/stage1_opening_fixtures_fivee_6m_model_with_market_odds_player_form_2026-06-04.csv"
 
 exp = json.load(open(SRC))
 ballots = exp["expert_ballots"]
 N = len(ballots)
 model = json.load(open(f"{OUT}/pickem_report.json"))["team_probabilities"]
 TEAMS = list(model.keys())
+PLAYER_STATUS = {}
+try:
+    for row in csv.DictReader(open(PLAYER_STATUS_SOURCE)):
+        for prefix in ("team1", "team2"):
+            team = row.get(prefix)
+            if not team:
+                continue
+            PLAYER_STATUS[team] = {
+                "player_sample_confidence": row.get(f"{prefix}_player_sample_confidence"),
+                "substitute_flag": row.get(f"{prefix}_substitute_flag"),
+                "player_form_score": row.get(f"{prefix}_player_form_score"),
+                "player_form_trend": row.get(f"{prefix}_player_form_trend"),
+            }
+except FileNotFoundError:
+    PLAYER_STATUS = {}
+
+def num(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+def player_status_fields(team):
+    status = PLAYER_STATUS.get(team)
+    if not status:
+        return {}
+    sample_confidence = max(0.0, min(1.0, num(status.get("player_sample_confidence"), 0.0)))
+    substitute_flag = 1 if num(status.get("substitute_flag"), 0.0) >= 1.0 else 0
+    return {
+        "player_sample_confidence": sample_confidence,
+        "substitute_flag": substitute_flag,
+        "player_form_score": num(status.get("player_form_score"), 0.0),
+        "player_form_trend": num(status.get("player_form_trend"), 0.0),
+        "player_status_risk": sample_confidence < 0.4 or substitute_flag >= 1,
+    }
 
 # ---- 1. Expert consensus (votes / N) ----
 def votes(team, cat):
@@ -83,23 +119,43 @@ print("="*70)
 print("FINAL HIGH-CONFIDENCE PICK'EM (model + 19 experts + market fused)")
 print(f"weights: experts {WE}, market {WK}, model {WM}  |  experts N={N}")
 print("="*70)
-result = {"weights": {"experts": WE, "market": WK, "model": WM}, "n_experts": N, "picks": {}}
+result = {
+    "weights": {"experts": WE, "market": WK, "model": WM},
+    "n_experts": N,
+    "player_status_source": PLAYER_STATUS_SOURCE,
+    "picks": {},
+    "pickem_risk_details": {},
+}
 for cat, picks in [("3-0", pick_30), ("advance", pick_adv), ("0-3", pick_03)]:
     print(f"\n[{cat}]")
     result["picks"][cat] = []
+    result["pickem_risk_details"][cat] = []
     for t in picks:
         b, a, tier = conf(t, cat)
+        status_fields = player_status_fields(t)
         v30, v03, vadv = votes(t,"3-0"), votes(t,"0-3"), votes(t,"advance")
         line = (f"  {t:<18} conf={b:.3f} [{tier}, {a}/3 signals agree] | "
                 f"experts 3-0/adv/0-3={v30}/{vadv}/{v03} of {N} | "
                 f"market_win={S[t]:.2f} | model 3-0/adv/0-3={M30[t]:.2f}/{MQ[t]:.2f}/{M03[t]:.2f}")
         print(line)
-        result["picks"][cat].append({
+        pick_row = {
             "team": t, "confidence": b, "tier": tier, "signals_agree": a,
             "expert_votes": {"3-0": v30, "advance": vadv, "0-3": v03},
             "market_win_prob_r1": round(S[t], 3),
             "model": {"3-0": round(M30[t],3), "advance": round(MQ[t],3), "0-3": round(M03[t],3)},
-        })
+        }
+        pick_row.update(status_fields)
+        result["picks"][cat].append(pick_row)
+        risk_row = {
+            "team": t,
+            "category": cat,
+            "confidence": b,
+            "tier": tier,
+            "market_win_prob_r1": round(S[t], 3),
+            "model": {"3-0": round(M30[t],3), "advance": round(MQ[t],3), "0-3": round(M03[t],3)},
+        }
+        risk_row.update(status_fields)
+        result["pickem_risk_details"][cat].append(risk_row)
 # ---- 7. Swing detection: runner-up + margin for the last-filled 3-0 and advance slot ----
 def slot_rows(cat, picks, score_all, candidate_pool):
     """Return per-slot rows; mark the last slot 'swing' if margin to next candidate is small."""
@@ -140,17 +196,23 @@ for cat, rows in [("3-0", rows30), ("advance", adv_rows), ("0-3", rows03)]:
             result["swing_slots"][r["slot"]] = {"primary": r["primary"], "alternative": r["alt"], "fused_margin": r["margin"]}
 
 # integrated CSV artifact
-import csv
 with open(f"{OUT}/final_fused_pickem_table_2026-06-01.csv", "w", newline="") as fh:
-    w = csv.writer(fh)
+    w = csv.writer(fh, lineterminator="\n")
     w.writerow(["slot","category","pick","alternative_if_swing","fused_margin","confidence","tier","signals_agree",
-                "expert_3-0","expert_advance","expert_0-3","market_win_r1","model_3-0","model_advance","model_0-3"])
+                "expert_3-0","expert_advance","expert_0-3","market_win_r1","model_3-0","model_advance","model_0-3",
+                "player_status_risk","player_sample_confidence","substitute_flag","player_form_score","player_form_trend"])
     for cat, rows in [("3-0", rows30), ("advance", adv_rows), ("0-3", rows03)]:
         for r in rows:
             t = r["primary"]; b,a,tier = conf(t,cat)
+            status_fields = player_status_fields(t)
             w.writerow([r["slot"],cat,t, r["alt"] if r["swing"] else "", r["margin"] if r["swing"] else "",
                         b,tier,a, votes(t,"3-0"),votes(t,"advance"),votes(t,"0-3"),
-                        round(S[t],3),round(M30[t],3),round(MQ[t],3),round(M03[t],3)])
+                        round(S[t],3),round(M30[t],3),round(MQ[t],3),round(M03[t],3),
+                        status_fields.get("player_status_risk"),
+                        status_fields.get("player_sample_confidence"),
+                        status_fields.get("substitute_flag"),
+                        status_fields.get("player_form_score"),
+                        status_fields.get("player_form_trend")])
 
 json.dump(result, open(f"{OUT}/final_fused_pickem_2026-06-01.json", "w"), indent=2, ensure_ascii=False)
 print(f"\nwritten: {OUT}/final_fused_pickem_2026-06-01.json")
