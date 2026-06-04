@@ -169,6 +169,7 @@ def describe_pickem_risk(
             features = team_features.get(team, {})
             stage_adjustment = _stage_adjustment(stage, key, features, rank)
             player_form_adjustment = _player_form_adjustment(key, features)
+            player_status = _player_status_details(features)
             upset_rank_gap = max(0, rank - best_rank)
             upset_penalty_multiplier = _upset_penalty_multiplier(key, upset_rank_gap, upset_rank_limit)
             prefer_weak_multiplier = _prefer_weak_multiplier(rank) if key == "0-3" else 1.0
@@ -187,6 +188,11 @@ def describe_pickem_risk(
                     "base_probability": base_probability,
                     "stage_adjustment": stage_adjustment,
                     "player_form_adjustment": player_form_adjustment,
+                    "player_form_score": player_status["player_form_score"],
+                    "player_form_trend": player_status["player_form_trend"],
+                    "player_sample_confidence": player_status["player_sample_confidence"],
+                    "substitute_flag": player_status["substitute_flag"],
+                    "player_status_risk": player_status["player_status_risk"],
                     "upset_rank_gap": upset_rank_gap,
                     "upset_penalty_multiplier": upset_penalty_multiplier,
                     "prefer_weak_multiplier": prefer_weak_multiplier,
@@ -319,6 +325,18 @@ def _player_availability_multiplier(key: str, features: Mapping[str, float]) -> 
     if key == "0-3":
         return min(1.08, 1.0 + (1.0 - sample_confidence) * 0.04 + substitute_flag * 0.03)
     return max(0.90, 1.0 - (1.0 - sample_confidence) * 0.05 - substitute_flag * 0.04)
+
+
+def _player_status_details(features: Mapping[str, float]) -> Dict[str, object]:
+    sample_confidence = _clip(_num(features.get("player_sample_confidence", features.get("sample_confidence", 1.0)), 1.0))
+    substitute_flag = 1 if _num(features.get("substitute_flag", features.get("player_substitute_flag", 0.0)), 0.0) >= 1.0 else 0
+    return {
+        "player_form_score": _num(features.get("player_form_score", features.get("form_score", 0.0)), 0.0),
+        "player_form_trend": _num(features.get("player_form_trend", features.get("form_trend", 0.0)), 0.0),
+        "player_sample_confidence": sample_confidence,
+        "substitute_flag": substitute_flag,
+        "player_status_risk": sample_confidence < 0.4 or substitute_flag >= 1,
+    }
 
 
 def _num(value: object, default: float) -> float:

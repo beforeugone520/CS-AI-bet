@@ -244,6 +244,11 @@ class StageStrategyTests(unittest.TestCase):
         self.assertEqual(pickems["3-0"], ["StableCore"])
         self.assertLess(fragile["player_form_adjustment"], 0.0)
         self.assertLess(fragile["player_availability_multiplier"], 1.0)
+        self.assertEqual(fragile["player_sample_confidence"], 0.2)
+        self.assertEqual(fragile["substitute_flag"], 1)
+        self.assertEqual(fragile["player_form_score"], 0.01)
+        self.assertEqual(fragile["player_form_trend"], -0.06)
+        self.assertTrue(fragile["player_status_risk"])
 
     def test_describe_pickem_risk_reports_stage_and_upset_adjustments(self):
         from cs2pickem.strategy import describe_pickem_risk
