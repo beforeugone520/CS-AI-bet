@@ -138,10 +138,12 @@ def column_svg(column: dict[str, Any], index: int, total_columns: int) -> str:
 def render_svg(data: dict[str, Any]) -> str:
     metric_x = [72, 236, 400]
     columns = data["columns"]
+    title = data["title"]
+    subtitle = data.get("subtitle", "Pick'em checkpoint")
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">',
-        f'  <title id="title">{text(data["title"])} Pick&apos;em Day 1 checkpoint</title>',
-        f'  <desc id="desc">A Swiss record board showing Pick&apos;em status after two Swiss rounds on {text(data["date"])}.</desc>',
+        f'  <title id="title">{text(title)} Pick&apos;em checkpoint</title>',
+        f'  <desc id="desc">A Swiss record board showing {text(subtitle)} on {text(data["date"])}.</desc>',
         "  <defs>",
         '    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">',
         '      <stop offset="0" stop-color="#071020"/>',

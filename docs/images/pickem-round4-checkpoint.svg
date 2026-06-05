@@ -1,0 +1,238 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">IEM Cologne 2026 Stage 1 Pick&apos;em checkpoint</title>
+  <desc id="desc">A Swiss record board showing Round 4 complete · Round 5 decider watch on 2026-06-05.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071020"/>
+      <stop offset="0.58" stop-color="#0b1326"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0H0V44" fill="none" stroke="#1b3558" stroke-width="0.8"/>
+    </pattern>
+    <style>
+      .bg { fill: url(#bg); }
+      .grid { fill: url(#grid); opacity: 0.23; }
+      .outer { fill: rgba(11, 19, 38, 0.58); stroke: #233f69; stroke-width: 1.3; }
+      .column { fill: #0f1a2d; stroke-width: 1.5; }
+      .column-glow { opacity: 0.18; }
+      .title { fill: #f4f8ff; font: 800 35px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .subtitle { fill: #9fb4d2; font: 500 15px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .badge { fill: #43a5ff; font: 800 19px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .record { fill: #f4f8ff; font: 900 42px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .column-title { fill: #dce9ff; font: 800 18px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .column-sub { fill: #8ea6ca; font: 500 12px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .team { fill: #f4f8ff; font-family: Arial, Helvetica, sans-serif; font-weight: 800; letter-spacing: 0; }
+      .status { fill: #aebfda; font: 600 11px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .slot { fill: #08111f; font: 900 11px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .metric-value { fill: #f4f8ff; font: 900 23px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .metric-label { fill: #aebfda; font: 700 12px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .footer { fill: #9fb4d2; font: 600 13px Arial, Helvetica, sans-serif; letter-spacing: 0; }
+      .rail { stroke: #2d8cff; stroke-width: 2; opacity: 0.9; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="720"/>
+  <rect class="grid" width="1200" height="720"/>
+  <rect class="outer" x="34" y="24" width="1132" height="692" rx="22"/>
+
+  <text x="72" y="78" class="title">IEM Cologne 2026 Stage 1</text>
+  <text x="72" y="106" class="subtitle">Round 4 complete · Round 5 decider watch · 2026-06-05</text>
+  <text x="1128" y="84" text-anchor="end" class="badge">SWISS ROUND 5 WATCH</text>
+  <text x="1128" y="108" text-anchor="end" class="subtitle">Round 4 results locked · Round 5 2-2 BO3s next</text>
+
+  <g transform="translate(72 126)">
+    <rect x="0" y="0" width="150" height="46" rx="8" fill="#123323" stroke="#34d66d" stroke-width="1.4"/>
+    <text x="22" y="30" class="metric-value">4</text>
+    <text x="56" y="28" class="metric-label">locked / hit</text>
+  </g>
+
+  <g transform="translate(236 126)">
+    <rect x="0" y="0" width="150" height="46" rx="8" fill="#342b13" stroke="#f4c84a" stroke-width="1.4"/>
+    <text x="22" y="30" class="metric-value">2</text>
+    <text x="56" y="28" class="metric-label">alive</text>
+  </g>
+
+  <g transform="translate(400 126)">
+    <rect x="0" y="0" width="150" height="46" rx="8" fill="#351920" stroke="#ff5c68" stroke-width="1.4"/>
+    <text x="22" y="30" class="metric-value">4</text>
+    <text x="56" y="28" class="metric-label">slot broken</text>
+  </g>
+
+  <g transform="translate(44 188)">
+    <rect class="column-glow" x="0" y="0" width="266" height="500" rx="14" fill="#34d66d"/>
+    <rect class="column" x="0" y="0" width="266" height="500" rx="14" stroke="#34d66d"/>
+    <rect x="18" y="22" width="78" height="66" rx="10" fill="#1c7f3e"/>
+    <text x="57" y="66" text-anchor="middle" class="record">3-x</text>
+    <text x="112" y="45" class="column-title">Stage 2</text>
+    <text x="112" y="70" class="column-sub">Advanced teams</text>
+    <line x1="20" y1="116" x2="246" y2="116" class="rail"/>
+  </g>
+
+  <g transform="translate(62 316)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#34d66d" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#34d66d"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#1c7f3e"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">BetBoom</text>
+    <text x="72" y="49" class="status">Advanced at 3-0</text>
+  </g>
+
+  <g transform="translate(62 388)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#34d66d" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#34d66d"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#1c7f3e"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">B8</text>
+    <text x="72" y="49" class="status">Advanced at 3-0</text>
+  </g>
+
+  <g transform="translate(62 460)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#34d66d" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#34d66d"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#1c7f3e"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">M80</text>
+    <text x="72" y="49" class="status">Beat NRG</text>
+  </g>
+
+  <g transform="translate(62 532)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#ff5c68" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#ff5c68"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#96313b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">3-0</text>
+    <text x="72" y="28" class="team" font-size="17">MIBR</text>
+    <text x="72" y="49" class="status">Advanced, but 3-0 broken</text>
+  </g>
+
+  <g transform="translate(62 604)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#ff5c68" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#ff5c68"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#96313b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">3-0</text>
+    <text x="72" y="28" class="team" font-size="17">GamerLegion</text>
+    <text x="72" y="49" class="status">Advanced, but 3-0 broken</text>
+  </g>
+
+  <g transform="translate(326 188)">
+    <rect class="column-glow" x="0" y="0" width="266" height="500" rx="14" fill="#f4c84a"/>
+    <rect class="column" x="0" y="0" width="266" height="500" rx="14" stroke="#f4c84a"/>
+    <rect x="18" y="22" width="78" height="66" rx="10" fill="#9a7b1b"/>
+    <text x="57" y="66" text-anchor="middle" class="record">2-2</text>
+    <text x="112" y="45" class="column-title">Round 5 BO3</text>
+    <text x="112" y="70" class="column-sub">Winner advances</text>
+    <line x1="20" y1="116" x2="246" y2="116" class="rail"/>
+  </g>
+
+  <g transform="translate(344 316)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#f4c84a" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#f4c84a"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#9a7b1b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">TYLOO</text>
+    <text x="72" y="49" class="status">vs Lynn Vision</text>
+  </g>
+
+  <g transform="translate(344 388)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#f4c84a" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#f4c84a"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#9a7b1b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">BIG</text>
+    <text x="72" y="49" class="status">vs NRG</text>
+  </g>
+
+  <g transform="translate(344 460)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#ff5c68" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#ff5c68"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#96313b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">0-3</text>
+    <text x="72" y="28" class="team" font-size="17">NRG</text>
+    <text x="72" y="49" class="status">0-3 broken; vs BIG</text>
+  </g>
+
+  <g transform="translate(344 532)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#50627e" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#50627e"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#39465d"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">-</text>
+    <text x="72" y="28" class="team" font-size="17">Liquid</text>
+    <text x="72" y="49" class="status">vs FlyQuest</text>
+  </g>
+
+  <g transform="translate(344 604)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#50627e" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#50627e"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#39465d"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">-</text>
+    <text x="72" y="28" class="team" font-size="17">FlyQuest</text>
+    <text x="72" y="49" class="status">vs Liquid</text>
+  </g>
+
+  <g transform="translate(608 188)">
+    <rect class="column-glow" x="0" y="0" width="266" height="500" rx="14" fill="#ff5c68"/>
+    <rect class="column" x="0" y="0" width="266" height="500" rx="14" stroke="#ff5c68"/>
+    <rect x="18" y="22" width="78" height="66" rx="10" fill="#96313b"/>
+    <text x="57" y="66" text-anchor="middle" class="record">1-3</text>
+    <text x="112" y="45" class="column-title">Eliminated</text>
+    <text x="112" y="70" class="column-sub">Round 4 exits</text>
+    <line x1="20" y1="116" x2="246" y2="116" class="rail"/>
+  </g>
+
+  <g transform="translate(626 316)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#ff5c68" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#ff5c68"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#96313b"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">ADV</text>
+    <text x="72" y="28" class="team" font-size="17">HEROIC</text>
+    <text x="72" y="49" class="status">Advance pick broken</text>
+  </g>
+
+  <g transform="translate(626 388)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#50627e" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#50627e"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#39465d"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">-</text>
+    <text x="72" y="28" class="team" font-size="17">Sharks</text>
+    <text x="72" y="49" class="status">Non-pick eliminated</text>
+  </g>
+
+  <g transform="translate(626 460)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#50627e" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#50627e"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#39465d"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">-</text>
+    <text x="72" y="28" class="team" font-size="15">THUNDER dOWNUNDER</text>
+    <text x="72" y="49" class="status">Non-pick eliminated</text>
+  </g>
+
+  <g transform="translate(890 188)">
+    <rect class="column-glow" x="0" y="0" width="266" height="500" rx="14" fill="#ff5c68"/>
+    <rect class="column" x="0" y="0" width="266" height="500" rx="14" stroke="#ff5c68"/>
+    <rect x="18" y="22" width="78" height="66" rx="10" fill="#96313b"/>
+    <text x="57" y="66" text-anchor="middle" class="record">0-3</text>
+    <text x="112" y="45" class="column-title">Eliminated</text>
+    <text x="112" y="70" class="column-sub">Day 2 exits</text>
+    <line x1="20" y1="116" x2="246" y2="116" class="rail"/>
+  </g>
+
+  <g transform="translate(908 316)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#34d66d" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#34d66d"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#1c7f3e"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">0-3</text>
+    <text x="72" y="28" class="team" font-size="15">Gaimin Gladiators</text>
+    <text x="72" y="49" class="status">0-3 pick hit</text>
+  </g>
+
+  <g transform="translate(908 388)">
+    <rect x="0" y="0" width="230" height="62" rx="8" fill="#172338" stroke="#50627e" stroke-width="1.8"/>
+    <rect x="0" y="0" width="7" height="62" rx="3.5" fill="#50627e"/>
+    <rect x="16" y="15" width="42" height="26" rx="6" fill="#39465d"/>
+    <text x="37" y="33" text-anchor="middle" class="slot">-</text>
+    <text x="72" y="28" class="team" font-size="17">SINNERS</text>
+    <text x="72" y="49" class="status">Non-pick eliminated</text>
+  </g>
+
+  <text x="1128" y="700" text-anchor="end" class="footer">Round 5: winners advance to Stage 2; losers are eliminated</text>
+</svg>

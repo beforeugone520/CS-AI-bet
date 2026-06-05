@@ -1,7 +1,7 @@
 date,event,event_tier,status,swiss_round,team1,team2,best_of,map,note,source,team1_wins,team1_losses,team1_record,team1_record_status,team2_wins,team2_losses,team2_record,team2_record_status,standings_source,swiss_match_type
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,live,4,THUNDER dOWNUNDER,FlyQuest,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,live,4,TYLOO,Sharks,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,scheduled,4,GamerLegion,BIG,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,scheduled,4,MIBR,Lynn Vision,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,scheduled,4,Liquid,HEROIC,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
-2026-06-04,IEM Cologne Major 2026 Stage 1,S,scheduled,4,M80,NRG,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,THUNDER dOWNUNDER,FlyQuest,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,TYLOO,Sharks,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,GamerLegion,BIG,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,MIBR,Lynn Vision,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,Liquid,HEROIC,3,unknown,1-2 elimination pool,hltv_major+esportsgg,1,2,1-2,alive,1,2,1-2,alive,esports.gg+dfrag,elimination
+2026-06-04,IEM Cologne Major 2026 Stage 1,S,completed,4,M80,NRG,3,unknown,2-1 advancement pool,hltv_major+esportsgg,2,1,2-1,alive,2,1,2-1,alive,esports.gg+dfrag,advancement

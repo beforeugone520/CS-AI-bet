@@ -83,6 +83,34 @@ class ExampleDataTests(unittest.TestCase):
             4,
         )
 
+    def test_cologne_round4_checkpoint_tracks_latest_pickem_state(self):
+        from cs2pickem.backtest import checkpoint_pickem_file
+
+        report = checkpoint_pickem_file(
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "predictions",
+                "fivee_6m_stage1_2026-06-01",
+                "final_fused_pickem_2026-06-01.json",
+            ),
+            os.path.join(
+                ROOT,
+                "data",
+                "cologne2026",
+                "source_inputs",
+                "stage1_round4_standings_2026-06-05.csv",
+            ),
+        )
+
+        self.assertEqual(report["summary"], {"locked": 4, "alive": 2, "broken": 4, "missing": 0})
+        picks = {(row["category"], row["team"]): row for row in report["picks"]}
+        self.assertEqual(picks[("advance", "M80")]["status"], "locked")
+        self.assertEqual(picks[("advance", "BIG")]["status"], "alive")
+        self.assertEqual(picks[("advance", "TYLOO")]["status"], "alive")
+        self.assertEqual(picks[("advance", "HEROIC")]["status"], "broken")
+
     def test_cologne_final_fused_pickems_apply_player_status_to_scores(self):
         import json
 

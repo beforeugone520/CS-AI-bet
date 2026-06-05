@@ -1,0 +1,17 @@
+{
+  "articles": [
+    {
+      "body": "当前仍可变化的 Pick'em 槽位集中在 BIG、TYLOO。如果这些队伍赢下后续关键比赛，advance 槽位会继续补成 locked；如果失利，对应槽位会变成 broken。该结论来自最新静态 standings 和 checkpoint 数据。",
+      "id": "template-current-stage-watch",
+      "source_data_version": "2026-06-05-r4",
+      "stage": "stage-1",
+      "summary": "当前 Pick'em 状态为 4 locked / 2 alive / 4 broken。",
+      "title": "BIG、TYLOO 是当前补分重点",
+      "type": "round_preview"
+    }
+  ],
+  "fallback_used": true,
+  "generated_at": "2026-06-05T03:37:53Z",
+  "model": "template-fallback",
+  "source_data_version": "2026-06-05-r4"
+}
