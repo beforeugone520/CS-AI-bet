@@ -16,15 +16,7 @@ export function renderApp(root, data, handlers) {
 
 export function renderPredictor(root, stage, handlers, pickemRuntime = null) {
   if (stage.empty_state) {
-    root.innerHTML = `
-      <div class="panel-head">
-        <div>
-          <h2>${escapeHtml(stage.empty_state.title)}</h2>
-          <p class="muted">${escapeHtml(stage.empty_state.message)}</p>
-        </div>
-        <span class="mono muted">${escapeHtml(stage.empty_state.next_update)}</span>
-      </div>
-    `;
+    root.innerHTML = renderFutureStage(stage);
     return;
   }
   if (stage.format === "swiss") {
@@ -75,19 +67,7 @@ function renderSwissWorkspace(stage, runtime) {
   const boardRounds = roundsForBoard(stage);
   return `
     <div class="matchup-shell">
-      <div class="stage-control-row">
-        <div class="stage-tabs" aria-label="Stage controls">
-          <button class="stage-tab active" type="button">Stage 1</button>
-          <button class="stage-tab" type="button" disabled>Stage 2</button>
-          <button class="advance-button" type="button" disabled>Advance →</button>
-        </div>
-        <div class="view-switcher" aria-label="View switcher">
-          <button class="active" type="button" title="Simple View">S</button>
-          <button type="button" title="Minimal View">M</button>
-          <button type="button" title="Bracket View">B</button>
-          <button type="button" title="Classic View">C</button>
-        </div>
-      </div>
+      ${renderStageControls(stage.stage_id)}
       <div class="matchup-header">
         <div>
           <h2>Stage 1 Swiss Matchups</h2>
@@ -117,6 +97,44 @@ function renderSwissWorkspace(stage, runtime) {
         ${renderRecordGroup("Live", groups.live, "status-warn")}
         ${renderRecordGroup("Eliminated", groups.eliminated, "status-bad")}
       </section>
+    </div>
+  `;
+}
+
+function renderFutureStage(stage) {
+  return `
+    <div class="matchup-shell">
+      ${renderStageControls(stage.stage_id)}
+      <section class="future-stage-page" aria-label="${escapeHtml(stage.stage_id)} status">
+        <div class="future-stage-card">
+          <span class="future-stage-kicker">${escapeHtml(stage.stage_id)} · ${escapeHtml(stage.format)} · ${escapeHtml(stage.status)}</span>
+          <h2>${escapeHtml(stage.empty_state.title)}</h2>
+          <p>${escapeHtml(stage.empty_state.message)}</p>
+          <div class="future-stage-meta">
+            <span>Only IEM Cologne Major 2026 data is shown here.</span>
+            <span class="mono">${escapeHtml(stage.empty_state.next_update)}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderStageControls(currentStageId) {
+  const current = currentStageId || "stage-1";
+  return `
+    <div class="stage-control-row">
+      <div class="stage-tabs" aria-label="Stage controls">
+        <a class="stage-tab ${current === "stage-1" ? "active" : ""}" href="#/stage/1">Stage 1</a>
+        <a class="stage-tab ${current === "stage-2" ? "active" : ""}" href="#/stage/2">Stage 2</a>
+        <a class="advance-button ${current === "stage-3" ? "active" : ""}" href="#/stage/3">Advance →</a>
+      </div>
+      <div class="view-switcher" aria-label="View switcher">
+        <button class="active" type="button" title="Simple View">S</button>
+        <button type="button" title="Minimal View">M</button>
+        <button type="button" title="Bracket View">B</button>
+        <button type="button" title="Classic View">C</button>
+      </div>
     </div>
   `;
 }

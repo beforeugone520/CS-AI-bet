@@ -93,6 +93,28 @@ test("renderPredictor renders Swiss rounds as a horizontal round board", () => {
   assert.equal((root.innerHTML.match(/locked-match/g) || []).length, 1);
 });
 
+test("renderPredictor renders future current-major stage pages with stage links", () => {
+  const root = fakeRoot();
+  const stage = {
+    stage_id: "stage-2",
+    format: "swiss",
+    status: "upcoming",
+    empty_state: {
+      title: "等待赛程生成",
+      message: "Stage 2 尚未开赛，等待 Stage 1 最终晋级队伍。",
+      next_update: "手动 AI 更新时检查真实赛程"
+    }
+  };
+
+  renderPredictor(root, stage, handlers(), null);
+
+  assert.match(root.innerHTML, /future-stage-page/);
+  assert.ok(root.innerHTML.includes('href="#/stage/1"'));
+  assert.ok(root.innerHTML.includes('href="#/stage/2"'));
+  assert.ok(root.innerHTML.includes('href="#/stage/3"'));
+  assert.match(root.innerHTML, /Only IEM Cologne Major 2026 data/);
+});
+
 function fakeRoot() {
   return {
     innerHTML: "",
