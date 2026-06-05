@@ -1,0 +1,11 @@
+{
+  "current_stage": "stage-1",
+  "event_id": "iem-cologne-2026",
+  "game": "Counter-Strike 2",
+  "name": "IEM Cologne 2026",
+  "stages": [
+    "stage-1",
+    "stage-2",
+    "stage-3"
+  ]
+}
