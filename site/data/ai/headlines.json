@@ -1,0 +1,13 @@
+{
+  "fallback_used": true,
+  "generated_at": "2026-06-05T03:20:58Z",
+  "items": [
+    {
+      "id": "template-current-stage-watch",
+      "stage": "stage-1",
+      "summary": "当前 Pick'em 状态为 4 locked / 2 alive / 4 broken。",
+      "title": "BIG、TYLOO 是当前补分重点",
+      "type": "round_preview"
+    }
+  ]
+}
