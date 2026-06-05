@@ -1,5 +1,5 @@
 import { loadSiteData } from "./data.js";
-import { resetSwissState, applySwissWinner } from "./swiss.js";
+import { resetSwissState, applySwissWinner, clearSwissSelections, fixtureKey, groupSwissRecords, undoSwiss } from "./swiss.js";
 import { emptyBracketState, applyBracketWinner } from "./bracket.js";
 import { classifyPickem, summarizePickem } from "./pickem.js";
 import { renderApp } from "./render.js";
@@ -15,7 +15,6 @@ window.addEventListener("hashchange", loadCurrentRoute);
 function loadCurrentRoute() {
   loadSiteData(window.location.hash || "#/")
     .then((data) => {
-      appData = enrichPickem(data);
       swissState = null;
       bracketState = null;
       if (data.stage.format === "swiss" && !data.stage.empty_state) {
@@ -24,7 +23,8 @@ function loadCurrentRoute() {
       if (data.stage.format === "playoff" && !data.stage.empty_state) {
         bracketState = emptyBracketState(data.stage.bracket);
       }
-      renderApp(root, appData, { onSwissWinner, onBracketWinner });
+      appData = prepareAppData(data);
+      renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onBracketWinner });
     })
     .catch((error) => {
       root.innerHTML = `<section class="panel panel-head"><h1>数据加载失败</h1><p class="muted">${error.message}</p></section>`;
@@ -34,14 +34,17 @@ function loadCurrentRoute() {
 function onSwissWinner(fixtureIndex, winner) {
   const fixture = appData.stage.fixtures[fixtureIndex];
   swissState = applySwissWinner(swissState, fixture, winner);
-  appData = enrichPickem({
-    ...appData,
-    stage: {
-      ...appData.stage,
-      standings: Object.values(swissState.records)
-    }
-  });
-  renderApp(root, appData, { onSwissWinner, onBracketWinner });
+  rerender();
+}
+
+function onSwissUndo() {
+  swissState = undoSwiss(swissState);
+  rerender();
+}
+
+function onSwissReset() {
+  swissState = clearSwissSelections(swissState);
+  rerender();
 }
 
 function onBracketWinner(matchId, winner) {
@@ -55,6 +58,34 @@ function onBracketWinner(matchId, winner) {
     }
   });
   renderApp(root, appData, { onSwissWinner, onBracketWinner });
+}
+
+function rerender() {
+  appData = prepareAppData(appData);
+  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onBracketWinner });
+}
+
+function prepareAppData(data) {
+  if (!swissState || data.stage.empty_state || data.stage.format !== "swiss") {
+    return enrichPickem(data);
+  }
+  const selectedByKey = {};
+  for (const entry of swissState.history) {
+    selectedByKey[entry.key || fixtureKey(entry.fixture)] = entry;
+  }
+  return enrichPickem({
+    ...data,
+    stage: {
+      ...data.stage,
+      real_standings: data.stage.real_standings || data.stage.standings,
+      standings: Object.values(swissState.records),
+      simulation: {
+        history: swissState.history,
+        selected_by_key: selectedByKey,
+        groups: groupSwissRecords(swissState.records)
+      }
+    }
+  });
 }
 
 function enrichPickem(data) {

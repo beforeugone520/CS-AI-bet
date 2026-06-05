@@ -12,14 +12,10 @@ export function applySwissWinner(state, fixture, winner) {
     throw new Error("winner must be one of the fixture teams");
   }
   const loser = winner === fixture.team1 ? fixture.team2 : fixture.team1;
-  const records = cloneRecords(state.records);
-  records[winner] = bump(records[winner], 1, 0);
-  records[loser] = bump(records[loser], 0, 1);
-  return {
-    initialRecords: cloneRecords(state.initialRecords || state.records),
-    records,
-    history: state.history.concat([{ fixture, winner, loser }])
-  };
+  const key = fixtureKey(fixture);
+  const entry = { fixture, key, winner, loser };
+  const history = state.history.filter((item) => (item.key || fixtureKey(item.fixture)) !== key).concat([entry]);
+  return replaySwissHistory(state.initialRecords || state.records, history);
 }
 
 export function undoSwiss(state) {
@@ -27,21 +23,49 @@ export function undoSwiss(state) {
     return state;
   }
   const history = state.history.slice(0, -1);
-  let replay = {
-    initialRecords: cloneRecords(state.initialRecords),
-    records: cloneRecords(state.initialRecords),
+  return replaySwissHistory(state.initialRecords || state.records, history);
+}
+
+export function clearSwissSelections(state) {
+  return {
+    initialRecords: cloneRecords(state.initialRecords || state.records),
+    records: cloneRecords(state.initialRecords || state.records),
     history: []
   };
-  for (const entry of history) {
-    replay = applySwissWinner(replay, entry.fixture, entry.winner);
-  }
-  return replay;
+}
+
+export function groupSwissRecords(records) {
+  const rows = Object.values(records).map((row) => ({ ...row })).sort(compareRecords);
+  return {
+    advanced: rows.filter((row) => row.status === "advanced"),
+    live: rows.filter((row) => row.status === "alive"),
+    eliminated: rows.filter((row) => row.status === "eliminated")
+  };
 }
 
 export function recordStatus(wins, losses) {
   if (wins >= 3) return "advanced";
   if (losses >= 3) return "eliminated";
   return "alive";
+}
+
+export function fixtureKey(fixture) {
+  const round = fixture.swiss_round || fixture.round || "round";
+  const teams = [fixture.team1, fixture.team2].sort().join("_");
+  return String(fixture.id || fixture.source_match_url || `${round}:${teams}`);
+}
+
+function replaySwissHistory(initialRecords, history) {
+  const records = cloneRecords(initialRecords);
+  for (const entry of history) {
+    records[entry.winner] = bump(records[entry.winner], 1, 0);
+    records[entry.loser] = bump(records[entry.loser], 0, 1);
+  }
+  return {
+    initialRecords: cloneRecords(initialRecords),
+    records,
+    history: history.map((entry) => ({ ...entry, fixture: { ...entry.fixture } }))
+  };
 }
 
 function bump(record, winDelta, lossDelta) {
@@ -74,4 +98,8 @@ function recordsFromStandings(rows) {
     };
   }
   return records;
+}
+
+function compareRecords(a, b) {
+  return Number(b.wins) - Number(a.wins) || Number(a.losses) - Number(b.losses) || String(a.team).localeCompare(String(b.team));
 }

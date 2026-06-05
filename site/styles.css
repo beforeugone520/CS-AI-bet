@@ -187,10 +187,124 @@ nav a:focus {
   border-color: var(--gold);
 }
 
+.winner-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.winner-button.is-selected {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.16);
+  color: #dcfce7;
+}
+
 .status-pill {
   border: 1px solid var(--line);
   padding: 5px 8px;
   font-size: 12px;
+}
+
+.truth-note {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.08);
+  line-height: 1.5;
+}
+
+.swiss-title {
+  align-items: center;
+}
+
+.simulator-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  align-items: stretch;
+}
+
+.metric.compact {
+  padding: 10px 12px;
+}
+
+.metric.compact strong {
+  font-size: 20px;
+}
+
+.sim-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.swiss-section {
+  border-top: 1px solid var(--line);
+}
+
+.section-label {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.section-label h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.selected-row {
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.standings-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+}
+
+.record-group + .record-group {
+  border-left: 1px solid var(--line);
+}
+
+.pickem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.pickem-chip {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.035);
+  padding: 10px 12px;
+  display: grid;
+  gap: 3px;
+}
+
+.pickem-chip span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pickem-locked {
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.pickem-alive {
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
+.pickem-broken {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.locked-results {
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .bracket-round {
@@ -236,11 +350,24 @@ nav a:focus {
   .team-row,
   .match-row,
   .article-row,
-  .metric-row {
+  .metric-row,
+  .simulator-toolbar,
+  .standings-board,
+  .pickem-grid {
     grid-template-columns: 1fr;
+  }
+
+  .record-group + .record-group {
+    border-left: 0;
+    border-top: 1px solid var(--line);
   }
 
   .match-actions {
     justify-content: flex-start;
+  }
+
+  .section-label {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
