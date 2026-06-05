@@ -23,11 +23,17 @@ The browser reads static JSON only. It must not invent teams, fixtures, brackets
 Stage 1 becomes the primary workspace:
 
 - A compact status bar shows data freshness and source mode.
-- A Swiss board shows the remaining fixtures with winner buttons.
+- A Swiss board shows Round 1-5 as horizontal columns, matching the matchup-simulator mental model rather than a news/dashboard feed.
+- Completed matches render as locked two-team match cards with the real winner highlighted.
+- Remaining fixtures render as editable two-team match cards. Clicking a team selects the winner for that match.
 - A simulation strip shows selected fixture winners, undo, and reset.
 - A standings section groups teams by advanced, live, and eliminated records.
 - Pick'em impact updates from the simulated records.
 
+## Reference Notes
+
+The majors.im-style interaction is a bracket board, not a fixture list. Its public tutorial copy describes the core loop as: click the team expected to win, let the bracket recalculate after a round is selected, switch between simple/classic/bracket/minimal views, and read seed/order/Buchholz context for Swiss pairing decisions. This project implements the same board-first structure within the stricter static-data boundary: real completed matches stay locked, and only repository-provided remaining fixtures are editable.
+
 ## Testing
 
-Browser logic tests cover replacement selection, undo/reset behavior, and status grouping. Existing Python export tests continue to verify that Stage 2/3 stay empty when real data is unavailable.
+Browser logic tests cover replacement selection, undo/reset behavior, status grouping, and the round-board render contract. Existing Python export tests continue to verify that Stage 2/3 stay empty when real data is unavailable.

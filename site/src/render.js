@@ -152,36 +152,92 @@ function renderStageHead(stage) {
 function renderSwissWorkspace(stage, runtime) {
   const simulation = stage.simulation || { history: [], selected_by_key: {}, groups: null };
   const groups = simulation.groups || groupFromRows(stage.standings || []);
+  const fixtureIndexByKey = fixtureIndexes(stage.fixtures || []);
   return `
-    <div class="panel-head swiss-title">
-      <div>
-        <h2>Swiss Matchup Simulator</h2>
-        <p class="muted">真实进度锁定到当前 standings；下面只模拟剩余 fixtures，不会写回数据源。</p>
+    <div class="matchup-shell">
+      <div class="matchup-header">
+        <div>
+          <h2>Stage 1 Swiss Matchups</h2>
+          <p>Pick winners in unlocked Round 5 matches. Completed rounds are locked real results.</p>
+        </div>
+        <div class="matchup-controls" aria-label="Swiss controls">
+          <span class="mono">${escapeHtml(stage.stage_id)} · ${simulation.history.length} local picks</span>
+          <button class="winner-button compact-button" data-swiss-undo ${simulation.history.length ? "" : "disabled"}>Undo</button>
+          <button class="winner-button compact-button" data-swiss-reset ${simulation.history.length ? "" : "disabled"}>Reset</button>
+        </div>
       </div>
-      <span class="mono muted">${escapeHtml(stage.stage_id)} · ${simulation.history.length} local picks</span>
+      <div class="matchup-summary">
+        <span><strong>${stage.fixtures.length}</strong> remaining BO3</span>
+        <span><strong>${groups.advanced.length}</strong> advanced</span>
+        <span><strong>${groups.live.length}</strong> live</span>
+        <span><strong>${groups.eliminated.length}</strong> eliminated</span>
+      </div>
+      <section class="swiss-round-board" aria-label="Swiss round board">
+        ${roundsForBoard(stage).map((round) => renderRoundColumn(round, simulation.selected_by_key, fixtureIndexByKey)).join("")}
+      </section>
+      ${renderSimulationHistory(simulation.history)}
+      ${renderPickemImpact(runtime)}
+      <section class="standings-board">
+        ${renderRecordGroup("Advanced", groups.advanced, "status-good")}
+        ${renderRecordGroup("Live", groups.live, "status-warn")}
+        ${renderRecordGroup("Eliminated", groups.eliminated, "status-bad")}
+      </section>
     </div>
-    <div class="simulator-toolbar">
-      <div class="metric compact"><strong>${stage.fixtures.length}</strong><span class="muted">remaining BO3</span></div>
-      <div class="metric compact"><strong>${groups.advanced.length}</strong><span class="muted">advanced</span></div>
-      <div class="metric compact"><strong>${groups.live.length}</strong><span class="muted">still live</span></div>
-      <div class="metric compact"><strong>${groups.eliminated.length}</strong><span class="muted">eliminated</span></div>
-      <div class="sim-actions">
-        <button class="winner-button" data-swiss-undo ${simulation.history.length ? "" : "disabled"}>Undo</button>
-        <button class="winner-button" data-swiss-reset ${simulation.history.length ? "" : "disabled"}>Reset</button>
+  `;
+}
+
+function renderRoundColumn(round, selectedByKey, fixtureIndexByKey) {
+  const lockedMatches = (round.results || []).map((match) => renderSwissMatchCard(match, { locked: true }));
+  const fixtureMatches = (round.fixtures || []).map((fixture) => {
+    const key = fixtureKey(fixture);
+    return renderSwissMatchCard(fixture, {
+      locked: false,
+      selection: selectedByKey[key],
+      index: fixtureIndexByKey[key]
+    });
+  });
+  const matches = lockedMatches.concat(fixtureMatches);
+  return `
+    <section class="round-column">
+      <div class="round-heading">
+        <h3>Round ${escapeHtml(round.round)}</h3>
+        <span>${roundLabel(round)}</span>
+      </div>
+      <div class="round-stack">
+        ${matches.length ? matches.join("") : `<div class="empty-round">Waiting for real data</div>`}
+      </div>
+    </section>
+  `;
+}
+
+function renderSwissMatchCard(match, options) {
+  const selection = options.selection || null;
+  const selectedWinner = selection?.winner || (options.locked ? match.winner : null);
+  const team1Selected = selectedWinner === match.team1;
+  const team2Selected = selectedWinner === match.team2;
+  const className = options.locked ? "locked-match" : "fixture-match";
+  const meta = options.locked ? `${match.match_score || ""}` : `${match.team1_record || ""} / ${match.team2_record || ""}`;
+  return `
+    <div class="swiss-match-card ${className} ${selectedWinner ? "has-winner" : ""}">
+      ${renderSwissTeamButton(match.team1, team1Selected, options, match)}
+      ${renderSwissTeamButton(match.team2, team2Selected, options, match)}
+      <div class="match-card-meta">
+        <span>${escapeHtml(options.locked ? "locked result" : match.note || "pick winner")}</span>
+        <span class="mono">${escapeHtml(meta)}</span>
       </div>
     </div>
-    <section class="swiss-section">
-      <div class="section-label"><h3>Round ${escapeHtml(stage.fixtures[0]?.swiss_round || "next")} Fixtures</h3><span class="muted">Click a winner to simulate.</span></div>
-      ${stage.fixtures.map((fixture, index) => renderMatchRow(fixture, index, simulation.selected_by_key[fixtureKey(fixture)])).join("")}
-    </section>
-    ${renderSimulationHistory(simulation.history)}
-    ${renderPickemImpact(runtime)}
-    <section class="standings-board">
-      ${renderRecordGroup("Advanced", groups.advanced, "status-good")}
-      ${renderRecordGroup("Live", groups.live, "status-warn")}
-      ${renderRecordGroup("Eliminated", groups.eliminated, "status-bad")}
-    </section>
-    ${renderLockedResults(stage.results || [])}
+  `;
+}
+
+function renderSwissTeamButton(team, selected, options, match) {
+  if (options.locked || options.index === undefined) {
+    return `<div class="team-slot ${selected ? "winner-slot" : "loser-slot"}"><span>${escapeHtml(team)}</span>${selected ? `<strong>W</strong>` : ""}</div>`;
+  }
+  return `
+    <button class="team-slot pick-slot ${selected ? "winner-slot" : ""}" data-index="${options.index}" data-winner="${escapeHtml(team)}">
+      <span>${escapeHtml(team)}</span>
+      ${selected ? `<strong>Pick</strong>` : ""}
+    </button>
   `;
 }
 
@@ -246,21 +302,6 @@ function renderRecordGroup(label, rows, className) {
   `;
 }
 
-function renderLockedResults(results) {
-  const latest = results.slice(-8).reverse();
-  return `
-    <section class="swiss-section locked-results">
-      <div class="section-label"><h3>Locked Real Results</h3><span class="muted">${results.length} completed matches from static data</span></div>
-      ${latest.map((row) => `
-        <div class="team-row">
-          <span>${escapeHtml(row.team1)} vs ${escapeHtml(row.team2)}</span>
-          <span class="mono status-pill">${escapeHtml(row.winner)} ${escapeHtml(row.match_score || "")}</span>
-        </div>
-      `).join("")}
-    </section>
-  `;
-}
-
 function renderBracketRound(label, matches) {
   return `
     <section class="bracket-round">
@@ -294,6 +335,60 @@ function groupFromRows(rows) {
     live: rows.filter((row) => row.status === "alive"),
     eliminated: rows.filter((row) => row.status === "eliminated")
   };
+}
+
+function roundsForBoard(stage) {
+  const byRound = new Map();
+  for (const round of stage.rounds || []) {
+    byRound.set(String(round.round), {
+      round: String(round.round),
+      results: round.results || [],
+      fixtures: round.fixtures || []
+    });
+  }
+  for (const result of stage.results || []) {
+    const key = String(result.round || "unknown");
+    if (!byRound.has(key)) byRound.set(key, { round: key, results: [], fixtures: [] });
+    const exists = byRound.get(key).results.some((item) => resultKey(item) === resultKey(result));
+    if (!exists) byRound.get(key).results.push(result);
+  }
+  for (const fixture of stage.fixtures || []) {
+    const key = String(fixture.swiss_round || fixture.round || "next");
+    if (!byRound.has(key)) byRound.set(key, { round: key, results: [], fixtures: [] });
+    const exists = byRound.get(key).fixtures.some((item) => fixtureKey(item) === fixtureKey(fixture));
+    if (!exists) byRound.get(key).fixtures.push(fixture);
+  }
+  return Array.from(byRound.values()).sort((a, b) => Number(a.round) - Number(b.round));
+}
+
+function fixtureIndexes(fixtures) {
+  const indexes = {};
+  fixtures.forEach((fixture, index) => {
+    indexes[fixtureKey(fixture)] = index;
+  });
+  return indexes;
+}
+
+function roundLabel(round) {
+  const number = String(round.round);
+  const labels = {
+    "1": "0-0",
+    "2": "1-0 / 0-1",
+    "3": "2-0 / 1-1 / 0-2",
+    "4": "2-1 / 1-2",
+    "5": "2-2 deciders"
+  };
+  return labels[number] || "Swiss";
+}
+
+function resultKey(result) {
+  return [
+    result.round || "round",
+    result.team1 || "",
+    result.team2 || "",
+    result.winner || "",
+    result.match_score || ""
+  ].join(":");
 }
 
 function sourceStatusClass(status) {

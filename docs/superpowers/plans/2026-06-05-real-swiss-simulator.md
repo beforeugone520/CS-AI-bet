@@ -27,10 +27,12 @@
 - Modify: `site/src/main.js`
 - Modify: `site/src/render.js`
 - Modify: `site/styles.css`
+- Create: `site/tests/render.test.mjs`
 
 - [ ] Wire `onSwissWinner`, `onSwissUndo`, and `onSwissReset` to the new Swiss state.
+- [ ] Render Round 1-5 as a horizontal Swiss board with locked completed match cards and editable remaining fixture cards.
 - [ ] Render selected fixtures, pending fixtures, grouped standings, and Pick'em impact from current local simulation state.
-- [ ] Add styles for selected match rows, locked real-data sections, grouped standings, and compact simulator controls.
+- [ ] Add styles for selected match cards, locked real-data cards, grouped standings, horizontal scrolling round columns, and compact simulator controls.
 - [ ] Run `node --test site/tests/*.test.mjs`.
 
 ### Task 3: Truthful Fallback Presentation
