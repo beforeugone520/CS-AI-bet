@@ -84,6 +84,10 @@ test("renderPredictor renders Swiss rounds as a horizontal round board", () => {
   assert.match(root.innerHTML, /view-switcher/);
   assert.match(root.innerHTML, /pickem-dock/);
   assert.match(root.innerHTML, /team-mark/);
+  assert.match(root.innerHTML, /team-logo/);
+  assert.match(root.innerHTML, /assets\/teams\/m80\.png/);
+  assert.match(root.innerHTML, /assets\/teams\/lvg\.png/);
+  assert.match(root.innerHTML, /assets\/teams\/big\.png/);
   assert.match(root.innerHTML, /match-score/);
   assert.match(root.innerHTML, /Round 1/);
   assert.match(root.innerHTML, /Round 5/);

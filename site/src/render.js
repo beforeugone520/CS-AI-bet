@@ -203,7 +203,11 @@ function renderSwissMatchCard(match, options) {
 }
 
 function renderSwissTeamButton(team, selected, options, match, side) {
-  const body = `<span class="team-mark team-${escapeHtml(teamSlug(team))}" aria-hidden="true">${escapeHtml(teamMark(team))}</span><span class="team-name">${escapeHtml(team)}</span>`;
+  const logoFile = teamLogoFile(team);
+  const logo = logoFile
+    ? `<img class="team-logo" src="./assets/teams/${escapeHtml(logoFile)}.png" alt="" loading="lazy" decoding="async">`
+    : "";
+  const body = `<span class="team-mark team-${escapeHtml(teamSlug(team))}" aria-hidden="true">${logo}<span class="team-fallback">${escapeHtml(teamMark(team))}</span></span><span class="team-name">${escapeHtml(team)}</span>`;
   if (options.locked || options.index === undefined) {
     return `<div class="team-slot ${side}-slot ${selected ? "winner-slot" : "loser-slot"}">${body}</div>`;
   }
@@ -417,6 +421,28 @@ function teamMark(team) {
     "TYLOO": "TY",
   };
   return marks[team] || teamInitials(team);
+}
+
+function teamLogoFile(team) {
+  const logos = {
+    "B8": "b8",
+    "BIG": "big",
+    "BetBoom": "betb",
+    "FlyQuest": "fly",
+    "Gaimin Gladiators": "gg",
+    "GamerLegion": "gl",
+    "HEROIC": "hero",
+    "Liquid": "liqu",
+    "Lynn Vision": "lvg",
+    "M80": "m80",
+    "MIBR": "mibr",
+    "NRG": "nrg",
+    "SINNERS": "sinn",
+    "Sharks": "shks",
+    "THUNDER dOWNUNDER": "tdu",
+    "TYLOO": "tylo",
+  };
+  return logos[team] || "";
 }
 
 function teamSlug(team) {
