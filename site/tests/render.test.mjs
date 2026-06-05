@@ -115,6 +115,25 @@ test("renderPredictor renders future current-major stage pages with stage links"
   assert.match(root.innerHTML, /Only IEM Cologne Major 2026 data/);
 });
 
+test("renderPredictor marks the selected Swiss view mode", () => {
+  const root = fakeRoot();
+  const stage = {
+    stage_id: "stage-1",
+    format: "swiss",
+    fixtures: [],
+    results: [],
+    rounds: [],
+    standings: [],
+    simulation: { history: [], selected_by_key: {}, groups: { advanced: [], live: [], eliminated: [] } }
+  };
+
+  renderPredictor(root, stage, handlers(), null, "classic");
+
+  assert.match(root.innerHTML, /matchup-shell view-classic/);
+  assert.match(root.innerHTML, /data-view-mode="classic"/);
+  assert.match(root.innerHTML, /class="active" type="button" title="Classic View"/);
+});
+
 function fakeRoot() {
   return {
     innerHTML: "",

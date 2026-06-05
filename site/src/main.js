@@ -8,6 +8,7 @@ const root = document.querySelector("#app");
 let appData = null;
 let swissState = null;
 let bracketState = null;
+let swissViewMode = "simple";
 
 loadCurrentRoute();
 window.addEventListener("hashchange", loadCurrentRoute);
@@ -24,7 +25,7 @@ function loadCurrentRoute() {
         bracketState = emptyBracketState(data.stage.bracket);
       }
       appData = prepareAppData(data);
-      renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onBracketWinner });
+      renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
     })
     .catch((error) => {
       root.innerHTML = `<section class="panel panel-head"><h1>数据加载失败</h1><p class="muted">${error.message}</p></section>`;
@@ -47,6 +48,11 @@ function onSwissReset() {
   rerender();
 }
 
+function onSwissViewMode(mode) {
+  swissViewMode = mode;
+  rerender();
+}
+
 function onBracketWinner(matchId, winner) {
   bracketState = applyBracketWinner(bracketState, matchId, winner);
   appData = enrichPickem({
@@ -57,17 +63,17 @@ function onBracketWinner(matchId, winner) {
       champion_path: { champion: bracketState.champion }
     }
   });
-  renderApp(root, appData, { onSwissWinner, onBracketWinner });
+  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
 }
 
 function rerender() {
   appData = prepareAppData(appData);
-  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onBracketWinner });
+  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
 }
 
 function prepareAppData(data) {
   if (!swissState || data.stage.empty_state || data.stage.format !== "swiss") {
-    return enrichPickem(data);
+    return enrichPickem({ ...data, swissViewMode });
   }
   const selectedByKey = {};
   for (const entry of swissState.history) {
@@ -75,6 +81,7 @@ function prepareAppData(data) {
   }
   return enrichPickem({
     ...data,
+    swissViewMode,
     stage: {
       ...data.stage,
       real_standings: data.stage.real_standings || data.stage.standings,

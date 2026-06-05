@@ -11,18 +11,21 @@ export function renderApp(root, data, handlers) {
       <div id="predictor"></div>
     </section>
   `;
-  renderPredictor(root.querySelector("#predictor"), data.stage, handlers, data.pickemRuntime);
+  renderPredictor(root.querySelector("#predictor"), data.stage, handlers, data.pickemRuntime, data.swissViewMode || "simple");
 }
 
-export function renderPredictor(root, stage, handlers, pickemRuntime = null) {
+export function renderPredictor(root, stage, handlers, pickemRuntime = null, viewMode = "simple") {
   if (stage.empty_state) {
-    root.innerHTML = renderFutureStage(stage);
+    root.innerHTML = renderFutureStage(stage, viewMode);
     return;
   }
   if (stage.format === "swiss") {
-    root.innerHTML = renderSwissWorkspace(stage, pickemRuntime);
+    root.innerHTML = renderSwissWorkspace(stage, pickemRuntime, viewMode);
     root.querySelectorAll("[data-winner]").forEach((button) => {
       button.addEventListener("click", () => handlers.onSwissWinner(Number(button.dataset.index), button.dataset.winner));
+    });
+    root.querySelectorAll("[data-view-mode]").forEach((button) => {
+      button.addEventListener("click", () => handlers.onSwissViewMode?.(button.dataset.viewMode));
     });
     root.querySelector("[data-swiss-undo]")?.addEventListener("click", () => handlers.onSwissUndo());
     root.querySelector("[data-swiss-reset]")?.addEventListener("click", () => handlers.onSwissReset());
@@ -60,21 +63,21 @@ function renderStageHead(stage) {
   return `<div class="panel-head"><div><h1>${escapeHtml(stage.name || stage.stage_id)}</h1><p class="muted">${escapeHtml(stage.format)} · ${escapeHtml(stage.status)}</p></div></div>`;
 }
 
-function renderSwissWorkspace(stage, runtime) {
+function renderSwissWorkspace(stage, runtime, viewMode = "simple") {
   const simulation = stage.simulation || { history: [], selected_by_key: {}, groups: null };
   const groups = simulation.groups || groupFromRows(stage.standings || []);
   const fixtureIndexByKey = fixtureIndexes(stage.fixtures || []);
   const boardRounds = roundsForBoard(stage);
   return `
-    <div class="matchup-shell">
-      ${renderStageControls(stage.stage_id)}
-      <div class="matchup-header">
+    <div class="matchup-shell view-${escapeHtml(viewMode)}">
+      ${renderStageControls(stage.stage_id, viewMode)}
+      <div class="matchup-header ${simulation.history.length ? "has-local-picks" : ""}">
         <div>
           <h2>Stage 1 Swiss Matchups</h2>
-          <p>Locked cards are real results. Pick unlocked Round 5 winners to preview Pick'em survival.</p>
+          <p>Locked results and local Round 5 picks.</p>
         </div>
         <div class="matchup-controls" aria-label="Swiss controls">
-          <span class="mono">${escapeHtml(stage.stage_id)} · ${simulation.history.length} local picks</span>
+          <span class="mono">${simulation.history.length} picks</span>
           <button class="winner-button compact-button" data-swiss-undo ${simulation.history.length ? "" : "disabled"}>Undo</button>
           <button class="winner-button compact-button" data-swiss-reset ${simulation.history.length ? "" : "disabled"}>Reset</button>
         </div>
@@ -101,10 +104,10 @@ function renderSwissWorkspace(stage, runtime) {
   `;
 }
 
-function renderFutureStage(stage) {
+function renderFutureStage(stage, viewMode = "simple") {
   return `
     <div class="matchup-shell">
-      ${renderStageControls(stage.stage_id)}
+      ${renderStageControls(stage.stage_id, viewMode)}
       <section class="future-stage-page" aria-label="${escapeHtml(stage.stage_id)} status">
         <div class="future-stage-card">
           <span class="future-stage-kicker">${escapeHtml(stage.stage_id)} · ${escapeHtml(stage.format)} · ${escapeHtml(stage.status)}</span>
@@ -120,23 +123,28 @@ function renderFutureStage(stage) {
   `;
 }
 
-function renderStageControls(currentStageId) {
+function renderStageControls(currentStageId, viewMode = "simple") {
   const current = currentStageId || "stage-1";
+  const mode = normalizeViewMode(viewMode);
   return `
     <div class="stage-control-row">
       <div class="stage-tabs" aria-label="Stage controls">
-        <a class="stage-tab ${current === "stage-1" ? "active" : ""}" href="#/stage/1">Stage 1</a>
-        <a class="stage-tab ${current === "stage-2" ? "active" : ""}" href="#/stage/2">Stage 2</a>
-        <a class="advance-button ${current === "stage-3" ? "active" : ""}" href="#/stage/3">Advance →</a>
+        <a class="stage-tab ${current === "stage-1" ? "active" : ""}" href="#/stage/1" aria-label="Stage 1"><span class="stage-label-full">Stage 1</span><span class="stage-label-short">S1</span></a>
+        <a class="stage-tab ${current === "stage-2" ? "active" : ""}" href="#/stage/2" aria-label="Stage 2"><span class="stage-label-full">Stage 2</span><span class="stage-label-short">S2</span></a>
+        <a class="advance-button ${current === "stage-3" ? "active" : ""}" href="#/stage/3" aria-label="Advance"><span class="stage-label-full">Advance →</span><span class="stage-label-short">→</span></a>
       </div>
       <div class="view-switcher" aria-label="View switcher">
-        <button class="active" type="button" title="Simple View">S</button>
-        <button type="button" title="Minimal View">M</button>
-        <button type="button" title="Bracket View">B</button>
-        <button type="button" title="Classic View">C</button>
+        <button class="${mode === "simple" ? "active" : ""}" type="button" title="Simple View" aria-label="Simple View" data-view-mode="simple">♕</button>
+        <button class="${mode === "minimal" ? "active" : ""}" type="button" title="Minimal View" aria-label="Minimal View" data-view-mode="minimal">☰</button>
+        <button class="${mode === "bracket" ? "active" : ""}" type="button" title="Bracket View" aria-label="Bracket View" data-view-mode="bracket">▦</button>
+        <button class="${mode === "classic" ? "active" : ""}" type="button" title="Classic View" aria-label="Classic View" data-view-mode="classic">▤</button>
       </div>
     </div>
   `;
+}
+
+function normalizeViewMode(mode) {
+  return ["simple", "minimal", "bracket", "classic"].includes(mode) ? mode : "simple";
 }
 
 function renderRoundColumn(round, selectedByKey, fixtureIndexByKey) {
@@ -195,7 +203,7 @@ function renderSwissMatchCard(match, options) {
 }
 
 function renderSwissTeamButton(team, selected, options, match, side) {
-  const body = `<span class="team-mark">${escapeHtml(teamInitials(team))}</span><span class="team-name">${escapeHtml(team)}</span>${selected ? `<strong>${options.locked ? "W" : "Pick"}</strong>` : ""}`;
+  const body = `<span class="team-mark team-${escapeHtml(teamSlug(team))}" aria-hidden="true">${escapeHtml(teamMark(team))}</span><span class="team-name">${escapeHtml(team)}</span>`;
   if (options.locked || options.index === undefined) {
     return `<div class="team-slot ${side}-slot ${selected ? "winner-slot" : "loser-slot"}">${body}</div>`;
   }
@@ -392,6 +400,27 @@ function teamInitials(team) {
     .join("")
     .slice(0, 3)
     .toUpperCase();
+}
+
+function teamMark(team) {
+  const marks = {
+    "BetBoom": "BB",
+    "FlyQuest": "FQ",
+    "Gaimin Gladiators": "GG",
+    "GamerLegion": "GL",
+    "HEROIC": "H",
+    "Liquid": "TL",
+    "Lynn Vision": "LV",
+    "Sharks": "SH",
+    "SINNERS": "SIN",
+    "THUNDER dOWNUNDER": "TD",
+    "TYLOO": "TY",
+  };
+  return marks[team] || teamInitials(team);
+}
+
+function teamSlug(team) {
+  return String(team).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "team";
 }
 
 function resultKey(result) {

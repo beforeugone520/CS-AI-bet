@@ -6,10 +6,10 @@ Reference: https://majors.im/2026/cologne
 
 ## Screenshot Evidence
 
-- Reference desktop: `docs/reviews/screenshots/majors-desktop.png`
-- Reference mobile: `docs/reviews/screenshots/majors-mobile.png`
-- Local desktop after changes: `docs/reviews/screenshots/local-desktop-v5.png`
-- Local mobile after changes: `docs/reviews/screenshots/local-mobile-v5.png`
+- Reference desktop: `docs/reviews/screenshots/majors-desktop-current.png`
+- Reference mobile: `docs/reviews/screenshots/majors-mobile-current.png`
+- Local desktop after latest changes: `docs/reviews/screenshots/local-desktop-v8.png`
+- Local mobile after latest changes: `docs/reviews/screenshots/local-mobile-v9.png`
 
 ## Changes Made
 
@@ -19,17 +19,20 @@ Reference: https://majors.im/2026/cologne
 - Wired `AI_UPDATE_NOTES` into the AI article request payload and generated metadata.
 - Converted the Swiss view into a horizontal round board with Stage controls, view switcher, glowing match cards, record ribbons, round-flow arrows, and a bottom Pick'em dock.
 - Kept Stage 2 and Stage 3 pages as current-Major placeholders instead of unrelated/fake historical content.
+- Tightened the latest pass to match Majors.im proportions more closely: compact topbar on mobile, shorter stage labels, interactive icon-style view controls, 146px desktop match cards, logo-like team badges, earlier board start position, and a lower Pick'em bar.
 
 ## Browser Verification
 
 - Chromium desktop viewport: 1440 x 768.
 - Chromium mobile viewport: 390 x 844.
 - Desktop interaction: selecting an unlocked Round 5 winner changes local picks from `0` to `1`.
-- Mobile layout: no document-level horizontal overflow; the Swiss board itself remains horizontally scrollable.
+- View switching: Simple, Minimal, Bracket, and Classic buttons update active state and board layout locally.
+- Stage navigation: Stage 2 and Stage 3 hash routes render current-Major placeholder pages.
+- Mobile layout: no window-level horizontal scrolling; the Swiss board and Pick'em strip remain horizontally scrollable inside their own containers.
 - Browser console/page errors: none after adding the static favicon.
 
 ## Remaining Gaps
 
-- The local implementation uses initials instead of real team logo assets.
-- Stage/view selector buttons are visual controls only; Stage 2 and Stage 3 remain disabled until real bracket data is available.
+- The local implementation uses logo-like generated badges instead of real team logo image assets.
+- Stage/view selector buttons are navigable/visual controls; the alternate view modes are not fully implemented yet.
 - The board approximates Majors.im structure and proportions, but exact animations, logo treatment, and all view modes are not cloned.
