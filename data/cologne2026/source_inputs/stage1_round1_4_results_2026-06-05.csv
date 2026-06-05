@@ -1,0 +1,31 @@
+date,event,round,team1,team2,winner,match_score,map_scores,maps,note,source
+2026-06-02,IEM Cologne 2026 Stage 1,1,SINNERS,FlyQuest,FlyQuest,0-1,14-16,Ancient,OT,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,M80,Lynn Vision,M80,1-0,13-8,Inferno,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,B8,TYLOO,B8,1-0,13-6,Mirage,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,MIBR,THUNDER dOWNUNDER,THUNDER dOWNUNDER,0-1,6-13,Inferno,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,GamerLegion,NRG,GamerLegion,1-0,13-10,Inferno,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,HEROIC,Sharks,Sharks,0-1,10-13,Nuke,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,BIG,Liquid,Liquid,0-1,10-13,Nuke,,esports.gg+dfrag
+2026-06-02,IEM Cologne 2026 Stage 1,1,BetBoom,Gaimin Gladiators,BetBoom,1-0,13-4,Dust II,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,B8,THUNDER dOWNUNDER,B8,1-0,13-11,Dust II,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,HEROIC,Lynn Vision,Lynn Vision,0-1,11-13,Dust II,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,M80,Sharks,M80,1-0,13-6,Mirage,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,MIBR,TYLOO,MIBR,1-0,16-14,Nuke,OT,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,GamerLegion,FlyQuest,GamerLegion,1-0,13-11,Nuke,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,SINNERS,NRG,NRG,0-1,6-13,,map name omitted because one source typoed it as NRG,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,BetBoom,Liquid,BetBoom,1-0,13-9,Dust II,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,2,BIG,Gaimin Gladiators,BIG,1-0,13-1,Nuke,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,GamerLegion,BetBoom,BetBoom,0-2,2-13;8-13,Nuke;Ancient,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,NRG,FlyQuest,NRG,1-0,13-10,Mirage,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,TYLOO,SINNERS,TYLOO,2-0,16-15;13-10,Ancient;Inferno,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,M80,B8,B8,0-2,11-13;20-22,Ancient;Inferno,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,Sharks,Lynn Vision,Lynn Vision,0-1,5-13,Overpass,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,Gaimin Gladiators,HEROIC,HEROIC,0-2,5-13;6-13,Dust II;Inferno,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,Liquid,MIBR,MIBR,0-1,10-13,Mirage,,esports.gg+dfrag
+2026-06-03,IEM Cologne 2026 Stage 1,3,THUNDER dOWNUNDER,BIG,BIG,0-1,7-13,Inferno,,esports.gg+dfrag
+2026-06-04,IEM Cologne 2026 Stage 1,4,THUNDER dOWNUNDER,FlyQuest,FlyQuest,1-2,13-8;11-13;6-13,Ancient;Train;Nuke,1-2 elimination pool,esportsgg
+2026-06-04,IEM Cologne 2026 Stage 1,4,TYLOO,Sharks,TYLOO,2-1,13-6;7-13;13-10,Inferno;Ancient;Train,1-2 elimination pool,esportsgg
+2026-06-04,IEM Cologne 2026 Stage 1,4,GamerLegion,BIG,GamerLegion,2-0,13-8;19-17,Overpass;Inferno,2-1 advancement pool,esportsgg
+2026-06-04,IEM Cologne 2026 Stage 1,4,MIBR,Lynn Vision,MIBR,2-1,13-9;11-13;13-10,Train;Ancient;Dust II,2-1 advancement pool,esportsgg
+2026-06-04,IEM Cologne 2026 Stage 1,4,Liquid,HEROIC,Liquid,2-0,13-10;13-6,Nuke;Train,1-2 elimination pool,esportsgg
+2026-06-04,IEM Cologne 2026 Stage 1,4,M80,NRG,M80,2-0,13-6;19-13,Ancient;Inferno,2-1 advancement pool; Inferno score normalized to M80 perspective,esportsgg+reddit_pmt

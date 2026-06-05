@@ -237,7 +237,9 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 | `forecast_status_required_logistic_2026-06-04.json` / `forecast_status_required_logistic_backtest_day1_2026-06-02.json` | 状态特征 required-selection 的 logistic-only 快速诊断；用于确认训练历史是否真的提供可学习的选手状态信号，不替代赛前主报告 |
 | `stage1_day2_results_2026-06-03.csv` | Day 2 的 Round 2-3 共 16 场赛果单独归档 |
 | `stage1_round1_3_results_2026-06-04.csv` / `stage1_round3_standings_2026-06-04.csv` / `final_fused_pickem_checkpoint_round3_2026-06-04.json` | Round 1-3 已复核赛果、Round 3 standings 和 `checkpoint-pickem` 中途状态报告 |
-| `stage1_round4_fixtures_2026-06-04.csv` / `stage1_round4_fixtures_with_standings_2026-06-04.csv` | Round 4 赛程快照，以及合并 Round 3 standings 后的晋级/淘汰压力 fixtures |
+| `stage1_round4_fixtures_2026-06-04.csv` / `stage1_round4_results_2026-06-04.csv` | Round 4 赛程快照和六场 BO3 赛果 |
+| `stage1_round1_4_results_2026-06-05.csv` / `stage1_round4_standings_2026-06-05.csv` / `final_fused_pickem_checkpoint_round4_2026-06-05.json` | Round 1-4 已复核赛果、Round 4 standings 和 `checkpoint-pickem` 中途状态报告 |
+| `stage1_round5_fixtures_2026-06-05.csv` / `stage1_round5_fixtures_with_standings_2026-06-05.csv` | Round 5 三场 2-2 决胜赛程，以及合并 Round 4 standings 后的晋级/淘汰压力 fixtures |
 | `final_fused_pickem_2026-06-01.json` / `final_fused_pickem_table_2026-06-01.csv` | 专家/市场/模型最终融合结果；保留 `raw_fused_score / player_availability_multiplier / status_adjusted_score` 和候选池 scoreboard |
 | `forecast_without_market_odds_2026-06-01.json` / `pickem_without_market_odds_2026-06-01.json` | 无市场赔率备份，便于对比 |
 
@@ -249,10 +251,10 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
   <img src="images/backtest-diagnostics.png" width="900" alt="CS2 Pick'em backtest diagnostics dashboard visual" />
 </p>
 
-| 层级 | 评估对象 | 2026-06-04 读数 | 结论用途 |
+| 层级 | 评估对象 | 2026-06-05 读数 | 结论用途 |
 | --- | --- | --- | --- |
 | 单场 forecast 回测 | Day 1 首轮 8 场 BO1；`avoid` 不计入有效下注 | 有效下注 `3/7`；计入规避方向为 `4/8`；已写入 `forecast_backtest_day1_2026-06-02.json` | 诊断单场模型、市场修正、低置信规避和 player form 是否合理 |
-| Pick'em 槽位中途回测 | 赛前 `3-0 / 晋级 / 0-3` 槽位对照 Day 2 结束后的 Round 3 战绩 | `checkpoint-pickem` 输出 `3 locked / 4 alive / 3 broken`；已写入 `final_fused_pickem_checkpoint_round3_2026-06-04.json` | 追踪提交清单的兑现路径，但不提前计算最终通过率 |
+| Pick'em 槽位中途回测 | 赛前 `3-0 / 晋级 / 0-3` 槽位对照 Round 4 结束后的战绩 | `checkpoint-pickem` 输出 `4 locked / 2 alive / 4 broken`；已写入 `final_fused_pickem_checkpoint_round4_2026-06-05.json` | 追踪提交清单的兑现路径，但不提前计算最终通过率 |
 | 最终 Pick'em 回测 | Stage 1 完赛后的最终 Swiss standings | 待 Stage 1 结束后用 `backtest-pickem` 计算 | 判断是否达到 pass threshold，并进入 readiness 审计 |
 
 当前策略诊断结论：
@@ -262,7 +264,7 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 - `market favorite ≥0.60 且 player form 反向则 avoid` 能提高百分比但覆盖太低，只作为低覆盖候选，不作为默认策略。
 - `player_status_signal_risk` 会把实际赛果按被选中一侧的低样本/替补风险拆开。原始赛前 `forecast_report.json` 没有 player status 字段；补入 player-form fixtures 后，5%+player form 的 5 个有效 pick 全部带低样本状态风险，命中 `3/5`，状态规避版本降到 3 个有效 pick，命中 `2/3`。因此 `--avoid-player-status-risk` 只作为审查信号，不替换 5%+player form 默认策略。
 - 模型训练层新增 `feature_selection.required_features` 诊断，会把选手 rating/KD/首杀/残局/star、替补、样本量、player form 和样本置信度列为 required 候选。2026-06-04 的 logistic-only 快速诊断显示，当前 6 个月训练历史中这些状态特征全部 `unavailable`，Day 1 回测为 `4/8`；这说明现阶段缺的是无泄漏历史选手状态数据，不能把 fixtures 上的状态字段当作模型已经学到的信号。
-- Pick'em 层面，BetBoom、B8 晋级和 Gaimin Gladiators `0-3` 已经兑现，M80/BIG/TYLOO/HEROIC 仍能补回晋级槽；GamerLegion/MIBR 的 `3-0` 与 NRG 的 `0-3` 已经不可恢复。
+- Pick'em 层面，BetBoom、B8、M80 晋级和 Gaimin Gladiators `0-3` 已经兑现，BIG/TYLOO 仍能在 Round 5 补回晋级槽；GamerLegion/MIBR 的 `3-0`、HEROIC 的 `晋级` 与 NRG 的 `0-3` 已经不可恢复。
 - `candidate_scoreboard_policy_diagnostics` 把 `3-0` 标为 `review_candidate_policy / extreme_consensus_composite`，`advance` 和 `0-3` 继续 `keep_current_policy / status_adjusted_score`。
 
 ### Day 1 forecast 回测
@@ -326,25 +328,25 @@ PYTHONPATH=src python3 -m cs2pickem.cli apply-forecast-policy \
   --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/forecast_policy_margin_0_05_player_status_risk_2026-06-04.json
 ```
 
-### Round 3 checkpoint
+### Round 4 checkpoint
 
-Day 2 / Round 3 这种中途状态先从逐场赛果推导 standings，再用 `checkpoint-pickem` 看槽位是否还活着，不用 `backtest-pickem` 提前算最终分：
+Round 4 这种中途状态先从逐场赛果推导 standings，再把 standings 合并进下一轮 fixtures，最后用 `checkpoint-pickem` 看槽位是否还活着，不用 `backtest-pickem` 提前算最终分：
 
 ```bash
 PYTHONPATH=src python3 -m cs2pickem.cli standings-from-results \
-  --results data/cologne2026/source_inputs/stage1_round1_3_results_2026-06-04.csv \
-  --source esports.gg+dfrag \
-  --output data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv
+  --results data/cologne2026/source_inputs/stage1_round1_4_results_2026-06-05.csv \
+  --source esportsgg+hltv_major \
+  --output data/cologne2026/source_inputs/stage1_round4_standings_2026-06-05.csv
 
 PYTHONPATH=src python3 -m cs2pickem.cli merge-standings \
-  --fixtures data/cologne2026/source_inputs/stage1_round4_fixtures_2026-06-04.csv \
-  --standings data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv \
-  --output data/cologne2026/processed/stage1_round4_fixtures_with_standings_2026-06-04.csv
+  --fixtures data/cologne2026/source_inputs/stage1_round5_fixtures_2026-06-05.csv \
+  --standings data/cologne2026/source_inputs/stage1_round4_standings_2026-06-05.csv \
+  --output data/cologne2026/processed/stage1_round5_fixtures_with_standings_2026-06-05.csv
 
 PYTHONPATH=src python3 -m cs2pickem.cli checkpoint-pickem \
   --pickems data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json \
-  --standings data/cologne2026/source_inputs/stage1_round3_standings_2026-06-04.csv \
-  --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_checkpoint_round3_2026-06-04.json
+  --standings data/cologne2026/source_inputs/stage1_round4_standings_2026-06-05.csv \
+  --output data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_checkpoint_round4_2026-06-05.json
 ```
 
 ### 完赛后 Pick'em 评分

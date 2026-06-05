@@ -1,0 +1,149 @@
+{
+  "title": "IEM Cologne 2026 Stage 1",
+  "subtitle": "Round 4 complete · Round 5 decider watch",
+  "date": "2026-06-05",
+  "source_note": "Round 4 results locked · Round 5 2-2 BO3s next",
+  "badge": "SWISS ROUND 5 WATCH",
+  "footer": "Round 5: winners advance to Stage 2; losers are eliminated",
+  "summary": [
+    {
+      "value": "4",
+      "label": "locked / hit",
+      "tone": "good"
+    },
+    {
+      "value": "2",
+      "label": "alive",
+      "tone": "warn"
+    },
+    {
+      "value": "4",
+      "label": "slot broken",
+      "tone": "bad"
+    }
+  ],
+  "columns": [
+    {
+      "record": "3-x",
+      "title": "Stage 2",
+      "subtitle": "Advanced teams",
+      "tone": "good",
+      "cards": [
+        {
+          "team": "BetBoom",
+          "slot": "ADV",
+          "status": "Advanced at 3-0",
+          "tone": "good"
+        },
+        {
+          "team": "B8",
+          "slot": "ADV",
+          "status": "Advanced at 3-0",
+          "tone": "good"
+        },
+        {
+          "team": "M80",
+          "slot": "ADV",
+          "status": "Beat NRG",
+          "tone": "good"
+        },
+        {
+          "team": "MIBR",
+          "slot": "3-0",
+          "status": "Advanced, but 3-0 broken",
+          "tone": "bad"
+        },
+        {
+          "team": "GamerLegion",
+          "slot": "3-0",
+          "status": "Advanced, but 3-0 broken",
+          "tone": "bad"
+        }
+      ]
+    },
+    {
+      "record": "2-2",
+      "title": "Round 5 BO3",
+      "subtitle": "Winner advances",
+      "tone": "warn",
+      "cards": [
+        {
+          "team": "TYLOO",
+          "slot": "ADV",
+          "status": "vs Lynn Vision",
+          "tone": "warn"
+        },
+        {
+          "team": "BIG",
+          "slot": "ADV",
+          "status": "vs NRG",
+          "tone": "warn"
+        },
+        {
+          "team": "NRG",
+          "slot": "0-3",
+          "status": "0-3 broken; vs BIG",
+          "tone": "bad"
+        },
+        {
+          "team": "Liquid",
+          "slot": "-",
+          "status": "vs FlyQuest",
+          "tone": "muted"
+        },
+        {
+          "team": "FlyQuest",
+          "slot": "-",
+          "status": "vs Liquid",
+          "tone": "muted"
+        }
+      ]
+    },
+    {
+      "record": "1-3",
+      "title": "Eliminated",
+      "subtitle": "Round 4 exits",
+      "tone": "bad",
+      "cards": [
+        {
+          "team": "HEROIC",
+          "slot": "ADV",
+          "status": "Advance pick broken",
+          "tone": "bad"
+        },
+        {
+          "team": "Sharks",
+          "slot": "-",
+          "status": "Non-pick eliminated",
+          "tone": "muted"
+        },
+        {
+          "team": "THUNDER dOWNUNDER",
+          "slot": "-",
+          "status": "Non-pick eliminated",
+          "tone": "muted"
+        }
+      ]
+    },
+    {
+      "record": "0-3",
+      "title": "Eliminated",
+      "subtitle": "Day 2 exits",
+      "tone": "bad",
+      "cards": [
+        {
+          "team": "Gaimin Gladiators",
+          "slot": "0-3",
+          "status": "0-3 pick hit",
+          "tone": "good"
+        },
+        {
+          "team": "SINNERS",
+          "slot": "-",
+          "status": "Non-pick eliminated",
+          "tone": "muted"
+        }
+      ]
+    }
+  ]
+}
