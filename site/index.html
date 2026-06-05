@@ -3,21 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CS2 Major Intel</title>
+  <title>IEM Cologne Major 2026 Simulator</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <a class="skip-link" href="#app">跳到主要内容</a>
-  <header class="topbar">
-    <div class="brand"><span class="brand-mark">AI</span> CS2 Major Intel</div>
-    <nav aria-label="主导航">
-      <a href="#/">Overview</a>
-      <a href="#/stage/1">Stage 1</a>
-      <a href="#/stage/2">Stage 2</a>
-      <a href="#/stage/3">Stage 3</a>
-      <a href="#/ai">AI Desk</a>
-      <a href="#/model">Model Lab</a>
-    </nav>
+  <header class="topbar appbar">
+    <div class="game-tabs" aria-label="Game">
+      <button class="game-tab active" type="button">CS</button>
+      <button class="game-tab" type="button" disabled>R6</button>
+    </div>
+    <div class="brand">Majors.im</div>
+    <button class="event-select" type="button">
+      <span class="event-badge">CS2</span>
+      IEM Cologne Major 2026
+    </button>
+    <div class="appbar-actions" aria-label="Display actions">
+      <button type="button" title="Language">US</button>
+      <button type="button" title="Theme">◐</button>
+      <button type="button" title="Help">?</button>
+      <button type="button" title="Info">i</button>
+    </div>
   </header>
   <main id="app" tabindex="-1">
     <section class="loading">Loading command center data...</section>

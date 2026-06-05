@@ -1,9 +1,20 @@
 name: Deploy static site
 
 on:
-  schedule:
-    - cron: "0 18 * * *"
   workflow_dispatch:
+    inputs:
+      ai_update_notes:
+        description: "AI-led update notes for this publication"
+        required: false
+        default: ""
+      refresh_sources:
+        description: "Refresh external match sources before publishing"
+        required: false
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
   push:
     branches: [ main ]
     paths:
@@ -37,17 +48,20 @@ jobs:
       - name: Run browser logic tests
         run: node --test site/tests/*.test.mjs
       - name: Refresh completed match sources
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.refresh_sources == 'true' }}
         run: PYTHONPATH=src python scripts/update_site_data.py --repo-root . --output-dir data/cologne2026/site_updates
       - name: Export static site data
         run: PYTHONPATH=src python scripts/export_site_data.py --repo-root . --output-dir site/data
       - name: Generate AI articles
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.ai_update_notes != '' }}
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_BASE_URL: https://zhengdatech.com/openai/v1
           AI_MODEL: gpt-5.5
+          AI_UPDATE_NOTES: ${{ inputs.ai_update_notes }}
         run: PYTHONPATH=src python scripts/generate_ai_articles.py --data-dir site/data --output-dir site/data/ai
       - name: Persist successful static data snapshot
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.refresh_sources == 'true' }}
         run: |
           STATUS=$(python - <<'PY'
           import json

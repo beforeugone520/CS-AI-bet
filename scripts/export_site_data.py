@@ -142,7 +142,7 @@ def _empty_swiss_stage(stage_id: str, message: str) -> dict[str, Any]:
         "empty_state": {
             "title": "等待赛程生成",
             "message": message,
-            "next_update": "每天 02:00 BJT 自动检查更新",
+            "next_update": "手动 AI 更新时检查真实赛程",
         },
     }
 
@@ -157,7 +157,7 @@ def _empty_playoff_stage(stage_id: str, message: str) -> dict[str, Any]:
         "empty_state": {
             "title": "等待淘汰赛签表",
             "message": message,
-            "next_update": "每天 02:00 BJT 自动检查更新",
+            "next_update": "手动 AI 更新时检查真实签表",
         },
     }
 

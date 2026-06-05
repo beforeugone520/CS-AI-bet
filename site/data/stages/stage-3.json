@@ -7,7 +7,7 @@
   "champion_path": {},
   "empty_state": {
     "message": "Stage 3 bracket 尚未生成，等待 Stage 2 完赛与淘汰赛抽签。",
-    "next_update": "每天 02:00 BJT 自动检查更新",
+    "next_update": "手动 AI 更新时检查真实签表",
     "title": "等待淘汰赛签表"
   },
   "format": "playoff",

@@ -1,12 +1,11 @@
 export async function loadSiteData(route = "#/") {
-  const [latest, sourceStatus, pickem, articles] = await Promise.all([
+  const [latest, sourceStatus, pickem] = await Promise.all([
     getJson("./data/latest.json"),
     getJson("./data/system/source-status.json"),
-    getJson("./data/pickem/current.json"),
-    getJson("./data/ai/articles.json").catch(() => ({ articles: [], fallback_used: true }))
+    getJson("./data/pickem/current.json")
   ]);
   const stage = await getJson(`./data/stages/${stageIdFromRoute(route, latest.current_stage)}.json`);
-  return { latest, sourceStatus, pickem, articles, stage, route };
+  return { latest, sourceStatus, pickem, stage, route };
 }
 
 export async function loadStage(stageNumber) {

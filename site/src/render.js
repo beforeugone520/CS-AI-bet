@@ -1,24 +1,14 @@
 import { fixtureKey } from "./swiss.js";
 
 export function renderApp(root, data, handlers) {
-  if (data.route === "#/ai") {
-    root.innerHTML = `${renderStatusBar(data)}${renderAiArchive(data)}`;
-    return;
-  }
-  if (data.route === "#/model") {
-    root.innerHTML = `${renderStatusBar(data)}${renderModelLab(data)}`;
-    return;
-  }
   root.innerHTML = `
-    ${renderStatusBar(data)}
-    <section class="command-grid">
-      <div class="panel">
-        ${renderStageHead(data.stage)}
-        <div id="predictor"></div>
+    <section class="simulator-page">
+      <h1>IEM Cologne Major 2026 Simulator</h1>
+      <div class="update-strip">
+        <span>${escapeHtml(data.sourceStatus.visible_status || data.latest.source_status)}</span>
+        <span class="mono">Updated ${escapeHtml(data.latest.last_updated)}</span>
       </div>
-      <aside class="panel">
-        ${renderAiDesk(data)}
-      </aside>
+      <div id="predictor"></div>
     </section>
   `;
   renderPredictor(root.querySelector("#predictor"), data.stage, handlers, data.pickemRuntime);
@@ -74,77 +64,6 @@ export function renderStatusBar(data) {
   `;
 }
 
-export function renderAiDesk(data) {
-  const articles = data.articles.articles || [];
-  const runtime = data.pickemRuntime;
-  const fallback = Boolean(data.articles.fallback_used);
-  const runtimeHtml = runtime ? `
-    <div class="article-row">
-      <div>
-        <strong>Pick'em runtime</strong>
-        <p class="muted">${runtime.summary.locked} locked / ${runtime.summary.alive} alive / ${runtime.summary.broken} broken / ${runtime.summary.missing} missing</p>
-      </div>
-      <span class="mono muted">local</span>
-    </div>
-  ` : "";
-  return `
-    <div class="panel-head"><h2>AI Desk</h2><span class="mono muted">${fallback ? "template fallback" : `${articles.length} articles`}</span></div>
-    ${fallback ? `<div class="truth-note">AI API 未生成正式内容；以下是基于静态数据的模板提示，不作为新闻稿。</div>` : ""}
-    ${runtimeHtml}
-    ${articles.map((article) => `
-      <article class="article-row">
-        <div>
-          <strong>${escapeHtml(article.title)}</strong>
-          <p class="muted">${escapeHtml(article.summary)}</p>
-        </div>
-        <span class="mono muted">${escapeHtml(article.type)}</span>
-      </article>
-    `).join("")}
-  `;
-}
-
-function renderAiArchive(data) {
-  const articles = data.articles.articles || [];
-  const fallback = Boolean(data.articles.fallback_used);
-  return `
-    <section class="panel page-grid">
-      <div class="panel-head">
-        <div><h1>AI Desk</h1><p class="muted">${fallback ? "Template fallback from static data. Waiting for API-generated analysis." : "Generated analysis from static site data."}</p></div>
-        <span class="mono muted">${fallback ? "template fallback" : "generated"}</span>
-      </div>
-      ${fallback ? `<div class="truth-note">当前内容不是实时新闻，也不是模型正式输出；它只用于说明 Pick'em 状态。</div>` : ""}
-      ${articles.map((article) => `
-        <article>
-          <div class="article-row">
-            <div><strong>${escapeHtml(article.title)}</strong><p class="muted">${escapeHtml(article.summary)}</p></div>
-            <span class="mono muted">${escapeHtml(article.stage)} / ${escapeHtml(article.type)}</span>
-          </div>
-          <div class="article-body">${escapeHtml(article.body)}</div>
-        </article>
-      `).join("")}
-    </section>
-  `;
-}
-
-function renderModelLab(data) {
-  const fallback = data.sourceStatus.fallback || {};
-  return `
-    <section class="panel">
-      <div class="panel-head">
-        <div><h1>Model Lab</h1><p class="muted">Static deployment, update schedule, source status, and forecast limits.</p></div>
-        <span class="mono muted">02:00 BJT</span>
-      </div>
-      <div class="metric-row">
-        <div class="metric"><strong>${escapeHtml(data.latest.current_stage)}</strong><span class="muted">current stage</span></div>
-        <div class="metric"><strong>${escapeHtml(data.latest.source_status)}</strong><span class="muted">source status</span></div>
-        <div class="metric"><strong>${escapeHtml(fallback.status || "unknown")}</strong><span class="muted">5E fallback</span></div>
-        <div class="metric"><strong>${escapeHtml(data.articles.fallback_used ? "template" : "api")}</strong><span class="muted">AI mode</span></div>
-      </div>
-      <div class="article-body">Frontend reads static JSON only. GitHub Actions refreshes source data at 02:00 BJT, generates API articles when a secret is configured, and publishes the gh-pages branch. Unknown future stages stay locked until real data exists.</div>
-    </section>
-  `;
-}
-
 function renderStageHead(stage) {
   return `<div class="panel-head"><div><h1>${escapeHtml(stage.name || stage.stage_id)}</h1><p class="muted">${escapeHtml(stage.format)} · ${escapeHtml(stage.status)}</p></div></div>`;
 }
@@ -153,12 +72,26 @@ function renderSwissWorkspace(stage, runtime) {
   const simulation = stage.simulation || { history: [], selected_by_key: {}, groups: null };
   const groups = simulation.groups || groupFromRows(stage.standings || []);
   const fixtureIndexByKey = fixtureIndexes(stage.fixtures || []);
+  const boardRounds = roundsForBoard(stage);
   return `
     <div class="matchup-shell">
+      <div class="stage-control-row">
+        <div class="stage-tabs" aria-label="Stage controls">
+          <button class="stage-tab active" type="button">Stage 1</button>
+          <button class="stage-tab" type="button" disabled>Stage 2</button>
+          <button class="advance-button" type="button" disabled>Advance →</button>
+        </div>
+        <div class="view-switcher" aria-label="View switcher">
+          <button class="active" type="button" title="Simple View">S</button>
+          <button type="button" title="Minimal View">M</button>
+          <button type="button" title="Bracket View">B</button>
+          <button type="button" title="Classic View">C</button>
+        </div>
+      </div>
       <div class="matchup-header">
         <div>
           <h2>Stage 1 Swiss Matchups</h2>
-          <p>Pick winners in unlocked Round 5 matches. Completed rounds are locked real results.</p>
+          <p>Locked cards are real results. Pick unlocked Round 5 winners to preview Pick'em survival.</p>
         </div>
         <div class="matchup-controls" aria-label="Swiss controls">
           <span class="mono">${escapeHtml(stage.stage_id)} · ${simulation.history.length} local picks</span>
@@ -173,9 +106,11 @@ function renderSwissWorkspace(stage, runtime) {
         <span><strong>${groups.eliminated.length}</strong> eliminated</span>
       </div>
       <section class="swiss-round-board" aria-label="Swiss round board">
-        ${roundsForBoard(stage).map((round) => renderRoundColumn(round, simulation.selected_by_key, fixtureIndexByKey)).join("")}
+        ${boardRounds.map((round, index) => `
+          ${renderRoundColumn(round, simulation.selected_by_key, fixtureIndexByKey)}
+          ${index < boardRounds.length - 1 ? renderRoundFlowArrow(round.round, boardRounds[index + 1].round) : ""}
+        `).join("")}
       </section>
-      ${renderSimulationHistory(simulation.history)}
       ${renderPickemImpact(runtime)}
       <section class="standings-board">
         ${renderRecordGroup("Advanced", groups.advanced, "status-good")}
@@ -210,34 +145,44 @@ function renderRoundColumn(round, selectedByKey, fixtureIndexByKey) {
   `;
 }
 
+function renderRoundFlowArrow(fromRound, toRound) {
+  return `
+    <div class="round-flow-arrow" aria-hidden="true" title="Round ${escapeHtml(fromRound)} to Round ${escapeHtml(toRound)}">
+      <span>→</span>
+    </div>
+  `;
+}
+
 function renderSwissMatchCard(match, options) {
   const selection = options.selection || null;
   const selectedWinner = selection?.winner || (options.locked ? match.winner : null);
   const team1Selected = selectedWinner === match.team1;
   const team2Selected = selectedWinner === match.team2;
   const className = options.locked ? "locked-match" : "fixture-match";
-  const meta = options.locked ? `${match.match_score || ""}` : `${match.team1_record || ""} / ${match.team2_record || ""}`;
+  const status = matchStatus(match, options, selectedWinner);
   return `
-    <div class="swiss-match-card ${className} ${selectedWinner ? "has-winner" : ""}">
-      ${renderSwissTeamButton(match.team1, team1Selected, options, match)}
-      ${renderSwissTeamButton(match.team2, team2Selected, options, match)}
+    <div class="swiss-match-card ${className} ${selectedWinner ? "has-winner" : ""} ${status.className}">
+      ${status.label ? `<div class="match-ribbon"><span>${escapeHtml(status.label)}</span><strong>${escapeHtml(status.record)}</strong></div>` : ""}
+      <div class="match-card-body">
+        ${renderSwissTeamButton(match.team1, team1Selected, options, match, "left")}
+        <div class="match-score">${escapeHtml(displayScore(match, options, selectedWinner))}</div>
+        ${renderSwissTeamButton(match.team2, team2Selected, options, match, "right")}
+      </div>
       <div class="match-card-meta">
-        <span>${escapeHtml(options.locked ? "locked result" : match.note || "pick winner")}</span>
-        <span class="mono">${escapeHtml(meta)}</span>
+        <span>${escapeHtml(options.locked ? "locked" : "pick")}</span>
+        <span class="mono">${escapeHtml(matchMeta(match, options))}</span>
       </div>
     </div>
   `;
 }
 
-function renderSwissTeamButton(team, selected, options, match) {
+function renderSwissTeamButton(team, selected, options, match, side) {
+  const body = `<span class="team-mark">${escapeHtml(teamInitials(team))}</span><span class="team-name">${escapeHtml(team)}</span>${selected ? `<strong>${options.locked ? "W" : "Pick"}</strong>` : ""}`;
   if (options.locked || options.index === undefined) {
-    return `<div class="team-slot ${selected ? "winner-slot" : "loser-slot"}"><span>${escapeHtml(team)}</span>${selected ? `<strong>W</strong>` : ""}</div>`;
+    return `<div class="team-slot ${side}-slot ${selected ? "winner-slot" : "loser-slot"}">${body}</div>`;
   }
   return `
-    <button class="team-slot pick-slot ${selected ? "winner-slot" : ""}" data-index="${options.index}" data-winner="${escapeHtml(team)}">
-      <span>${escapeHtml(team)}</span>
-      ${selected ? `<strong>Pick</strong>` : ""}
-    </button>
+    <button class="team-slot ${side}-slot pick-slot ${selected ? "winner-slot" : ""}" data-index="${options.index}" data-winner="${escapeHtml(team)}">${body}</button>
   `;
 }
 
@@ -274,14 +219,20 @@ function renderSimulationHistory(history) {
 }
 
 function renderPickemImpact(runtime) {
-  if (!runtime) return "";
+  if (!runtime) {
+    return `
+      <section class="pickem-dock">
+        <div class="section-label"><h3>Pick'em Impact</h3><span class="muted">Waiting for pick data.</span></div>
+      </section>
+    `;
+  }
   return `
-    <section class="swiss-section">
+    <section class="pickem-dock">
       <div class="section-label">
         <h3>Pick'em Impact</h3>
         <span class="muted">${runtime.summary.locked} locked / ${runtime.summary.alive} alive / ${runtime.summary.broken} broken / ${runtime.summary.missing} missing</span>
       </div>
-      <div class="pickem-grid">
+      <div class="pickem-slots">
         ${runtime.rows.map((row) => `
           <div class="pickem-chip ${statusClass(row.status)}">
             <strong>${escapeHtml(row.team)}</strong>
@@ -379,6 +330,50 @@ function roundLabel(round) {
     "5": "2-2 deciders"
   };
   return labels[number] || "Swiss";
+}
+
+function displayScore(match, options, selectedWinner) {
+  if (!options.locked) {
+    return selectedWinner ? "3 : 2" : "vs";
+  }
+  const mapScores = String(match.map_scores || "");
+  const score = mapScores && !mapScores.includes(";") ? mapScores : String(match.match_score || "");
+  return score.replace(/\s*-\s*/g, " : ");
+}
+
+function matchMeta(match, options) {
+  if (options.locked) {
+    return String(match.note || match.maps || "");
+  }
+  return [match.team1_record, match.team2_record].filter(Boolean).join(" / ");
+}
+
+function matchStatus(match, options, selectedWinner) {
+  const text = String(match.note || match.swiss_match_type || "").toLowerCase();
+  if (!options.locked && String(match.swiss_round || match.round) === "5") {
+    return {
+      className: selectedWinner ? "advance-card" : "",
+      label: selectedWinner ? "ADVANCE" : "",
+      record: selectedWinner ? "3:2" : ""
+    };
+  }
+  if (text.includes("elimination")) {
+    return { className: "elimination-card", label: "ELIMINATED", record: "1:3" };
+  }
+  if (text.includes("advancement")) {
+    return { className: "advance-card", label: "ADVANCE", record: "3:1" };
+  }
+  return { className: "", label: "", record: "" };
+}
+
+function teamInitials(team) {
+  return String(team || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
 }
 
 function resultKey(result) {

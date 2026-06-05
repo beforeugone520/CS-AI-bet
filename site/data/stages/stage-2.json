@@ -1,7 +1,7 @@
 {
   "empty_state": {
     "message": "Stage 2 尚未开赛，等待 Stage 1 最终晋级队伍。",
-    "next_update": "每天 02:00 BJT 自动检查更新",
+    "next_update": "手动 AI 更新时检查真实赛程",
     "title": "等待赛程生成"
   },
   "fixtures": [],

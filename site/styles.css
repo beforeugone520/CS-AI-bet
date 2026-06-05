@@ -1,16 +1,17 @@
 :root {
   color-scheme: dark;
-  --bg: #05070b;
-  --surface: #0b101a;
-  --surface-2: #111827;
-  --surface-3: #162032;
-  --line: rgba(169, 184, 211, 0.2);
-  --text: #eef4ff;
-  --muted: #94a3b8;
-  --blue: #3b82f6;
-  --gold: #d97706;
-  --green: #22c55e;
-  --red: #ef4444;
+  --bg: #081122;
+  --surface: #121c31;
+  --surface-2: #17243b;
+  --surface-3: #0b1426;
+  --line: rgba(145, 164, 197, 0.24);
+  --text: #f4f7fb;
+  --muted: #a2aec4;
+  --blue: #1f86ff;
+  --cyan: #00d8ff;
+  --gold: #f59e0b;
+  --green: #1ee56d;
+  --red: #ff3d55;
   --amber: #f59e0b;
 }
 
@@ -21,7 +22,8 @@
 body {
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(59, 130, 246, 0.12), transparent 260px),
+    radial-gradient(circle at 50% 0, rgba(31, 134, 255, 0.18), transparent 360px),
+    linear-gradient(180deg, #101b31 0, #081122 48%, #071020 100%),
     var(--bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -41,18 +43,20 @@ body {
   top: 12px;
 }
 
-.topbar {
-  min-height: 64px;
+.topbar,
+.appbar {
+  min-height: 74px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 0 24px;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 112px;
   border-bottom: 1px solid var(--line);
-  background: rgba(5, 7, 11, 0.9);
+  background: rgba(18, 28, 49, 0.9);
   position: sticky;
   top: 0;
   z-index: 20;
+  backdrop-filter: blur(14px);
 }
 
 .brand {
@@ -60,16 +64,69 @@ body {
   align-items: center;
   gap: 10px;
   font-weight: 800;
+  font-size: 20px;
 }
 
-.brand-mark {
-  width: 30px;
-  height: 30px;
+.game-tabs {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.game-tab,
+.event-select,
+.appbar-actions button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+}
+
+.game-tab {
+  min-width: 46px;
+  border: 0;
+}
+
+.game-tab.active {
+  background: var(--blue);
+}
+
+.game-tab:disabled {
+  color: var(--muted);
+}
+
+.event-select {
+  width: min(790px, 52vw);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.event-badge {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--blue), var(--gold));
-  color: #fff;
-  font: 800 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-width: 30px;
+  height: 24px;
+  border-radius: 3px;
+  background: rgba(31, 134, 255, 0.22);
+  color: #dff7ff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.appbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.appbar-actions button {
+  width: 42px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 nav {
@@ -90,9 +147,30 @@ nav a:focus {
 }
 
 #app {
-  width: min(1280px, calc(100% - 32px));
+  width: 100%;
   margin: 0 auto;
-  padding: 24px 0 56px;
+  padding: 16px 16px 168px;
+}
+
+.simulator-page {
+  width: min(1320px, 100%);
+  margin: 0 auto;
+}
+
+.simulator-page > h1 {
+  margin: 8px 0 20px;
+  text-align: center;
+  font-size: 31px;
+  font-weight: 800;
+}
+
+.update-strip {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .command-grid {
@@ -213,9 +291,48 @@ nav a:focus {
 }
 
 .matchup-shell {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 160px),
-    rgba(11, 16, 26, 0.58);
+  background: transparent;
+}
+
+.stage-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 0 0 24px;
+}
+
+.stage-tabs,
+.view-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-tab,
+.advance-button,
+.view-switcher button {
+  min-height: 34px;
+  border: 1px solid rgba(145, 164, 197, 0.32);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 0 13px;
+  cursor: pointer;
+}
+
+.stage-tab.active,
+.view-switcher .active,
+.advance-button {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.stage-tab:disabled,
+.advance-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .matchup-header {
@@ -223,8 +340,10 @@ nav a:focus {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px;
-  border-bottom: 1px solid var(--line);
+  max-width: 920px;
+  margin: 0 auto 18px;
+  padding: 0;
+  border-bottom: 0;
 }
 
 .matchup-header h2,
@@ -233,7 +352,7 @@ nav a:focus {
 }
 
 .matchup-header h2 {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .matchup-header p {
@@ -253,9 +372,7 @@ nav a:focus {
 }
 
 .matchup-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-bottom: 1px solid var(--line);
+  display: none;
 }
 
 .matchup-summary span {
@@ -278,37 +395,54 @@ nav a:focus {
 }
 
 .swiss-round-board {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(214px, 1fr);
-  gap: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   overflow-x: auto;
-  padding: 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 12px 4px 28px;
+  border-bottom: 0;
   scroll-snap-type: x proximity;
+  scrollbar-color: rgba(0, 216, 255, 0.5) rgba(255, 255, 255, 0.04);
 }
 
 .round-column {
-  min-width: 214px;
-  border: 1px solid var(--line);
-  background: rgba(5, 7, 11, 0.62);
+  flex: 0 0 210px;
+  min-width: 210px;
+  border: 0;
+  background: transparent;
   scroll-snap-align: start;
 }
 
+.round-flow-arrow {
+  flex: 0 0 14px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  color: rgba(0, 216, 255, 0.72);
+  font-size: 22px;
+  text-shadow: 0 0 12px rgba(0, 216, 255, 0.8);
+  pointer-events: none;
+}
+
 .round-heading {
-  min-height: 58px;
+  min-height: 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
+  padding: 0 0 8px;
+  border-bottom: 0;
+  text-align: center;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .round-heading h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .round-heading span {
@@ -318,42 +452,101 @@ nav a:focus {
 
 .round-stack {
   display: grid;
-  gap: 8px;
-  padding: 8px;
+  gap: 7px;
+  padding: 0;
 }
 
 .swiss-match-card {
   display: grid;
-  gap: 1px;
-  border: 1px solid rgba(169, 184, 211, 0.18);
-  background: rgba(255, 255, 255, 0.04);
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(0, 216, 255, 0.8);
+  border-radius: 7px;
+  background: rgba(10, 20, 38, 0.92);
+  box-shadow: 0 0 16px rgba(0, 216, 255, 0.28);
+  overflow: hidden;
+}
+
+.match-ribbon {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid currentColor;
+}
+
+.match-ribbon strong {
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.match-card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  min-height: 44px;
 }
 
 .team-slot {
-  min-height: 38px;
+  min-width: 0;
+  min-height: 44px;
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.055);
+  justify-content: center;
+  gap: 5px;
+  padding: 5px;
+  background: rgba(71, 20, 46, 0.82);
   color: var(--text);
-  text-align: left;
+  text-align: center;
+  overflow: hidden;
 }
 
-.team-slot span {
+.team-name {
+  max-width: 50px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.team-mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .team-slot strong {
   flex: none;
   color: var(--green);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.match-score {
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  background: rgba(4, 11, 24, 0.98);
+  color: var(--cyan);
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .pick-slot {
@@ -368,8 +561,8 @@ nav a:focus {
 }
 
 .winner-slot {
-  background: rgba(34, 197, 94, 0.18);
-  color: #f0fdf4;
+  background: linear-gradient(90deg, rgba(0, 216, 255, 0.36), rgba(0, 216, 255, 0.08));
+  color: #effcff;
 }
 
 .loser-slot {
@@ -377,22 +570,31 @@ nav a:focus {
 }
 
 .locked-match {
-  border-color: rgba(34, 197, 94, 0.28);
+  border-color: rgba(0, 216, 255, 0.9);
 }
 
 .fixture-match {
-  border-color: rgba(245, 158, 11, 0.35);
+  border-color: rgba(0, 216, 255, 0.9);
+}
+
+.elimination-card {
+  border-color: rgba(255, 61, 85, 0.95);
+  box-shadow: 0 0 16px rgba(255, 61, 85, 0.3);
+}
+
+.elimination-card .match-ribbon {
+  color: var(--red);
 }
 
 .match-card-meta {
-  min-height: 24px;
+  min-height: 19px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px 8px;
+  padding: 2px 7px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .empty-round {
@@ -462,36 +664,71 @@ nav a:focus {
   border-left: 1px solid var(--line);
 }
 
-.pickem-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0 16px 16px;
+.pickem-dock {
+  width: min(612px, calc(100vw - 32px));
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  z-index: 18;
+  transform: translateX(-50%);
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(23, 36, 59, 0.92);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.42), 0 0 20px rgba(0, 216, 255, 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.pickem-slots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 14px 12px;
 }
 
 .pickem-chip {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.035);
-  padding: 10px 12px;
+  width: 46px;
+  min-height: 60px;
+  border: 0;
+  background: transparent;
+  padding: 0;
   display: grid;
-  gap: 3px;
+  place-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.pickem-chip strong {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--blue);
+  border-radius: 999px;
+  background: rgba(31, 134, 255, 0.2);
+  overflow: hidden;
+  text-indent: -999px;
 }
 
 .pickem-chip span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 9px;
+  line-height: 1.1;
 }
 
-.pickem-locked {
-  border-color: rgba(34, 197, 94, 0.55);
+.pickem-locked strong {
+  border-color: var(--green);
+  background: rgba(30, 229, 109, 0.23);
 }
 
-.pickem-alive {
-  border-color: rgba(245, 158, 11, 0.6);
+.pickem-alive strong {
+  border-color: var(--blue);
 }
 
-.pickem-broken {
-  border-color: rgba(239, 68, 68, 0.55);
+.pickem-broken strong {
+  border-color: var(--red);
+  background: rgba(255, 61, 85, 0.2);
 }
 
 .locked-results {
@@ -538,6 +775,54 @@ nav a:focus {
     padding: 14px 16px;
   }
 
+  .event-select {
+    width: 100%;
+  }
+
+  .appbar-actions {
+    display: none;
+  }
+
+  #app {
+    padding: 20px 16px 44px;
+  }
+
+  .simulator-page > h1 {
+    margin: 0 0 24px;
+    font-size: 31px;
+    line-height: 1.18;
+  }
+
+  .update-strip {
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .stage-control-row {
+    justify-content: flex-start;
+    gap: 14px;
+    overflow-x: auto;
+    margin: 0 -16px 22px;
+    padding: 0 16px 10px;
+    scrollbar-width: none;
+  }
+
+  .stage-control-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stage-tabs,
+  .view-switcher {
+    flex: none;
+  }
+
+  .stage-tab,
+  .advance-button,
+  .view-switcher button {
+    flex: none;
+    min-width: 42px;
+  }
+
   .team-row,
   .match-row,
   .article-row,
@@ -564,7 +849,18 @@ nav a:focus {
   }
 
   .swiss-round-board {
-    grid-auto-columns: minmax(230px, 82vw);
+    justify-content: flex-start;
+    margin: 0 -16px;
+    padding: 12px 16px 24px;
+  }
+
+  .round-column {
+    flex-basis: 210px;
+    min-width: 210px;
+  }
+
+  .round-flow-arrow {
+    min-height: 260px;
   }
 
   .record-group + .record-group {
@@ -579,5 +875,12 @@ nav a:focus {
   .section-label {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .pickem-dock {
+    position: static;
+    width: 100%;
+    transform: none;
+    margin: 12px 0 20px;
   }
 }

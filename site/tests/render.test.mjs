@@ -79,6 +79,12 @@ test("renderPredictor renders Swiss rounds as a horizontal round board", () => {
   renderPredictor(root, stage, handlers(), null);
 
   assert.match(root.innerHTML, /swiss-round-board/);
+  assert.match(root.innerHTML, /round-flow-arrow/);
+  assert.match(root.innerHTML, /stage-control-row/);
+  assert.match(root.innerHTML, /view-switcher/);
+  assert.match(root.innerHTML, /pickem-dock/);
+  assert.match(root.innerHTML, /team-mark/);
+  assert.match(root.innerHTML, /match-score/);
   assert.match(root.innerHTML, /Round 1/);
   assert.match(root.innerHTML, /Round 5/);
   assert.match(root.innerHTML, /locked-match/);

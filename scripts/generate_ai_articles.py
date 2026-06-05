@@ -23,9 +23,10 @@ def generate_ai_articles(
     api_key: str | None,
     base_url: str = DEFAULT_BASE_URL,
     model: str = DEFAULT_MODEL,
+    update_notes: str | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
-    summary = _load_summary(data_dir)
+    summary = _load_summary(data_dir, update_notes=update_notes)
     fallback_used = True
     articles = template_articles(summary)
     if api_key:
@@ -42,6 +43,7 @@ def generate_ai_articles(
         "model": model if not fallback_used else "template-fallback",
         "fallback_used": fallback_used,
         "source_data_version": summary["data_version"],
+        "update_notes": summary["update_notes"],
         "articles": articles,
     }
     headlines = {
@@ -70,7 +72,10 @@ def build_ai_request(model: str, data_summary: dict[str, Any]) -> dict[str, Any]
         "messages": [
             {
                 "role": "system",
-                "content": "你是 CS2 电竞数据编辑。只根据用户提供的数据写简短中文分析，不夸大投注价值。",
+                "content": (
+                    "你是 CS2 电竞数据编辑。只根据用户提供的 IEM Cologne Major 2026 数据和更新备注"
+                    "写简短中文分析，不引入其他赛事，不夸大投注价值。输出 JSON。"
+                ),
             },
             {
                 "role": "user",
@@ -136,7 +141,7 @@ def _normalize_article(article: dict[str, Any], data_summary: dict[str, Any]) ->
     }
 
 
-def _load_summary(data_dir: Path) -> dict[str, Any]:
+def _load_summary(data_dir: Path, update_notes: str | None = None) -> dict[str, Any]:
     latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))
     pickem = json.loads((data_dir / "pickem" / "current.json").read_text(encoding="utf-8"))
     source_status = json.loads((data_dir / "system" / "source-status.json").read_text(encoding="utf-8"))
@@ -149,7 +154,13 @@ def _load_summary(data_dir: Path) -> dict[str, Any]:
         "locked_picks": pickem["locked_picks"],
         "alive_picks": pickem["alive_picks"],
         "broken_picks": pickem["broken_picks"],
+        "update_notes": _normalize_update_notes(update_notes),
     }
+
+
+def _normalize_update_notes(update_notes: str | None) -> str:
+    normalized = " ".join((update_notes or "").split())
+    return normalized[:1200]
 
 
 def _now() -> str:
@@ -169,6 +180,7 @@ def main() -> None:
         api_key=os.environ.get("AI_API_KEY"),
         base_url=args.base_url,
         model=args.model,
+        update_notes=os.environ.get("AI_UPDATE_NOTES"),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
 
