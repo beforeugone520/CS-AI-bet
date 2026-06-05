@@ -36,3 +36,8 @@ test("summarizePickem counts statuses", () => {
 
   assert.deepEqual(summarizePickem(rows), { locked: 2, alive: 1, broken: 1, missing: 0 });
 });
+
+test("summarizePickem includes missing status when record is absent", () => {
+  const rows = classifyPickem({ picks: [{ category: "advance", team: "Unknown" }] }, {});
+  assert.deepEqual(summarizePickem(rows), { locked: 0, alive: 0, broken: 0, missing: 1 });
+});

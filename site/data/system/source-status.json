@@ -9,10 +9,10 @@
     "name": "5E",
     "status": "not_used"
   },
-  "generated_at": "2026-06-05T03:15:19Z",
+  "generated_at": "2026-06-05T03:29:21Z",
   "primary": {
     "name": "repository-source-inputs",
-    "status": "success"
+    "status": "primary_success"
   },
   "visible_status": "主来源已更新"
 }
