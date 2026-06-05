@@ -243,6 +243,28 @@ PYTHONPATH=src python3 -m cs2pickem.cli merge-odds \
 | `final_fused_pickem_2026-06-01.json` / `final_fused_pickem_table_2026-06-01.csv` | 专家/市场/模型最终融合结果；保留 `raw_fused_score / player_availability_multiplier / status_adjusted_score` 和候选池 scoreboard |
 | `forecast_without_market_odds_2026-06-01.json` / `pickem_without_market_odds_2026-06-01.json` | 无市场赔率备份，便于对比 |
 
+## 静态网站数据导出
+
+GitHub Pages 站点只读取 `site/data/*.json`。用下面命令从已复核的赛事数据生成静态 JSON：
+
+```bash
+PYTHONPATH=src python3 scripts/update_site_data.py \
+  --repo-root . \
+  --output-dir data/cologne2026/site_updates \
+  --disable-primary \
+  --disable-fivee
+
+PYTHONPATH=src python3 scripts/export_site_data.py \
+  --repo-root . \
+  --output-dir site/data
+
+PYTHONPATH=src python3 scripts/generate_ai_articles.py \
+  --data-dir site/data \
+  --output-dir site/data/ai
+```
+
+`update_site_data.py` 在 GitHub Actions 定时任务中会启用主来源和 5E fallback；成功生成的 `data/cologne2026/site_updates` 与 `site/data` 会提交回仓库，作为下一次失败时的有效缓存。本地文档命令使用 `--disable-primary --disable-fivee` 方便离线验证。`generate_ai_articles.py` 在 `AI_API_KEY` 存在时调用 OpenAI-compatible API；没有 key 或 API 失败时写入模板 fallback 文章。
+
 ## 回测与诊断
 
 回测拆成三层，避免把“单场胜负预测”“Pick'em 槽位中途状态”和“最终 Pick'em 命中”混在一起。

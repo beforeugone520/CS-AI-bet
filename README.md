@@ -149,6 +149,23 @@ Stage 1 全部结束前，只做 checkpoint 复盘，不提前计算最终 Pick'
 
 </div>
 
+## 静态网站部署
+
+`site/` 是 GitHub Pages 静态站入口。它展示当前 Stage 指挥中心、Swiss/Bracket 推演、AI Desk 文章和数据来源状态。
+
+本地预览：
+
+```bash
+PYTHONPATH=src python3 scripts/update_site_data.py --repo-root . --output-dir data/cologne2026/site_updates --disable-primary --disable-fivee
+PYTHONPATH=src python3 scripts/export_site_data.py --repo-root . --output-dir site/data
+PYTHONPATH=src python3 scripts/generate_ai_articles.py --data-dir site/data --output-dir site/data/ai
+python3 -m http.server 8000 --directory site
+```
+
+然后打开 `http://localhost:8000`。
+
+自动部署使用 `.github/workflows/pages.yml`，每天北京时间 02:00 更新一次，也可以在 GitHub Actions 手动触发。成功更新的数据快照会提交回仓库，用于下一次源失败时保留上一次有效页面。AI API key 必须放在 GitHub Secrets 的 `AI_API_KEY`，不要写入仓库。
+
 ## 技术二级菜单
 
 | 想看什么 | 入口 |
