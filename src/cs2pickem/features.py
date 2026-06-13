@@ -9,6 +9,14 @@ from .maps import DEFAULT_MAP_POOL
 
 MAP_FEATURE_NAMES = [f"map_{name}" for name in DEFAULT_MAP_POOL]
 
+# Glicko-2 pre-match neutral fallbacks (cold start), mirroring the reliability.py
+# injection defaults (mu0=1500, phi0=350). When the Glicko columns are not injected
+# the diff is a neutral 0 and the uncertainty tape is two cold-start RDs (350+350=700),
+# so an un-injected row never silently looks like a confident or low-uncertainty match.
+GLICKO_NEUTRAL_DIFF = 0.0
+GLICKO_NEUTRAL_RD = 350.0
+GLICKO_NEUTRAL_RD_SUM = GLICKO_NEUTRAL_RD * 2.0
+
 
 @dataclass
 class Dataset:
@@ -68,6 +76,13 @@ class FeatureBuilder:
         # Genuinely wired (reliability rolling refit) -> stays in the default pool.
         "bt_strength_diff",
         "bt_map_strength_diff",
+        # Glicko-2 pre-match rating gap (injected by reliability.py, leakage-free
+        # period-batched snapshot). Pure team1-minus-team2 diff -> antisymmetric,
+        # neutral (0) default when absent. It is a strong directional rating signal
+        # wired end-to-end the same way as the BT diffs, so it competes in the
+        # selector by default. The symmetric uncertainty tape (glicko_rd_sum) is a
+        # weak-prior magnitude and lives in UNVERIFIED_FEATURE_NAMES instead.
+        "glicko_diff",
         # Ban/Pick gate: bp_applied is a zero-cost has-intel indicator that is
         # written by merge_bp_into_fixtures, so it carries real (if sparse) signal.
         "bp_applied",
@@ -101,6 +116,14 @@ class FeatureBuilder:
     #     (devig_z) None under the default multiplicative de-vig -> constant 0.
     #   - bp_confidence / bp_total_* / bp_ban_overlap: sparse magnitude columns with
     #     an unproven win/loss prior; high false-correlation risk on small samples.
+    #   - glicko_rd_sum: the symmetric Glicko-2 uncertainty tape (team1_rd_pre +
+    #     team2_rd_pre). It IS wired end-to-end alongside glicko_diff, but as a
+    #     standalone win/loss feature its prior is unproven: a large RD-sum mostly
+    #     flags "both teams are cold-start / inactive" (a confounder, not a clean
+    #     directional win signal), so forcing it into the default pool would dilute
+    #     in-sample selection. It is gated OFF until WF-2F A/B-adjudicates it,
+    #     mirroring how the strong gate (glicko_diff / bp_applied) competes by default
+    #     while the weak-prior magnitude lives here.
     UNVERIFIED_FEATURE_NAMES = (
         "event_grade_sum",
         "team_event_grade_sum",
@@ -111,6 +134,7 @@ class FeatureBuilder:
         "bp_total_bans",
         "bp_ban_overlap",
         "bp_total_picks",
+        "glicko_rd_sum",
     )
 
     # Backward-compatible full ordering (kept stable for any caller that reads the
@@ -214,6 +238,13 @@ class FeatureBuilder:
             # Bradley-Terry diffs: pure antisymmetric, neutral default when not injected.
             "bt_strength_diff": _num(row, "bt_strength_diff", 0.0),
             "bt_map_strength_diff": _num(row, "bt_map_strength_diff", 0.0),
+            # Glicko-2 pre-match signals. glicko_diff is antisymmetric (neutral 0 when
+            # not injected). glicko_rd_sum is the symmetric uncertainty tape; its neutral
+            # default is two cold-start RDs (350+350=700) so an un-injected row reads as
+            # maximally uncertain rather than spuriously confident. Prefer the injected
+            # column, else reconstruct from the pre snapshots, else fall back to neutral.
+            "glicko_diff": _glicko_diff(row),
+            "glicko_rd_sum": _glicko_rd_sum(row),
             # 5E magnitude (symmetric sum = swap-invariant) + directional schedule diff.
             # event_grade is a single match-level scalar (no team orientation), so it is
             # intrinsically swap-invariant; exposed under a "_sum" name for consistency.
@@ -272,6 +303,39 @@ def _num(row: Dict[str, Any], key: str, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return float(default)
+
+
+def _glicko_diff(row: Dict[str, Any]) -> float:
+    """Antisymmetric pre-match Glicko-2 rating gap (team1 - team2).
+
+    Prefers the injected ``glicko_diff`` column; if only the pre snapshots are present
+    it reconstructs the diff from them; otherwise falls back to a neutral 0. Keeping
+    reconstruction symmetric with the snapshots guarantees the team-swap antisymmetry
+    contract holds whichever upstream wiring produced the row.
+    """
+    if row.get("glicko_diff") not in (None, ""):
+        return _num(row, "glicko_diff", GLICKO_NEUTRAL_DIFF)
+    pre1 = row.get("team1_glicko_pre")
+    pre2 = row.get("team2_glicko_pre")
+    if pre1 not in (None, "") and pre2 not in (None, ""):
+        return _num(row, "team1_glicko_pre", 0.0) - _num(row, "team2_glicko_pre", 0.0)
+    return GLICKO_NEUTRAL_DIFF
+
+
+def _glicko_rd_sum(row: Dict[str, Any]) -> float:
+    """Symmetric (swap-invariant) Glicko-2 uncertainty tape (rd1 + rd2).
+
+    Prefers the injected ``glicko_rd_sum`` column; reconstructs from the pre RD
+    snapshots when only those are present; otherwise falls back to two cold-start RDs
+    (700) so an un-injected row reads as maximally uncertain instead of confident.
+    """
+    if row.get("glicko_rd_sum") not in (None, ""):
+        return _num(row, "glicko_rd_sum", GLICKO_NEUTRAL_RD_SUM)
+    rd1 = row.get("team1_rd_pre")
+    rd2 = row.get("team2_rd_pre")
+    if rd1 not in (None, "") and rd2 not in (None, ""):
+        return _num(row, "team1_rd_pre", GLICKO_NEUTRAL_RD) + _num(row, "team2_rd_pre", GLICKO_NEUTRAL_RD)
+    return GLICKO_NEUTRAL_RD_SUM
 
 
 def _implied_market_pair(odds_team1: float, odds_team2: float) -> tuple[float, float]:

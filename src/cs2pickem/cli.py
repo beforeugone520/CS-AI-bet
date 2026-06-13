@@ -68,6 +68,7 @@ def main() -> int:
     tune_parser.add_argument("--market-weight", type=float, default=0.30, help="market probability weight for historical model+market fusion diagnostics")
     tune_parser.add_argument("--probability-objective", default="log_loss", choices=["accuracy", "log_loss", "brier_score", "ece"], help="objective used to choose raw vs calibrated test probabilities")
     tune_parser.add_argument("--elo-modes", default="with", help="comma-separated Elo feature modes to compare: with,without")
+    tune_parser.add_argument("--rating-modes", default="elo", help="comma-separated rating sources to compare: elo,glicko (WF-2C skeleton; A/B verdict deferred to WF-2F)")
     tune_parser.add_argument("--output", help="optional JSON output path")
     simulate_parser = subparsers.add_parser("simulate", help="simulate Swiss from a team CSV")
     simulate_parser.add_argument("--teams", required=True, help="CSV with team,seed,strength columns")
@@ -351,6 +352,7 @@ def main() -> int:
             market_weight=args.market_weight,
             probability_objective=args.probability_objective,
             elo_modes=_parse_str_list(args.elo_modes),
+            rating_modes=_parse_str_list(args.rating_modes),
         )
         return _emit(report, args.output)
     if args.command == "simulate":

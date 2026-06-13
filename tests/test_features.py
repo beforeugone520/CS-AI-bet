@@ -26,8 +26,9 @@ _PAIR_ALIASES = {
 
 # Pre-injected diff columns: upstream computes them as ``team1 - team2`` from the
 # team identity, so a genuine team swap negates them. The test models that by
-# negating these carried-over values.
-_NEGATED_ON_SWAP = ("bt_strength_diff", "bt_map_strength_diff")
+# negating these carried-over values. ``glicko_rd_sum`` is intentionally absent --
+# it is swap-invariant, so a genuine swap carries it over unchanged.
+_NEGATED_ON_SWAP = ("bt_strength_diff", "bt_map_strength_diff", "glicko_diff")
 
 
 def _swap_teams(row):
@@ -325,6 +326,8 @@ class FeatureBuilderNewColumnTests(unittest.TestCase):
         for name in (
             "bt_strength_diff",
             "bt_map_strength_diff",
+            "glicko_diff",
+            "glicko_rd_sum",
             "event_grade_sum",
             "team_event_grade_sum",
             "team_event_grade_diff",
@@ -339,6 +342,143 @@ class FeatureBuilderNewColumnTests(unittest.TestCase):
             "odds_is_proxy",
         ):
             self.assertIn(name, names)
+
+
+class FeatureBuilderGlickoTests(unittest.TestCase):
+    """WF-2C: FeatureBuilder consumes the leakage-free pre-match Glicko-2 signals.
+
+    glicko_diff (strong antisymmetric rating gap) competes in the default candidate
+    pool; glicko_rd_sum (weak-prior symmetric uncertainty tape) is gated OFF until the
+    WF-2F A/B opts it in. Neither must break the antisymmetry / back-compat contracts.
+    """
+
+    def test_consumes_glicko_diff_column(self):
+        from cs2pickem.features import FeatureBuilder
+
+        rows = [
+            {
+                "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage",
+                "team1_glicko_pre": 1700.0, "team2_glicko_pre": 1400.0,
+                "team1_rd_pre": 80.0, "team2_rd_pre": 120.0,
+                "glicko_diff": 300.0, "glicko_rd_sum": 200.0,
+            },
+            {
+                "team1": "Charlie", "team2": "Delta", "winner": "Delta", "best_of": 3, "map": "inferno",
+                "team1_glicko_pre": 1450.0, "team2_glicko_pre": 1650.0,
+                "team1_rd_pre": 110.0, "team2_rd_pre": 90.0,
+                "glicko_diff": -200.0, "glicko_rd_sum": 200.0,
+            },
+        ]
+        dataset = FeatureBuilder().fit_transform(rows)
+        self.assertIn("glicko_diff", dataset.feature_names)
+        index = dataset.feature_names.index("glicko_diff")
+        # The team1-favoured row scores higher on glicko_diff than the team2-favoured one.
+        self.assertGreater(dataset.rows[0][index], dataset.rows[1][index])
+
+    def test_glicko_diff_is_default_active_candidate(self):
+        """glicko_diff is a strong directional signal wired end-to-end -> it competes in
+        the default candidate pool (mirrors the BT diffs), not gated to UNVERIFIED."""
+        from cs2pickem.features import FeatureBuilder
+
+        active = set(FeatureBuilder().feature_names)
+        self.assertIn("glicko_diff", active)
+
+    def test_glicko_rd_sum_is_unverified_off_by_default(self):
+        """glicko_rd_sum is a weak-prior magnitude (large RD-sum mostly flags
+        cold-start/inactive teams) -> gated OFF by default, still computed for
+        inspection, opted back in for the WF-2F A/B."""
+        from cs2pickem.features import FeatureBuilder
+
+        builder = FeatureBuilder()
+        active = set(builder.feature_names)
+        self.assertNotIn("glicko_rd_sum", active)
+        # Still computed (just not exposed to the selector) -> back-compat.
+        self.assertIn("glicko_rd_sum", builder._raw_features({"team1": "A", "team2": "B"}))
+        self.assertIn("glicko_rd_sum", FeatureBuilder.UNVERIFIED_FEATURE_NAMES)
+        # Opt-in (WF-2F) puts it back into the candidate pool.
+        opted_in = set(FeatureBuilder(include_unverified_features=True).feature_names)
+        self.assertIn("glicko_rd_sum", opted_in)
+        self.assertIn("glicko_diff", opted_in)
+
+    def test_glicko_defaults_to_neutral_when_absent(self):
+        """An un-injected row reads as neutral rating gap (0) and maximally uncertain
+        (two cold-start RDs = 700), never spuriously confident."""
+        from cs2pickem.features import FeatureBuilder
+
+        builder = FeatureBuilder()
+        builder.fit_transform([
+            {"team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1},
+        ])
+        raw = builder._raw_features({"team1": "Alpha", "team2": "Bravo"})
+        self.assertEqual(raw["glicko_diff"], 0.0)
+        self.assertEqual(raw["glicko_rd_sum"], 700.0)
+
+    def test_glicko_reconstructs_from_pre_snapshots(self):
+        """When only the pre snapshots are present, glicko_diff / glicko_rd_sum are
+        reconstructed from them (team1 - team2 / team1 + team2)."""
+        from cs2pickem.features import FeatureBuilder
+
+        builder = FeatureBuilder()
+        raw = builder._raw_features({
+            "team1": "A", "team2": "B",
+            "team1_glicko_pre": 1620.0, "team2_glicko_pre": 1500.0,
+            "team1_rd_pre": 100.0, "team2_rd_pre": 220.0,
+        })
+        self.assertAlmostEqual(raw["glicko_diff"], 120.0, places=9)
+        self.assertAlmostEqual(raw["glicko_rd_sum"], 320.0, places=9)
+
+    def test_glicko_diff_antisymmetric_rd_sum_symmetric_under_swap(self):
+        """glicko_diff negates under team swap; glicko_rd_sum is swap-invariant."""
+        from cs2pickem.features import FeatureBuilder
+
+        builder = FeatureBuilder()
+        row = {
+            "team1": "Alpha", "team2": "Bravo", "best_of": 3, "map": "mirage",
+            "team1_glicko_pre": 1640.0, "team2_glicko_pre": 1490.0,
+            "team1_rd_pre": 90.0, "team2_rd_pre": 160.0,
+            "glicko_diff": 150.0, "glicko_rd_sum": 250.0,
+        }
+        raw = builder._raw_features(row)
+        swapped_row = _swap_teams(row)
+        # _swap_teams negates carried-over *_diff columns and swaps team1_/team2_ prefixes,
+        # so this exercises both the injected column and the snapshot reconstruction paths.
+        swapped = builder._raw_features(swapped_row)
+        self.assertAlmostEqual(swapped["glicko_diff"], -raw["glicko_diff"], places=9)
+        self.assertAlmostEqual(swapped["glicko_rd_sum"], raw["glicko_rd_sum"], places=9)
+
+    def test_glicko_diff_in_full_antisymmetry_contract(self):
+        """glicko_diff participates in the all-*_diff-columns antisymmetry contract."""
+        from cs2pickem.features import FeatureBuilder
+
+        builder = FeatureBuilder()
+        row = {
+            "team1": "Alpha", "team2": "Bravo", "best_of": 3, "map": "mirage",
+            "team1_glicko_pre": 1700.0, "team2_glicko_pre": 1400.0,
+            "team1_rd_pre": 70.0, "team2_rd_pre": 130.0,
+            "glicko_diff": 300.0, "glicko_rd_sum": 200.0,
+        }
+        raw = builder._raw_features(row)
+        swapped = builder._raw_features(_swap_teams(row))
+        self.assertIn("glicko_diff", raw)
+        for name, value in raw.items():
+            if name.endswith("_diff"):
+                self.assertAlmostEqual(
+                    swapped[name], -value, places=9, msg=f"{name} must negate on team swap"
+                )
+
+    def test_glicko_columns_excluded_from_unstable_identity_and_required(self):
+        """No name drift: glicko candidate columns are neither in the excluded
+        (unstable-identity) set nor force-added to the player-status required set."""
+        from cs2pickem.reliability import (
+            PLAYER_STATUS_REQUIRED_FEATURES,
+            UNSTABLE_IDENTITY_FEATURES,
+            GLICKO_CANDIDATE_FEATURES,
+        )
+
+        for name in ("glicko_diff", "glicko_rd_sum"):
+            self.assertIn(name, GLICKO_CANDIDATE_FEATURES)
+            self.assertNotIn(name, UNSTABLE_IDENTITY_FEATURES)
+            self.assertNotIn(name, PLAYER_STATUS_REQUIRED_FEATURES)
 
 
 if __name__ == "__main__":

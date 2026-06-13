@@ -189,6 +189,123 @@ class MatchTuningTests(unittest.TestCase):
         # The reported test_predictions come from the validation-selected best.
         self.assertEqual(len(report["test_predictions"]), 3)
 
+    def test_default_rating_mode_is_elo_and_behaviour_unchanged(self):
+        """WF-2C: the rating_mode axis defaults to 'elo' so the existing Elo-only path is
+        unchanged -- no glicko injection, no glicko columns selected, candidate names carry
+        no rating suffix, and each candidate reports rating_mode='elo'."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 6, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+        )
+        result = report["candidate_results"][0]
+        self.assertEqual(result["rating_mode"], "elo")
+        # Glicko is NOT injected by default -> its columns are constant 0/700 -> never selected.
+        self.assertNotIn("glicko_diff", result["selected_feature_names"])
+        self.assertNotIn("glicko_rd_sum", result["selected_feature_names"])
+        # Authoritative selection carries the rating_mode through for downstream visibility.
+        self.assertEqual(report["authoritative_best"]["rating_mode"], "elo")
+
+    def test_default_candidate_grid_has_no_rating_suffix(self):
+        """The default grid (rating_modes unset) emits a single 'elo' mode with no name
+        suffix, so existing candidate names are byte-identical."""
+        from cs2pickem.tuning import _candidate_grid
+
+        grid = _candidate_grid([8], [3], ["logistic"])
+        self.assertTrue(all(c["rating_mode"] == "elo" for c in grid))
+        self.assertTrue(all("glicko" not in c["name"] and "_elo" not in c["name"] for c in grid))
+
+    def test_single_glicko_mode_grid_carries_disambiguating_suffix(self):
+        """WF-2C review fix: a glicko-only single-mode grid must still suffix '_glicko' so
+        its candidate names never collide with the byte-identical default elo names in
+        reports (the internal rating_mode field disambiguated, but human-readable names did
+        not). The default elo single-mode path stays unsuffixed."""
+        from cs2pickem.tuning import _candidate_grid
+
+        grid = _candidate_grid([8], [3], ["logistic"], rating_modes=["glicko"])
+        self.assertTrue(all(c["rating_mode"] == "glicko" for c in grid))
+        self.assertTrue(all(c["name"].startswith("logistic_glicko_") for c in grid))
+        # And the default elo single-mode grid is unchanged (no suffix).
+        elo_grid = _candidate_grid([8], [3], ["logistic"], rating_modes=["elo"])
+        self.assertTrue(all(c["name"] == "logistic_k8_e3" for c in elo_grid))
+
+    def test_rating_mode_normalization_and_config_default(self):
+        from cs2pickem.tuning import (
+            RATING_MODES,
+            _DEFAULT_RATING_MODE,
+            _config_rating_mode,
+            _normalize_rating_mode,
+        )
+
+        self.assertEqual(_DEFAULT_RATING_MODE, "elo")
+        self.assertEqual(set(RATING_MODES), {"elo", "glicko"})
+        self.assertEqual(_normalize_rating_mode("elo"), "elo")
+        self.assertEqual(_normalize_rating_mode("Glicko-2"), "glicko")
+        self.assertEqual(_normalize_rating_mode("glicko2"), "glicko")
+        # Missing / empty rating_mode in a config falls back to the default 'elo'.
+        self.assertEqual(_config_rating_mode({}), "elo")
+        self.assertEqual(_config_rating_mode({"rating_mode": ""}), "elo")
+        self.assertEqual(_config_rating_mode({"rating_mode": "glicko"}), "glicko")
+        with self.assertRaises(ValueError):
+            _normalize_rating_mode("trueskill")
+
+    def test_optimize_match_predictions_can_compare_elo_and_glicko_rating_modes(self):
+        """WF-2C skeleton: the backtest can switch the rating source. Both candidates run;
+        the glicko candidate injects Glicko-2 (so glicko_diff becomes a live candidate), the
+        elo candidate does not. A/B significance is left to WF-2F -- here we only verify the
+        switch is wired and reported."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            top_k_values=[8],
+            epochs_values=[3],
+            candidate_names=["logistic"],
+            rating_modes=["elo", "glicko"],
+        )
+        by_name = {result["name"]: result for result in report["candidate_results"]}
+        self.assertEqual(set(by_name), {"logistic_elo_k8_e3", "logistic_glicko_k8_e3"})
+        self.assertEqual(by_name["logistic_elo_k8_e3"]["rating_mode"], "elo")
+        self.assertEqual(by_name["logistic_glicko_k8_e3"]["rating_mode"], "glicko")
+        # The elo candidate never injects Glicko -> glicko_diff cannot be selected for it.
+        self.assertNotIn("glicko_diff", by_name["logistic_elo_k8_e3"]["selected_feature_names"])
+
+    def test_glicko_rating_mode_routes_through_leakage_free_injection(self):
+        """Anti-leakage contract: selecting rating_mode='glicko' must route through the
+        period-batched, pre-match Glicko-2 injection (same engine test_reliability locks),
+        reported via the glicko feature-preparation basis -- never a same-day-result peek."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            top_k_values=[8],
+            epochs_values=[3],
+            candidate_names=["logistic"],
+            rating_modes=["glicko"],
+        )
+        result = report["candidate_results"][0]
+        self.assertEqual(result["rating_mode"], "glicko")
+        glicko_prep = result["feature_preparation"]["glicko"]
+        # The glicko candidate is fed by the rolling pre-match snapshot engine, not 'not_applied'.
+        self.assertEqual(glicko_prep["basis"], "chronological_pre_match_rolling")
+        # Elo stays injected too (rating_mode swaps the *added* engine, not the Elo baseline).
+        self.assertEqual(result["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
+
     def test_optimize_matches_cli_reads_csv_and_writes_report(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

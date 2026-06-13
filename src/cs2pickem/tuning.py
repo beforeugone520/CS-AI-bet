@@ -41,44 +41,72 @@ def optimize_match_predictions(
     market_weight: float = 0.30,
     probability_objective: str = "log_loss",
     elo_modes: Sequence[str] | None = None,
+    rating_modes: Sequence[str] | None = None,
 ) -> Dict[str, object]:
+    """Replay a chronological holdout and compare candidate model configs.
+
+    ``rating_modes`` (WF-2C skeleton) selects which leakage-free rating source feeds the
+    candidate's rows: ``"elo"`` (the default, online pre-match Elo -- unchanged behaviour)
+    or ``"glicko"`` (the period-batched Glicko-2 injection, which also writes the
+    ``glicko_diff`` candidate column). It mirrors the existing ``elo_modes`` axis so the
+    backtest can A/B the rating engines, but this stage only wires the switch and reports
+    the per-candidate ``rating_mode``; the actual significance adjudication between Elo and
+    Glicko is deferred to WF-2F. Defaulting to ``"elo"`` keeps ``inject_glicko=False`` so
+    the existing Elo-only hot path is bit-for-bit unchanged.
+    """
     raw_cleaned = sorted(clean_matches([dict(row) for row in rows], reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
     default_cleaned, _, feature_preparation = prepare_reliability_features(raw_cleaned)
     split = time_series_split(default_cleaned, train_ratio=train_ratio, validation_ratio=validation_ratio)
     if not split.train or not split.validation or not split.test:
         raise ValueError("match optimization requires non-empty train, validation, and test splits")
 
-    configs = [dict(config) for config in (candidate_configs or _candidate_grid(top_k_values, epochs_values, candidate_names, elo_modes=elo_modes))]
+    configs = [
+        dict(config)
+        for config in (
+            candidate_configs
+            or _candidate_grid(top_k_values, epochs_values, candidate_names, elo_modes=elo_modes, rating_modes=rating_modes)
+        )
+    ]
     baseline_validation = _constant_metrics(split.validation, 0.5)
     baseline_test = _constant_metrics(split.test, 0.5)
-    split_cache: Dict[bool, object] = {True: split}
-    feature_preparation_cache: Dict[bool, Dict[str, object]] = {True: feature_preparation}
-    prepared_cache: Dict[tuple[int, bool], Dict[str, object]] = {}
-    rolling_cache: Dict[tuple[int, bool], List[Dict[str, object]]] = {}
+    # Rows depend on BOTH which Elo gets injected and which rating engine is selected, so the
+    # split / feature-prep / matrix caches are keyed on (inject_elo, rating_mode). The default
+    # 'elo' mode keeps inject_glicko=False -> rows are bit-identical to the historic path.
+    default_rating_mode = _DEFAULT_RATING_MODE
+    split_cache: Dict[tuple[bool, str], object] = {(True, default_rating_mode): split}
+    feature_preparation_cache: Dict[tuple[bool, str], Dict[str, object]] = {(True, default_rating_mode): feature_preparation}
+    prepared_cache: Dict[tuple[int, bool, str], Dict[str, object]] = {}
+    rolling_cache: Dict[tuple[int, bool, str], List[Dict[str, object]]] = {}
     candidate_results = []
     for index, config in enumerate(configs):
         top_k = int(config.get("top_k", 25))
         inject_elo = _config_inject_elo(config)
-        if inject_elo not in split_cache:
-            prepared_cleaned, _, candidate_feature_preparation = prepare_reliability_features(raw_cleaned, inject_elo=inject_elo)
-            split_cache[inject_elo] = time_series_split(prepared_cleaned, train_ratio=train_ratio, validation_ratio=validation_ratio)
-            feature_preparation_cache[inject_elo] = candidate_feature_preparation
-        candidate_split = split_cache[inject_elo]
-        cache_key = (top_k, inject_elo)
+        rating_mode = _config_rating_mode(config)
+        rating_key = (inject_elo, rating_mode)
+        if rating_key not in split_cache:
+            prepared_cleaned, _, candidate_feature_preparation = prepare_reliability_features(
+                raw_cleaned,
+                inject_elo=inject_elo,
+                inject_glicko=(rating_mode == "glicko"),
+            )
+            split_cache[rating_key] = time_series_split(prepared_cleaned, train_ratio=train_ratio, validation_ratio=validation_ratio)
+            feature_preparation_cache[rating_key] = candidate_feature_preparation
+        candidate_split = split_cache[rating_key]
+        cache_key = (top_k, inject_elo, rating_mode)
         if cache_key not in prepared_cache:
             prepared_cache[cache_key] = _prepare_split_matrices(
                 candidate_split.train,
                 candidate_split.validation,
                 candidate_split.test,
                 top_k=top_k,
-                feature_preparation=feature_preparation_cache[inject_elo],
+                feature_preparation=feature_preparation_cache[rating_key],
             )
         if cache_key not in rolling_cache:
             rolling_cache[cache_key] = _prepare_rolling_fold_matrices(
                 candidate_split.train + candidate_split.validation + candidate_split.test,
                 top_k=top_k,
                 rolling_folds=rolling_folds,
-                feature_preparation=feature_preparation_cache[inject_elo],
+                feature_preparation=feature_preparation_cache[rating_key],
             )
         candidate_results.append(
             _evaluate_candidate(
@@ -135,11 +163,13 @@ def _candidate_grid(
     epochs_values: Sequence[int] | None,
     candidate_names: Sequence[str] | None,
     elo_modes: Sequence[str] | None = None,
+    rating_modes: Sequence[str] | None = None,
 ) -> List[Dict[str, object]]:
     top_values = [int(value) for value in (top_k_values or [12, 18, 25])]
     epoch_values = [int(value) for value in (epochs_values or [8])]
     names = [str(name) for name in (candidate_names or ["fast_logistic", "random_forest", "no_nn"])]
     modes = [_normalize_elo_mode(mode) for mode in (elo_modes or ["with"])]
+    rating_mode_values = [_normalize_rating_mode(mode) for mode in (rating_modes or [_DEFAULT_RATING_MODE])]
     configs: List[Dict[str, object]] = []
     for top_k in top_values:
         for epochs in epoch_values:
@@ -149,14 +179,25 @@ def _candidate_grid(
                     raise ValueError(f"unknown tuning candidate: {name}")
                 for mode in modes:
                     mode_suffix = f"_{mode}_elo" if len(modes) > 1 else ""
-                    configs.append({
-                        "name": f"{name}{mode_suffix}_k{top_k}_e{epochs}",
-                        "preset": name,
-                        "top_k": top_k,
-                        "epochs": epochs,
-                        "weights": dict(weights),
-                        "inject_elo": mode == "with",
-                    })
+                    for rating_mode in rating_mode_values:
+                        # Suffix the rating mode whenever it is non-default (e.g. a
+                        # glicko-only single-mode run) so its candidates never collide
+                        # with the byte-identical default elo names in reports. The
+                        # default 'elo' single-mode path stays unsuffixed for back-compat.
+                        rating_suffix = (
+                            f"_{rating_mode}"
+                            if len(rating_mode_values) > 1 or rating_mode != _DEFAULT_RATING_MODE
+                            else ""
+                        )
+                        configs.append({
+                            "name": f"{name}{mode_suffix}{rating_suffix}_k{top_k}_e{epochs}",
+                            "preset": name,
+                            "top_k": top_k,
+                            "epochs": epochs,
+                            "weights": dict(weights),
+                            "inject_elo": mode == "with",
+                            "rating_mode": rating_mode,
+                        })
     return configs
 
 
@@ -175,6 +216,28 @@ def _config_inject_elo(config: Mapping[str, Any]) -> bool:
     if "elo_mode" in config:
         return _normalize_elo_mode(str(config.get("elo_mode"))) == "with"
     return True
+
+
+# WF-2C rating-source switch. 'elo' is the default and keeps the existing online pre-match
+# Elo path (inject_glicko stays False -> rows unchanged). 'glicko' selects the period-batched
+# Glicko-2 injection. The A/B significance verdict between them is deferred to WF-2F.
+RATING_MODES = ("elo", "glicko")
+_DEFAULT_RATING_MODE = "elo"
+
+
+def _normalize_rating_mode(mode: str) -> str:
+    normalized = str(mode).strip().lower()
+    if normalized in {"elo", "elo_only", "online_elo"}:
+        return "elo"
+    if normalized in {"glicko", "glicko2", "glicko-2", "glicko_2"}:
+        return "glicko"
+    raise ValueError(f"unknown rating mode: {mode}")
+
+
+def _config_rating_mode(config: Mapping[str, Any]) -> str:
+    if "rating_mode" in config and config.get("rating_mode") not in (None, ""):
+        return _normalize_rating_mode(str(config.get("rating_mode")))
+    return _DEFAULT_RATING_MODE
 
 
 def _evaluate_candidate(
@@ -239,6 +302,8 @@ def _evaluate_candidate(
         "top_k": top_k,
         "epochs": epochs,
         "weights": weights,
+        "inject_elo": _config_inject_elo(config),
+        "rating_mode": _config_rating_mode(config),
         "selected_feature_names": selected_train.feature_names,
         "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
         "feature_preparation": prepared.get("feature_preparation", {}),
@@ -485,6 +550,8 @@ def _best_summary(
         "top_k": candidate["top_k"],
         "epochs": candidate["epochs"],
         "weights": candidate["weights"],
+        "rating_mode": candidate.get("rating_mode", _DEFAULT_RATING_MODE),
+        "inject_elo": candidate.get("inject_elo", True),
         "validation_metrics": candidate["validation_metrics"],
         "test_metrics": test_metrics,
         "accuracy_delta_vs_baseline": test_metrics["accuracy"] - float(baseline_test["accuracy"]),
