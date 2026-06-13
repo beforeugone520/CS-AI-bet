@@ -154,6 +154,114 @@ class MatchTuningTests(unittest.TestCase):
                 fusion_method="bogus",
             )
 
+    def test_default_grid_axes_keep_names_and_settings_byte_identical(self):
+        """WF-2F wiring safety: the new probability/feature grid axes (calibration_method,
+        fusion_method, model_weight, include_unverified) all default to the production value,
+        so the default grid is byte-identical -- no name drift, no extra candidates, every
+        candidate pinned to platt / legacy / model_weight=0.35 / unverified-off."""
+        from cs2pickem.tuning import _candidate_grid
+
+        grid = _candidate_grid([8], [3], ["logistic"])
+        self.assertEqual([c["name"] for c in grid], ["logistic_k8_e3"])
+        only = grid[0]
+        self.assertEqual(only["calibration_methods"], ["platt"])
+        self.assertEqual(only["fusion_method"], "legacy")
+        self.assertAlmostEqual(only["model_weight"], 0.35)
+        self.assertFalse(only["include_unverified_features"])
+
+    def test_grid_axes_fan_out_with_disambiguating_suffixes(self):
+        """Each new axis fans out the grid AND tags the variant so names never collide."""
+        from cs2pickem.tuning import _candidate_grid
+
+        cal = {c["name"] for c in _candidate_grid([8], [3], ["logistic"], calibration_method_modes=["platt", "beta"])}
+        self.assertEqual(cal, {"logistic_platt_k8_e3", "logistic_beta_k8_e3"})
+
+        fusion = {c["name"] for c in _candidate_grid([8], [3], ["logistic"], fusion_method_modes=["legacy_clip", "logit_pool"])}
+        self.assertEqual(fusion, {"logistic_legacy_k8_e3", "logistic_logit_pool_k8_e3"})
+
+        mw = {c["name"] for c in _candidate_grid([8], [3], ["logistic"], fusion_method_modes=["logit_pool"], model_weight_values=[0.35, 0.5])}
+        self.assertEqual(mw, {"logistic_logit_pool_mw035_k8_e3", "logistic_logit_pool_mw05_k8_e3"})
+
+        unv = {c["name"] for c in _candidate_grid([8], [3], ["logistic"], include_unverified_modes=[False, True])}
+        self.assertEqual(unv, {"logistic_k8_e3", "logistic_unv_k8_e3"})
+
+    def test_grid_calibration_method_axis_is_same_口径_single_method(self):
+        """A pinned calibration method is honoured verbatim (no platt re-prepend) so the
+        {platt vs beta vs temperature} A/B compares each calibrator in isolation."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            top_k_values=[8],
+            epochs_values=[3],
+            candidate_names=["logistic"],
+            calibration_method_modes=["platt", "beta"],
+        )
+        by = {c["name"]: c for c in report["candidate_results"]}
+        self.assertEqual(set(by), {"logistic_platt_k8_e3", "logistic_beta_k8_e3"})
+        # Each candidate uses EXACTLY its pinned method -- beta is not silently joined by platt.
+        self.assertEqual(by["logistic_platt_k8_e3"]["calibration_methods"], ["platt"])
+        self.assertEqual(by["logistic_beta_k8_e3"]["calibration_methods"], ["beta"])
+        self.assertEqual(by["logistic_platt_k8_e3"]["calibration"]["basis"], "validation_platt_logistic")
+        self.assertEqual(by["logistic_beta_k8_e3"]["calibration"]["basis"], "validation_beta")
+
+    def test_grid_fusion_axis_drives_per_candidate_market_fusion(self):
+        """fusion_method + model_weight are resolved per candidate and flow into the
+        market_fusion block, enabling a same-口径 legacy-vs-logit_pool comparison."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        rows = chronological_matches()
+        rows[-1]["odds_team1"] = 1.50
+        rows[-1]["odds_team2"] = 2.80
+        report = optimize_match_predictions(
+            rows,
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            top_k_values=[8],
+            epochs_values=[3],
+            candidate_names=["logistic"],
+            fusion_method_modes=["legacy_clip", "logit_pool"],
+            model_weight_values=[0.4],
+        )
+        by = {c["name"]: c for c in report["candidate_results"]}
+        self.assertEqual(by["logistic_legacy_k8_e3"]["market_fusion"]["fusion_method"], "legacy")
+        self.assertEqual(by["logistic_logit_pool_k8_e3"]["market_fusion"]["fusion_method"], "logit_pool")
+        self.assertAlmostEqual(by["logistic_logit_pool_k8_e3"]["market_fusion"]["model_weight"], 0.4)
+
+    def test_grid_include_unverified_axis_opts_columns_into_candidate_pool(self):
+        """include_unverified=True opts the gated columns into the selector's candidate pool;
+        the off variant cannot select them. Folding it into the matrix cache key keeps the
+        on/off candidates from sharing a feature matrix (anti train/serve skew within backtest)."""
+        from cs2pickem.tuning import optimize_match_predictions
+
+        rows = chronological_matches()
+        # Give event_grade real variance so the unverified column is selectable when opted in.
+        for index, row in enumerate(rows):
+            row["event_grade"] = (index % 4) + 1
+        report = optimize_match_predictions(
+            rows,
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            top_k_values=[30],
+            epochs_values=[3],
+            candidate_names=["logistic"],
+            include_unverified_modes=[False, True],
+        )
+        by = {c["name"]: c for c in report["candidate_results"]}
+        self.assertFalse(by["logistic_k30_e3"]["include_unverified_features"])
+        self.assertTrue(by["logistic_unv_k30_e3"]["include_unverified_features"])
+        # The off candidate never exposes a gated column; the on candidate can select it.
+        self.assertNotIn("event_grade_sum", by["logistic_k30_e3"]["selected_feature_names"])
+        self.assertIn("event_grade_sum", by["logistic_unv_k30_e3"]["selected_feature_names"])
+
     def test_default_calibration_method_keeps_legacy_basis_labels(self):
         from cs2pickem.tuning import optimize_match_predictions
 

@@ -96,6 +96,35 @@ class OddsTests(unittest.TestCase):
         self.assertEqual(sorted(merged[0]["odds_providers"]), ["BookA", "BookB"])
         self.assertEqual(report["matched_by_canonical"], 2)
 
+    def test_merge_odds_into_matches_merges_devig_audit_fields_back(self):
+        """WF-2F: the de-vig audit magnitudes (overround / devig_z) now ride back onto the
+        match row so the previously constant-0 odds_overround / odds_devig_z feature columns
+        carry real signal. overround is averaged across providers; devig_z stays absent under
+        the default multiplicative de-vig (None) so the feature keeps its neutral 0 default."""
+        from cs2pickem.odds import merge_odds_into_matches
+
+        merged, _ = merge_odds_into_matches(fixture_rows(), odds_rows())
+        alpha = merged[0]
+        # overround is present and non-zero (real two-way book vig), and matches the
+        # provider-average of each candidate's de-vigged overround.
+        self.assertIn("overround", alpha)
+        self.assertGreater(alpha["overround"], 0.0)
+        # Default multiplicative de-vig reports no insider z, so the key is intentionally
+        # NOT written -> the feature builder falls back to its neutral 0 (no silent skew).
+        self.assertNotIn("devig_z", alpha)
+        self.assertEqual(alpha["devig_method"], "multiplicative")
+
+    def test_merge_odds_devig_audit_makes_feature_column_nonzero(self):
+        """The merged overround flows through FeatureBuilder into a non-zero odds_overround
+        feature -- proving the column is no longer dead in the real (merged) pipeline."""
+        from cs2pickem.features import FeatureBuilder
+        from cs2pickem.odds import merge_odds_into_matches
+
+        merged, _ = merge_odds_into_matches(fixture_rows(), odds_rows())
+        builder = FeatureBuilder(include_unverified_features=True)
+        raw = builder._raw_features(merged[0])
+        self.assertGreater(raw["odds_overround"], 0.0)
+
     def test_merge_odds_prefers_source_match_url_before_date_team_fallback(self):
         from cs2pickem.odds import merge_odds_into_matches
 

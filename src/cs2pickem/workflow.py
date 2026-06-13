@@ -13,6 +13,7 @@ from .pipeline import enrich_matches_file, train_evaluate
 from .players import merge_player_stats_file
 from .readiness import DEFAULT_PICKEM_SLOTS, audit_readiness_file
 from .sources import annotate_version_tags, parse_version_log
+from .strategy import DEFAULT_PICKEM_OBJECTIVE
 from .update import _augment_parsed_rows
 from .visualization import write_training_visualizations
 
@@ -52,6 +53,11 @@ def run_end_to_end_pipeline(
     source_reference_time: str | None = None,
     maximum_source_age_hours: int | None = None,
     require_validation_tuned_weights: bool = True,
+    pickem_objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    pickem_threshold: int | None = None,
+    pickem_pairing: str = "legacy",
+    series_uplift: bool = False,
+    leverage_strength: float = 1.0,
 ) -> Dict[str, object]:
     os.makedirs(output_dir, exist_ok=True)
     artifacts = _artifact_paths(output_dir)
@@ -141,6 +147,11 @@ def run_end_to_end_pipeline(
         max_age_days=max_age_days,
         ensemble_weights=tuned_ensemble_weights,
         fixtures_path=fixture_input,
+        pickem_objective=pickem_objective,
+        pickem_threshold=pickem_threshold,
+        pickem_pairing=pickem_pairing,
+        series_uplift=series_uplift,
+        leverage_strength=leverage_strength,
     )
     write_json(artifacts["pickem_report"], pickem_report)
 

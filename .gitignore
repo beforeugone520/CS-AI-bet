@@ -17,6 +17,9 @@ venv/
 .coverage
 htmlcov/
 
+# WF-2F adjudication backtest per-match dumps (regenerable, not committed)
+.wf2f_results/
+
 # Scraped HTML cache (regenerable)
 data/fivee/cache/
 

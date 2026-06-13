@@ -11,7 +11,9 @@ from .models import default_ensemble, model_hyperparameters
 from .reliability import (
     PLAYER_STATUS_REQUIRED_FEATURES,
     UNSTABLE_IDENTITY_FEATURES,
+    apply_final_bt_to_match,
     apply_final_elo_to_match,
+    apply_final_glicko_to_match,
     prepare_reliability_features,
 )
 from .selection import FeatureSelector
@@ -35,6 +37,9 @@ class MatchPredictor:
         calibration_report: Dict[str, object] | None = None,
         team_elo_ratings: Mapping[str, float] | None = None,
         feature_preparation: Dict[str, object] | None = None,
+        team_bt_strengths: Mapping[str, float] | None = None,
+        team_bt_map_strengths: Mapping[str, Mapping[str, float]] | None = None,
+        team_glicko_state: Mapping[str, Mapping[str, float]] | None = None,
     ) -> None:
         self.builder = builder
         self.selector = selector
@@ -47,6 +52,21 @@ class MatchPredictor:
         self.calibrator = calibrator
         self.calibration_report = calibration_report or {"basis": "not_applied", "calibration_count": 0}
         self.team_elo_ratings = dict(team_elo_ratings or {})
+        # Serve-side rating state for leakage-free scoring of upcoming fixtures. These are
+        # populated by train() only when the matching inject_* axis is on; when empty the
+        # corresponding apply_final_* injection is a no-op, so the default (Elo-only) serve
+        # path is byte-identical to before. Keeping the train/serve injections paired is the
+        # anti-skew invariant: a BT/Glicko column injected at fit time but constant-0 at score
+        # time would be worse than not injecting at all.
+        self.team_bt_strengths = dict(team_bt_strengths or {})
+        self.team_bt_map_strengths = {
+            map_name: dict(strengths)
+            for map_name, strengths in (team_bt_map_strengths or {}).items()
+        }
+        self.team_glicko_state = {
+            key: dict(value)
+            for key, value in (team_glicko_state or {}).items()
+        }
         self.feature_preparation = feature_preparation or {
             "elo": {"basis": "not_applied", "rows": trained_matches, "teams": 0},
             "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
@@ -68,9 +88,37 @@ class MatchPredictor:
         inject_elo: bool = True,
         calibration_method: str = "platt",
         calibration_cv_folds: int = 0,
+        inject_bt: bool = False,
+        rating_mode: str = "elo",
+        inject_glicko: bool = False,
     ) -> "MatchPredictor":
+        # The added rating engine is selected by rating_mode ('elo' default keeps the engine
+        # off) OR explicitly by inject_glicko; rating_mode='glicko' implies Glicko injection.
+        # inject_bt is an orthogonal switch (BT can ride alongside either rating mode). Both
+        # default off so the historic Elo-only train/serve behaviour is bit-for-bit unchanged.
+        use_glicko = bool(inject_glicko) or str(rating_mode).strip().lower() == "glicko"
         cleaned_history = sorted(clean_matches([dict(row) for row in history_rows], reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
-        prepared_history, final_elo, feature_preparation = prepare_reliability_features(cleaned_history, inject_elo=inject_elo)
+        prepared_history, final_elo, feature_preparation = prepare_reliability_features(
+            cleaned_history,
+            inject_elo=inject_elo,
+            inject_bt=inject_bt,
+            inject_glicko=use_glicko,
+        )
+        # Snapshot the final full-history rating fits so predict_probability_details can score
+        # upcoming fixtures with the same engine the model was trained on (serve-side anti-skew).
+        bt_report = feature_preparation.get("bt", {}) if isinstance(feature_preparation, Mapping) else {}
+        glicko_report = feature_preparation.get("glicko", {}) if isinstance(feature_preparation, Mapping) else {}
+        final_bt = dict(bt_report.get("final", {})) if inject_bt else {}
+        final_bt_map = (
+            {map_name: dict(strengths) for map_name, strengths in (bt_report.get("final_map", {}) or {}).items()}
+            if inject_bt
+            else {}
+        )
+        final_glicko = (
+            {key: dict(value) for key, value in (glicko_report.get("final", {}) or {}).items()}
+            if use_glicko
+            else {}
+        )
         model_rows, calibration_rows = _model_calibration_split(
             prepared_history,
             calibration_ratio=calibration_ratio,
@@ -107,6 +155,9 @@ class MatchPredictor:
             calibration_report=calibration_report,
             team_elo_ratings=final_elo,
             feature_preparation=feature_preparation,
+            team_bt_strengths=final_bt,
+            team_bt_map_strengths=final_bt_map,
+            team_glicko_state=final_glicko,
         )
 
     def predict_probability(self, row: Mapping[str, Any]) -> float:
@@ -114,6 +165,17 @@ class MatchPredictor:
 
     def predict_probability_details(self, row: Mapping[str, Any]) -> Dict[str, object]:
         prepared_row = apply_final_elo_to_match(row, self.team_elo_ratings)
+        # Serve-side rating injection mirrors the engines used at train time so the model never
+        # sees a column that was non-zero at fit time but constant-0 at score time (train/serve
+        # anti-skew). Each step is gated on the matching final state being populated, which
+        # train() only does when the corresponding inject_* axis was on -> the default Elo-only
+        # path runs neither branch and is byte-identical to before.
+        if self.team_bt_strengths or self.team_bt_map_strengths:
+            prepared_row = apply_final_bt_to_match(
+                prepared_row, self.team_bt_strengths, self.team_bt_map_strengths
+            )
+        if self.team_glicko_state:
+            prepared_row = apply_final_glicko_to_match(prepared_row, self.team_glicko_state)
         transformed = self.builder.transform([prepared_row])
         selected_rows = self.selector.transform(transformed).rows
         raw_probability = self.model.predict_proba(selected_rows)[0]

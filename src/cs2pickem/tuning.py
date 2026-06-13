@@ -8,7 +8,7 @@ from .evaluation import accuracy, auc, brier_score, calibration_table, log_loss,
 from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
 from .models import default_ensemble
-from .odds import market_probability_from_row
+from .odds import DEFAULT_DEVIG_METHOD, market_probability_from_row, normalize_devig_method
 from .reliability import PLAYER_STATUS_REQUIRED_FEATURES, UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
 from .selection import FeatureSelector
 from .splitting import time_series_folds, time_series_split
@@ -52,9 +52,16 @@ def optimize_match_predictions(
     probability_objective: str = "log_loss",
     elo_modes: Sequence[str] | None = None,
     rating_modes: Sequence[str] | None = None,
+    inject_bt_modes: Sequence[bool] | None = None,
     calibration_methods: Sequence[str] | None = None,
     fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
     model_weight: float = DEFAULT_MODEL_WEIGHT,
+    include_unverified_features: bool = False,
+    devig_method: str = DEFAULT_DEVIG_METHOD,
+    calibration_method_modes: Sequence[str] | None = None,
+    fusion_method_modes: Sequence[str] | None = None,
+    model_weight_values: Sequence[float] | None = None,
+    include_unverified_modes: Sequence[bool] | None = None,
 ) -> Dict[str, object]:
     """Replay a chronological holdout and compare candidate model configs.
 
@@ -77,35 +84,57 @@ def optimize_match_predictions(
         dict(config)
         for config in (
             candidate_configs
-            or _candidate_grid(top_k_values, epochs_values, candidate_names, elo_modes=elo_modes, rating_modes=rating_modes)
+            or _candidate_grid(
+                top_k_values,
+                epochs_values,
+                candidate_names,
+                elo_modes=elo_modes,
+                rating_modes=rating_modes,
+                inject_bt_modes=inject_bt_modes,
+                calibration_method_modes=calibration_method_modes,
+                fusion_method_modes=fusion_method_modes,
+                model_weight_values=model_weight_values,
+                include_unverified_modes=include_unverified_modes,
+            )
         )
     ]
     baseline_validation = _constant_metrics(split.validation, 0.5)
     baseline_test = _constant_metrics(split.test, 0.5)
-    # Rows depend on BOTH which Elo gets injected and which rating engine is selected, so the
-    # split / feature-prep / matrix caches are keyed on (inject_elo, rating_mode). The default
-    # 'elo' mode keeps inject_glicko=False -> rows are bit-identical to the historic path.
+    # Rows depend on which Elo gets injected, which rating engine is selected, AND whether the
+    # Bradley-Terry strength prior is injected, so the split / feature-prep caches are keyed on
+    # (inject_elo, rating_mode, inject_bt). The default ('elo', no BT) keeps
+    # inject_glicko=inject_bt=False -> rows are bit-identical to the historic path. Folding
+    # inject_bt into the key is load-bearing: a BT-on candidate must NOT reuse BT-off rows, or
+    # bt_strength_diff would be selected on (non-zero) training rows yet scored constant-0.
+    #
+    # The matrix caches additionally fold in include_unverified: the FeatureBuilder feature set
+    # (and therefore the selected matrices) differs when the gated/unverified columns are opted
+    # in, so an unverified-on candidate must NOT reuse the unverified-off matrices (same anti-skew
+    # reasoning as inject_bt). The default include_unverified=False keeps the matrices byte-identical.
     default_rating_mode = _DEFAULT_RATING_MODE
-    split_cache: Dict[tuple[bool, str], object] = {(True, default_rating_mode): split}
-    feature_preparation_cache: Dict[tuple[bool, str], Dict[str, object]] = {(True, default_rating_mode): feature_preparation}
-    prepared_cache: Dict[tuple[int, bool, str], Dict[str, object]] = {}
-    rolling_cache: Dict[tuple[int, bool, str], List[Dict[str, object]]] = {}
+    split_cache: Dict[tuple[bool, str, bool], object] = {(True, default_rating_mode, False): split}
+    feature_preparation_cache: Dict[tuple[bool, str, bool], Dict[str, object]] = {(True, default_rating_mode, False): feature_preparation}
+    prepared_cache: Dict[tuple[int, bool, str, bool, bool], Dict[str, object]] = {}
+    rolling_cache: Dict[tuple[int, bool, str, bool, bool], List[Dict[str, object]]] = {}
     candidate_results = []
     for index, config in enumerate(configs):
         top_k = int(config.get("top_k", 25))
         inject_elo = _config_inject_elo(config)
         rating_mode = _config_rating_mode(config)
-        rating_key = (inject_elo, rating_mode)
+        inject_bt = _config_inject_bt(config)
+        include_unverified = _config_include_unverified(config)
+        rating_key = (inject_elo, rating_mode, inject_bt)
         if rating_key not in split_cache:
             prepared_cleaned, _, candidate_feature_preparation = prepare_reliability_features(
                 raw_cleaned,
                 inject_elo=inject_elo,
                 inject_glicko=(rating_mode == "glicko"),
+                inject_bt=inject_bt,
             )
             split_cache[rating_key] = time_series_split(prepared_cleaned, train_ratio=train_ratio, validation_ratio=validation_ratio)
             feature_preparation_cache[rating_key] = candidate_feature_preparation
         candidate_split = split_cache[rating_key]
-        cache_key = (top_k, inject_elo, rating_mode)
+        cache_key = (top_k, inject_elo, rating_mode, inject_bt, include_unverified)
         if cache_key not in prepared_cache:
             prepared_cache[cache_key] = _prepare_split_matrices(
                 candidate_split.train,
@@ -113,6 +142,7 @@ def optimize_match_predictions(
                 candidate_split.test,
                 top_k=top_k,
                 feature_preparation=feature_preparation_cache[rating_key],
+                include_unverified_features=include_unverified,
             )
         if cache_key not in rolling_cache:
             rolling_cache[cache_key] = _prepare_rolling_fold_matrices(
@@ -120,6 +150,7 @@ def optimize_match_predictions(
                 top_k=top_k,
                 rolling_folds=rolling_folds,
                 feature_preparation=feature_preparation_cache[rating_key],
+                include_unverified_features=include_unverified,
             )
         candidate_results.append(
             _evaluate_candidate(
@@ -130,9 +161,10 @@ def optimize_match_predictions(
                 rolling_prepared=rolling_cache[cache_key],
                 market_weight=market_weight,
                 probability_objective=probability_objective,
-                calibration_methods=_normalize_calibration_methods(calibration_methods),
-                fusion_method=_resolve_fusion_method(fusion_method),
-                model_weight=model_weight,
+                calibration_methods=_config_calibration_methods(config, calibration_methods),
+                fusion_method=_resolve_fusion_method(_config_fusion_method(config, fusion_method)),
+                model_weight=_config_model_weight(config, model_weight),
+                devig_method=_config_devig_method(config, devig_method),
             )
         )
     # Authoritative model selection uses ONLY the validation split. The test/holdout
@@ -183,12 +215,39 @@ def _candidate_grid(
     candidate_names: Sequence[str] | None,
     elo_modes: Sequence[str] | None = None,
     rating_modes: Sequence[str] | None = None,
+    inject_bt_modes: Sequence[bool] | None = None,
+    calibration_method_modes: Sequence[str] | None = None,
+    fusion_method_modes: Sequence[str] | None = None,
+    model_weight_values: Sequence[float] | None = None,
+    include_unverified_modes: Sequence[bool] | None = None,
 ) -> List[Dict[str, object]]:
     top_values = [int(value) for value in (top_k_values or [12, 18, 25])]
     epoch_values = [int(value) for value in (epochs_values or [8])]
     names = [str(name) for name in (candidate_names or ["fast_logistic", "random_forest", "no_nn"])]
     modes = [_normalize_elo_mode(mode) for mode in (elo_modes or ["with"])]
     rating_mode_values = [_normalize_rating_mode(mode) for mode in (rating_modes or [_DEFAULT_RATING_MODE])]
+    # BT axis defaults to OFF-only so the default grid is byte-identical (no BT candidates, no
+    # name suffix). Pass [False, True] to A/B the Bradley-Terry strength prior. As with the
+    # rating-mode suffix, the BT-on variant gets a disambiguating '_bt' suffix whenever it is
+    # non-default so its names never collide with the BT-off baseline in reports.
+    bt_mode_values = [bool(value) for value in (inject_bt_modes or [False])]
+    # Probability-quality axes (WF-2F same-口径 A/B). Each defaults to the single
+    # production value so the default grid is byte-identical (no extra candidates, no
+    # name suffix). Passing a multi-value list (or a single non-default value) fans out
+    # the grid AND attaches a disambiguating suffix so the variant never collides with
+    # the byte-identical default name in reports -- mirroring the elo/rating/bt axes.
+    #   * calibration_method: fixes the candidate's single calibration method (one of
+    #     platt/beta/temperature) so {platt vs beta vs temperature} can be compared
+    #     same-口径 within one backtest run. (The default 'platt' keeps the historic
+    #     single-method validation-selection path unchanged.)
+    #   * fusion_method + model_weight: pick the market-fusion blend (legacy_clip vs
+    #     logit_pool) and the logit-pool model-weight prior.
+    #   * include_unverified: opts the gated/unverified feature columns back into the
+    #     selector's candidate pool (5E event-grade, odds audit, weak-prior magnitudes).
+    calibration_mode_values = [_normalize_calibration_method(mode) for mode in (calibration_method_modes or ["platt"])]
+    fusion_mode_values = [_resolve_fusion_method(mode) for mode in (fusion_method_modes or [_DEFAULT_TUNING_FUSION_METHOD])]
+    model_weight_grid = [float(value) for value in (model_weight_values or [DEFAULT_MODEL_WEIGHT])]
+    unverified_mode_values = [bool(value) for value in (include_unverified_modes or [False])]
     configs: List[Dict[str, object]] = []
     for top_k in top_values:
         for epochs in epoch_values:
@@ -208,16 +267,68 @@ def _candidate_grid(
                             if len(rating_mode_values) > 1 or rating_mode != _DEFAULT_RATING_MODE
                             else ""
                         )
-                        configs.append({
-                            "name": f"{name}{mode_suffix}{rating_suffix}_k{top_k}_e{epochs}",
-                            "preset": name,
-                            "top_k": top_k,
-                            "epochs": epochs,
-                            "weights": dict(weights),
-                            "inject_elo": mode == "with",
-                            "rating_mode": rating_mode,
-                        })
+                        for inject_bt in bt_mode_values:
+                            bt_suffix = "_bt" if (len(bt_mode_values) > 1 or inject_bt) and inject_bt else ""
+                            for calibration_method in calibration_mode_values:
+                                cal_suffix = (
+                                    f"_{calibration_method}"
+                                    if len(calibration_mode_values) > 1 or calibration_method != "platt"
+                                    else ""
+                                )
+                                for fusion_method in fusion_mode_values:
+                                    for model_weight in model_weight_grid:
+                                        fusion_suffix = _fusion_grid_suffix(
+                                            fusion_method,
+                                            model_weight,
+                                            fusion_mode_values,
+                                            model_weight_grid,
+                                        )
+                                        for include_unverified in unverified_mode_values:
+                                            unv_suffix = (
+                                                "_unv"
+                                                if (len(unverified_mode_values) > 1 or include_unverified)
+                                                and include_unverified
+                                                else ""
+                                            )
+                                            configs.append({
+                                                "name": (
+                                                    f"{name}{mode_suffix}{rating_suffix}{bt_suffix}"
+                                                    f"{cal_suffix}{fusion_suffix}{unv_suffix}_k{top_k}_e{epochs}"
+                                                ),
+                                                "preset": name,
+                                                "top_k": top_k,
+                                                "epochs": epochs,
+                                                "weights": dict(weights),
+                                                "inject_elo": mode == "with",
+                                                "rating_mode": rating_mode,
+                                                "inject_bt": inject_bt,
+                                                "calibration_methods": [calibration_method],
+                                                "fusion_method": fusion_method,
+                                                "model_weight": model_weight,
+                                                "include_unverified_features": include_unverified,
+                                            })
     return configs
+
+
+def _fusion_grid_suffix(
+    fusion_method: str,
+    model_weight: float,
+    fusion_mode_values: Sequence[str],
+    model_weight_grid: Sequence[float],
+) -> str:
+    """Disambiguating name suffix for the market-fusion grid axis.
+
+    Stays empty for the byte-identical default (single legacy method, single default
+    model_weight) so existing candidate names are unchanged. A non-default fusion method
+    or a fanned-out model_weight grid gets a ``_<method>`` and/or ``_mw<weight>`` tag so
+    variants never collide in reports.
+    """
+    parts = ""
+    if len(fusion_mode_values) > 1 or fusion_method != _DEFAULT_TUNING_FUSION_METHOD:
+        parts += f"_{fusion_method}"
+    if len(model_weight_grid) > 1:
+        parts += f"_mw{model_weight:g}".replace(".", "")
+    return parts
 
 
 def _normalize_elo_mode(mode: str) -> str:
@@ -259,7 +370,102 @@ def _config_rating_mode(config: Mapping[str, Any]) -> str:
     return _DEFAULT_RATING_MODE
 
 
+# Orthogonal Bradley-Terry strength-prior switch. It is deliberately NOT folded into
+# RATING_MODES (which stays {elo, glicko}): BT can ride alongside either rating engine, so a
+# separate inject_bt config key keeps the rating-engine axis and the BT axis independent. The
+# WF-2C/D backtest never injected BT (inject_bt was hard-defaulted False), leaving
+# bt_strength_diff / bt_map_strength_diff as constant-0 dead columns in every candidate. With
+# this switch a candidate can opt BT in so the selector actually competes those columns. It
+# defaults False so the existing hot path is bit-for-bit unchanged, and -- crucially -- it is
+# folded into the rating cache key so a BT-on candidate never reuses BT-off rows (which would
+# silently feed it constant-0 BT columns = the very train/serve skew we are guarding against).
+def _config_inject_bt(config: Mapping[str, Any]) -> bool:
+    return bool(config.get("inject_bt", False))
+
+
+# Probability-quality / feature axes resolved per-candidate (config overrides the top-level
+# default). Keeping the top-level default as the fallback means an explicit candidate_configs
+# list (which omits these keys) inherits the run-wide setting exactly as before -- and the grid
+# path, which now writes these keys explicitly, drives them per candidate. All default to the
+# production-safe value so the default grid stays byte-identical.
+def _config_include_unverified(config: Mapping[str, Any]) -> bool:
+    return bool(config.get("include_unverified_features", False))
+
+
+def _config_calibration_methods(
+    config: Mapping[str, Any], default_methods: Sequence[str] | None
+) -> List[str]:
+    """Resolve the calibration methods for one candidate.
+
+    A grid candidate PINS a single method (``calibration_methods=[m]``) so the
+    {platt vs beta vs temperature} A/B is same-口径: that one method is used verbatim,
+    WITHOUT the run-wide ``_normalize_calibration_methods`` platt-prepend, so a 'beta'
+    candidate scores beta-only and never silently re-competes platt. Explicit
+    ``candidate_configs`` that omit the key inherit the run-wide default list (which keeps
+    the historic platt-first normalization for back-compat). A pinned multi-element list
+    still flows through normalization so an opt-in multi-method candidate behaves as before.
+    """
+    pinned = config.get("calibration_methods")
+    if pinned not in (None, ""):
+        materialized = [str(method).strip().lower() for method in pinned]
+        if len(materialized) == 1:
+            return [_normalize_calibration_method(materialized[0])]
+        return _normalize_calibration_methods(materialized)
+    return _normalize_calibration_methods(default_methods)
+
+
+def _config_fusion_method(config: Mapping[str, Any], default_method: str) -> str:
+    value = config.get("fusion_method")
+    return str(value) if value not in (None, "") else default_method
+
+
+def _config_model_weight(config: Mapping[str, Any], default_weight: float) -> float:
+    value = config.get("model_weight")
+    if value in (None, ""):
+        return float(default_weight)
+    return float(value)
+
+
+def _config_devig_method(config: Mapping[str, Any], default_method: str) -> str:
+    """Resolve the de-vig method for one candidate (config overrides run-wide default).
+
+    The de-vig method only affects how raw two-way odds are turned into a fair market
+    probability inside the market-fusion report, so it is purely an odds-subset axis. It
+    defaults to ``multiplicative`` (the historic behaviour), keeping the no-odds hot path
+    and every existing market-fusion number byte-identical until a candidate opts in.
+    """
+    value = config.get("devig_method")
+    return normalize_devig_method(str(value) if value not in (None, "") else default_method)
+
+
 CALIBRATION_METHODS = ("platt", "beta", "temperature")
+
+
+def _normalize_calibration_method(method: str | None) -> str:
+    """Validate / normalise a single calibration method for the grid axis.
+
+    Unlike ``_normalize_calibration_methods`` (which always keeps platt first as the
+    headline block), this returns exactly the one requested method so a grid candidate
+    can be pinned to platt, beta, OR temperature for a same-口径 A/B. Defaults to platt.
+    """
+    normalized = str(method or "platt").strip().lower()
+    if normalized not in CALIBRATION_METHODS:
+        raise ValueError(f"unknown calibration method: {method!r}")
+    return normalized
+
+
+def _resolve_evaluation_methods(methods: Sequence[str] | None) -> List[str]:
+    """Resolve the per-candidate calibration method list at evaluation time.
+
+    A single pinned method is returned verbatim (only validated) so the grid's same-口径
+    {platt|beta|temperature} A/B uses exactly that one calibrator. Empty / multi-element
+    requests fall back to ``_normalize_calibration_methods`` (platt-first), preserving the
+    historic default and the opt-in multi-method validation-selection path.
+    """
+    materialized = [str(method).strip().lower() for method in (methods or [])]
+    if len(materialized) == 1:
+        return [_normalize_calibration_method(materialized[0])]
+    return _normalize_calibration_methods(materialized)
 
 
 def _normalize_calibration_methods(methods: Sequence[str] | None) -> List[str]:
@@ -356,6 +562,7 @@ def _evaluate_candidate(
     calibration_methods: Sequence[str] = ("platt",),
     fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
     model_weight: float = DEFAULT_MODEL_WEIGHT,
+    devig_method: str = DEFAULT_DEVIG_METHOD,
 ) -> Dict[str, object]:
     top_k = int(config.get("top_k", 25))
     epochs = int(config.get("epochs", 8))
@@ -380,9 +587,12 @@ def _evaluate_candidate(
     calibrated_test_probabilities = raw_test_probabilities
     calibrated_validation_probabilities = validation_probabilities
     calibrated_available = bool(calibrate and validation_probabilities and validation_labels)
-    # Normalise the requested methods, always keeping platt first so its report
-    # remains the headline 'calibration' block (back-compat with existing readers).
-    methods = _normalize_calibration_methods(calibration_methods)
+    # Resolve the requested calibration methods. A single pinned method (e.g. the grid's
+    # {platt|beta|temperature} same-口径 A/B) is honoured VERBATIM -- it is not run through
+    # the platt-prepend normalization, so a beta candidate scores beta-only and never
+    # silently re-competes platt. Any multi-element request keeps the historic platt-first
+    # normalization (headline 'calibration' block stays back-compat for existing readers).
+    methods = _resolve_evaluation_methods(calibration_methods)
     method_candidates: list[dict] = []
     multi_method = len(methods) > 1
     if calibrated_available:
@@ -451,6 +661,7 @@ def _evaluate_candidate(
         market_weight=market_weight,
         fusion_method=fusion_method,
         model_weight=model_weight,
+        devig_method=devig_method,
     )
     return {
         "name": str(config.get("name") or config.get("preset") or "candidate"),
@@ -460,6 +671,9 @@ def _evaluate_candidate(
         "weights": weights,
         "inject_elo": _config_inject_elo(config),
         "rating_mode": _config_rating_mode(config),
+        "inject_bt": _config_inject_bt(config),
+        "include_unverified_features": _config_include_unverified(config),
+        "calibration_methods": list(methods),
         "selected_feature_names": selected_train.feature_names,
         "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
         "feature_preparation": prepared.get("feature_preparation", {}),
@@ -482,13 +696,17 @@ def _prepare_split_matrices(
     test_rows: Sequence[dict],
     top_k: int,
     feature_preparation: Dict[str, object] | None = None,
+    include_unverified_features: bool = False,
 ) -> Dict[str, object]:
     feature_preparation = feature_preparation or {
         "elo": {"basis": "not_applied", "rows": len(train_rows), "teams": 0},
         "excluded_feature_names": list(UNSTABLE_IDENTITY_FEATURES),
         "required_feature_names": list(PLAYER_STATUS_REQUIRED_FEATURES),
     }
-    builder = FeatureBuilder()
+    # One builder per (split, include_unverified) -> the SAME feature set is fit on train and
+    # applied to validation/test, so the candidate never sees a column at fit time that is
+    # absent at score time. include_unverified opts the gated columns into the candidate pool.
+    builder = FeatureBuilder(include_unverified_features=include_unverified_features)
     train_dataset = builder.fit_transform(train_rows)
     selector = FeatureSelector(
         top_k=top_k,
@@ -518,6 +736,7 @@ def _prepare_rolling_fold_matrices(
     top_k: int,
     rolling_folds: int,
     feature_preparation: Dict[str, object] | None = None,
+    include_unverified_features: bool = False,
 ) -> List[Dict[str, object]]:
     prepared_folds: List[Dict[str, object]] = []
     for train_rows, validation_rows in time_series_folds(cleaned, folds=max(1, rolling_folds)):
@@ -530,6 +749,7 @@ def _prepare_rolling_fold_matrices(
                 [],
                 top_k=top_k,
                 feature_preparation=feature_preparation,
+                include_unverified_features=include_unverified_features,
             )
         )
     return prepared_folds
@@ -690,16 +910,19 @@ def _market_fusion_report(
     market_weight: float,
     fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
     model_weight: float = DEFAULT_MODEL_WEIGHT,
+    devig_method: str = DEFAULT_DEVIG_METHOD,
 ) -> Dict[str, object]:
     market_weight = max(0.0, min(1.0, float(market_weight)))
     fusion_method = _resolve_fusion_method(fusion_method)
-    signals = [(index, market_probability_from_row(row)) for index, row in enumerate(rows)]
+    devig_method = normalize_devig_method(devig_method)
+    signals = [(index, market_probability_from_row(row, method=devig_method)) for index, row in enumerate(rows)]
     market_signals = [(index, signal) for index, signal in signals if signal is not None]
     if not market_signals:
         return {
             "market_weight": market_weight,
             "fusion_method": fusion_method,
             "model_weight": float(model_weight),
+            "devig_method": devig_method,
             "test_rows_with_market": 0,
             "proxy_rows": 0,
             "signal_counts": {},
@@ -735,6 +958,7 @@ def _market_fusion_report(
         "market_weight": market_weight,
         "fusion_method": fusion_method,
         "model_weight": float(model_weight),
+        "devig_method": devig_method,
         "test_rows_with_market": len(market_indexes),
         "proxy_rows": proxy_rows,
         "signal_counts": signal_counts,
@@ -785,6 +1009,9 @@ def _best_summary(
         "weights": candidate["weights"],
         "rating_mode": candidate.get("rating_mode", _DEFAULT_RATING_MODE),
         "inject_elo": candidate.get("inject_elo", True),
+        "inject_bt": candidate.get("inject_bt", False),
+        "include_unverified_features": candidate.get("include_unverified_features", False),
+        "calibration_methods": candidate.get("calibration_methods", ["platt"]),
         "validation_metrics": candidate["validation_metrics"],
         "test_metrics": test_metrics,
         "accuracy_delta_vs_baseline": test_metrics["accuracy"] - float(baseline_test["accuracy"]),

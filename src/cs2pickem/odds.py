@@ -158,6 +158,18 @@ def merge_odds_into_matches(matches: Iterable[Dict[str, Any]], odds_rows: Iterab
             copied["market_signal_source"] = "odds_provider_average"
             copied["market_signal_basis"] = "real_odds"
             copied["market_signal_proxy"] = False
+            # Merge the de-vig audit magnitudes back onto the match row so the (previously
+            # constant-0) odds_overround / odds_devig_z feature columns carry real signal once
+            # the join lands. overround is always present; devig_z is None for multiplicative /
+            # power de-vig, so average only the providers that report it (and omit the key when
+            # none do, leaving the feature's neutral 0 default untouched -- no silent skew).
+            overrounds = [row["overround"] for row in candidates if row.get("overround") is not None]
+            if overrounds:
+                copied["overround"] = _average(overrounds)
+            devig_zs = [row["devig_z"] for row in candidates if row.get("devig_z") is not None]
+            if devig_zs:
+                copied["devig_z"] = _average(devig_zs)
+            copied["devig_method"] = candidates[0].get("devig_method")
         output.append(copied)
 
     return output, {
@@ -236,6 +248,16 @@ def _resolve_method(method: Optional[str]) -> str:
     if resolved not in DEVIG_METHODS:
         raise ValueError(f"unknown devig method: {method!r}; expected one of {DEVIG_METHODS}")
     return resolved
+
+
+def normalize_devig_method(method: Optional[str]) -> str:
+    """Public validator/normaliser for the de-vig method axis.
+
+    Thin wrapper over the internal resolver so callers (e.g. the WF-2F backtest's
+    devig A/B) can validate/normalise a requested method without reaching into a
+    private name. Defaults to ``multiplicative`` for backward compatibility.
+    """
+    return _resolve_method(method)
 
 
 def _devig(
