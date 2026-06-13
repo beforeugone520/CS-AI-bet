@@ -107,6 +107,88 @@ class MatchTuningTests(unittest.TestCase):
         self.assertEqual(by_name["logistic_with_elo_k8_e3"]["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
         self.assertEqual(by_name["logistic_without_elo_k8_e3"]["feature_preparation"]["elo"]["basis"], "not_applied")
 
+    def test_probability_selection_follows_validation_not_test(self):
+        from cs2pickem.tuning import _probability_selection
+
+        # Build a case where calibrated clearly wins on VALIDATION (lower log_loss)
+        # but raw clearly wins on TEST. The selected basis must track validation.
+        validation_labels = [1, 1, 0, 0]
+        validation_raw = [0.55, 0.55, 0.45, 0.45]  # weak, near 0.5
+        validation_calibrated = [0.95, 0.95, 0.05, 0.05]  # confident + correct
+        validation_rows = [{} for _ in validation_labels]
+
+        test_labels = [1, 1, 0, 0]
+        # On TEST, calibrated is confidently WRONG while raw is mild + correct.
+        test_raw = [0.55, 0.55, 0.45, 0.45]
+        test_calibrated = [0.05, 0.05, 0.95, 0.95]
+        test_rows = [{} for _ in test_labels]
+
+        selection = _probability_selection(
+            validation_labels,
+            validation_raw,
+            validation_calibrated,
+            validation_rows,
+            test_raw,
+            test_calibrated,
+            test_labels,
+            test_rows,
+            objective="log_loss",
+            calibrated_available=True,
+        )
+        # Validation prefers calibrated -> chosen, even though test would prefer raw.
+        self.assertEqual(selection["selected_basis"], "calibrated_model")
+        self.assertEqual(selection["selection_basis"], "validation_only")
+        self.assertEqual(selection["selected_probabilities"], list(test_calibrated))
+
+        # Permuting/replacing the test labels must NOT change the chosen basis,
+        # proving test labels never participate in the selection.
+        permuted = _probability_selection(
+            validation_labels,
+            validation_raw,
+            validation_calibrated,
+            validation_rows,
+            test_raw,
+            test_calibrated,
+            [0, 0, 1, 1],  # flipped test labels
+            test_rows,
+            objective="log_loss",
+            calibrated_available=True,
+        )
+        self.assertEqual(permuted["selected_basis"], selection["selected_basis"])
+        self.assertEqual(permuted["selected_probabilities"], selection["selected_probabilities"])
+
+    def test_report_tags_test_oracle_outputs_as_diagnostic_only(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 6, "epochs": 3, "weights": {"logistic": 1.0}},
+                {"name": "forest_small", "top_k": 6, "epochs": 3, "weights": {"random_forest": 1.0}},
+            ],
+        )
+
+        # Authoritative selection is validation-based and explicitly marked.
+        self.assertEqual(report["selection_basis"], "validation")
+        self.assertEqual(report["best_by_validation_accuracy"]["selection_basis"], "validation")
+        self.assertEqual(report["best_by_validation_log_loss"]["selection_basis"], "validation")
+        self.assertEqual(report["authoritative_best"]["name"], report["best_by_validation_accuracy"]["name"])
+        # Test-oracle picks are tagged as diagnostic and must not be treated as a selection.
+        self.assertEqual(
+            report["best_by_test_accuracy"]["selection_basis"],
+            "test_oracle_diagnostic_do_not_use_for_model_selection",
+        )
+        self.assertEqual(
+            report["best_by_test_log_loss"]["selection_basis"],
+            "test_oracle_diagnostic_do_not_use_for_model_selection",
+        )
+        # The reported test_predictions come from the validation-selected best.
+        self.assertEqual(len(report["test_predictions"]), 3)
+
     def test_optimize_matches_cli_reads_csv_and_writes_report(self):
         from cs2pickem.cli import main
         from cs2pickem.data import write_matches_csv

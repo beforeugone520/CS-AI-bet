@@ -10,6 +10,10 @@ from .ratings import compute_elo_ratings
 
 ELO_TIER_K = {"S": 32.0, "A": 20.0, "B": 14.0, "C": 10.0}
 
+# Approximate length of a 6-month window in days; used to bound the "_6m" winrate
+# features so their name matches the window they actually summarise.
+SIX_MONTH_DAYS = 182
+
 
 PLAYER_FIELDS = (
     "rating",
@@ -103,8 +107,8 @@ def _apply_team_features(
     row[f"{prefix}_matches_30d"] = _matches_since(history.results, played_at, days=30)
     row[f"{prefix}_recent_winrate_5"] = _recent_winrate(history.results, limit=5)
     row[f"{prefix}_recent_winrate_10"] = _recent_winrate(history.results, limit=10)
-    row[f"{prefix}_bo1_winrate_6m"] = _mode_winrate(history.results, best_of=1)
-    row[f"{prefix}_bo3_winrate_6m"] = _mode_winrate(history.results, best_of=3)
+    row[f"{prefix}_bo1_winrate_6m"] = _mode_winrate(history.results, best_of=1, played_at=played_at, window_days=SIX_MONTH_DAYS)
+    row[f"{prefix}_bo3_winrate_6m"] = _mode_winrate(history.results, best_of=3, played_at=played_at, window_days=SIX_MONTH_DAYS)
     row[f"{prefix}_map_winrate"] = _map_winrate(history.results, map_name)
     row[f"{prefix}_current_streak"] = history.current_streak
     row[f"{prefix}_h2h_winrate_vs_opponent"] = _h2h_winrate(h2h[frozenset({team, opponent})], team)
@@ -141,8 +145,21 @@ def _recent_winrate(results: Deque[tuple[str, bool, int, str]], limit: int) -> f
     return sum(1 for _, won, _, _ in selected if won) / len(selected)
 
 
-def _mode_winrate(results: Deque[tuple[str, bool, int, str]], best_of: int) -> float:
-    selected = [won for _, won, mode, _ in results if mode == best_of]
+def _mode_winrate(
+    results: Deque[tuple[str, bool, int, str]],
+    best_of: int,
+    played_at=None,
+    window_days: Optional[int] = None,
+) -> float:
+    if played_at is not None and window_days is not None:
+        cutoff = played_at - timedelta(days=window_days)
+        selected = [
+            won
+            for raw_date, won, mode, _ in results
+            if mode == best_of and parse_date(raw_date) >= cutoff
+        ]
+    else:
+        selected = [won for _, won, mode, _ in results if mode == best_of]
     if not selected:
         return 0.5
     return sum(1 for won in selected if won) / len(selected)

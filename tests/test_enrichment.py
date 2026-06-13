@@ -90,6 +90,48 @@ class EnrichmentTests(unittest.TestCase):
         self.assertEqual(last["team2_current_streak"], 1)
         self.assertEqual(last["team2_matches_30d"], 5)
 
+    def test_bo_winrate_6m_excludes_matches_older_than_window(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Alpha plays five bo1 matches: four very old wins (well outside the 6-month
+        # window) and one recent loss inside the window. The "_6m" winrate must only
+        # count the recent match, so it should be 0.0, not 4/5 (all-time).
+        rows = [
+            {"date": "2024-01-01", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2024-01-08", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2024-01-15", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2024-01-22", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2025-06-01", "team1": "Alpha", "team2": "Charlie", "winner": "Charlie", "best_of": 1, "map": "mirage"},
+            {"date": "2025-06-10", "team1": "Alpha", "team2": "Delta", "winner": "Delta", "best_of": 1, "map": "mirage"},
+        ]
+
+        enriched = enrich_match_history(rows)
+        last = enriched[-1]
+        self.assertEqual(last["team1"], "Alpha")
+        # Prior to the last match Alpha has 4 old wins (outside window) + 1 recent loss
+        # inside the window. The 6-month bo1 winrate must reflect only the recent loss.
+        self.assertAlmostEqual(last["team1_bo1_winrate_6m"], 0.0)
+
+    def test_bo_winrate_6m_counts_all_in_window_matches(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Two recent bo1 matches within the window (one win, one loss) -> 0.5,
+        # plus an in-window bo3 win -> 1.0.
+        rows = [
+            {"date": "2026-01-05", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2026-02-05", "team1": "Alpha", "team2": "Bravo", "winner": "Bravo", "best_of": 1, "map": "mirage"},
+            {"date": "2026-03-05", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 3, "map": "inferno"},
+            {"date": "2026-04-05", "team1": "Alpha", "team2": "Charlie", "winner": "Charlie", "best_of": 1, "map": "nuke"},
+        ]
+
+        enriched = enrich_match_history(rows)
+        last = enriched[-1]
+        self.assertEqual(last["team1"], "Alpha")
+        # bo1 prior to last match: win (1/5) + loss (2/5) -> 1/2
+        self.assertAlmostEqual(last["team1_bo1_winrate_6m"], 1 / 2)
+        # bo3 prior to last match: single win -> 1.0
+        self.assertAlmostEqual(last["team1_bo3_winrate_6m"], 1.0)
+
     def test_enrich_adds_leakage_free_pre_match_elo(self):
         from cs2pickem.enrichment import enrich_match_history
 

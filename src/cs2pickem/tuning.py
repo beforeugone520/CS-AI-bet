@@ -91,10 +91,17 @@ def optimize_match_predictions(
                 probability_objective=probability_objective,
             )
         )
+    # Authoritative model selection uses ONLY the validation split. The test/holdout
+    # split is reserved for reporting and must not drive which candidate is "best".
     best_accuracy = max(candidate_results, key=lambda item: (item["validation_metrics"]["accuracy"], -item["validation_metrics"]["log_loss"], item["name"]))
     best_log_loss = min(candidate_results, key=lambda item: (item["validation_metrics"]["log_loss"], -item["validation_metrics"]["accuracy"], item["name"]))
+    # Test-oracle picks are kept only as an after-the-fact diagnostic ("how good
+    # could we have done if we had cheated and peeked at the holdout"). They are
+    # explicitly tagged so no caller mistakes them for a usable selection.
     best_test_accuracy = max(candidate_results, key=lambda item: (item["test_metrics"]["accuracy"], -item["test_metrics"]["log_loss"], item["name"]))
     best_test_log_loss = min(candidate_results, key=lambda item: (item["test_metrics"]["log_loss"], -item["test_metrics"]["accuracy"], item["name"]))
+    _TEST_ORACLE_BASIS = "test_oracle_diagnostic_do_not_use_for_model_selection"
+    authoritative_best = _best_summary(best_accuracy, baseline_test, selection_basis="validation")
     return {
         "matches": len(raw_cleaned),
         "reference_date": reference_date,
@@ -112,10 +119,12 @@ def optimize_match_predictions(
         },
         "baseline": {"validation_metrics": baseline_validation, "test_metrics": baseline_test},
         "candidate_results": candidate_results,
-        "best_by_validation_accuracy": _best_summary(best_accuracy, baseline_test),
-        "best_by_validation_log_loss": _best_summary(best_log_loss, baseline_test),
-        "best_by_test_accuracy": _best_summary(best_test_accuracy, baseline_test),
-        "best_by_test_log_loss": _best_summary(best_test_log_loss, baseline_test),
+        "selection_basis": "validation",
+        "authoritative_best": authoritative_best,
+        "best_by_validation_accuracy": _best_summary(best_accuracy, baseline_test, selection_basis="validation"),
+        "best_by_validation_log_loss": _best_summary(best_log_loss, baseline_test, selection_basis="validation"),
+        "best_by_test_accuracy": _best_summary(best_test_accuracy, baseline_test, selection_basis=_TEST_ORACLE_BASIS),
+        "best_by_test_log_loss": _best_summary(best_test_log_loss, baseline_test, selection_basis=_TEST_ORACLE_BASIS),
         "test_predictions": _prediction_rows(split.test, best_accuracy["test_probabilities"]),
         "best_test_accuracy_predictions": _prediction_rows(split.test, best_test_accuracy["test_probabilities"]),
     }
@@ -198,18 +207,29 @@ def _evaluate_candidate(
     raw_test_probabilities = model.predict_proba(test_x)
     calibration_report: Dict[str, object] = {"basis": "not_applied"}
     calibrated_test_probabilities = raw_test_probabilities
-    if calibrate and validation_probabilities and validation_labels:
+    calibrated_validation_probabilities = validation_probabilities
+    calibrated_available = bool(calibrate and validation_probabilities and validation_labels)
+    if calibrated_available:
         calibrator = ProbabilityCalibrator().fit(validation_probabilities, validation_labels)
         calibrated_test_probabilities = calibrator.transform(raw_test_probabilities)
+        calibrated_validation_probabilities = calibrator.transform(validation_probabilities)
         calibration_report = calibrator.report()
         calibration_report["basis"] = "validation_platt_logistic"
+    # The raw-vs-calibrated decision is made ONLY on the validation split so that
+    # no test label ever participates in model/probability selection. The chosen
+    # basis is then applied to the test probabilities; test metrics are reported
+    # for both bases but never drive the choice.
     probability_selection = _probability_selection(
-        test_labels,
+        validation_labels,
+        validation_probabilities,
+        calibrated_validation_probabilities,
+        validation_rows,
         raw_test_probabilities,
         calibrated_test_probabilities,
+        test_labels,
         test_rows,
         objective=probability_objective,
-        calibrated_available=calibrate and validation_probabilities and validation_labels,
+        calibrated_available=calibrated_available,
     )
     test_probabilities = probability_selection["selected_probabilities"]
     market_fusion = _market_fusion_report(test_labels, test_probabilities, test_rows, market_weight=market_weight)
@@ -355,30 +375,50 @@ def _mean_metric_summary(metric_rows: Sequence[Mapping[str, float]]) -> Dict[str
 
 
 def _probability_selection(
-    labels: Sequence[int],
-    raw_probabilities: Sequence[float],
-    calibrated_probabilities: Sequence[float],
-    rows: Sequence[dict],
+    validation_labels: Sequence[int],
+    validation_raw_probabilities: Sequence[float],
+    validation_calibrated_probabilities: Sequence[float],
+    validation_rows: Sequence[dict],
+    test_raw_probabilities: Sequence[float],
+    test_calibrated_probabilities: Sequence[float],
+    test_labels: Sequence[int],
+    test_rows: Sequence[dict],
     objective: str,
     calibrated_available: bool,
 ) -> Dict[str, object]:
-    raw_metrics = _metric_summary(labels, raw_probabilities, rows)
-    calibrated_metrics = _metric_summary(labels, calibrated_probabilities, rows)
     objective = objective if objective in {"accuracy", "log_loss", "brier_score", "ece"} else "log_loss"
+    # Decide raw-vs-calibrated purely on the validation split: test labels must
+    # never influence which probability basis is selected.
+    validation_raw_metrics = _metric_summary(validation_labels, validation_raw_probabilities, validation_rows)
+    validation_calibrated_metrics = _metric_summary(validation_labels, validation_calibrated_probabilities, validation_rows)
     if not calibrated_available:
         selected_basis = "raw_model"
-        selected_probabilities = list(raw_probabilities)
     elif objective == "accuracy":
-        selected_basis = "calibrated_model" if calibrated_metrics["accuracy"] > raw_metrics["accuracy"] else "raw_model"
-        selected_probabilities = list(calibrated_probabilities if selected_basis == "calibrated_model" else raw_probabilities)
+        selected_basis = (
+            "calibrated_model"
+            if validation_calibrated_metrics["accuracy"] > validation_raw_metrics["accuracy"]
+            else "raw_model"
+        )
     else:
-        selected_basis = "calibrated_model" if calibrated_metrics[objective] < raw_metrics[objective] else "raw_model"
-        selected_probabilities = list(calibrated_probabilities if selected_basis == "calibrated_model" else raw_probabilities)
+        selected_basis = (
+            "calibrated_model"
+            if validation_calibrated_metrics[objective] < validation_raw_metrics[objective]
+            else "raw_model"
+        )
+    use_calibrated = selected_basis == "calibrated_model"
+    selected_probabilities = list(test_calibrated_probabilities if use_calibrated else test_raw_probabilities)
+    # Test metrics are reported for transparency/audit but are NOT used to choose
+    # the basis above.
+    raw_test_metrics = _metric_summary(test_labels, test_raw_probabilities, test_rows)
+    calibrated_test_metrics = _metric_summary(test_labels, test_calibrated_probabilities, test_rows)
     return {
         "objective": objective,
         "selected_basis": selected_basis,
-        "raw_test_metrics": raw_metrics,
-        "calibrated_test_metrics": calibrated_metrics,
+        "selection_basis": "validation_only",
+        "validation_raw_metrics": validation_raw_metrics,
+        "validation_calibrated_metrics": validation_calibrated_metrics,
+        "raw_test_metrics": raw_test_metrics,
+        "calibrated_test_metrics": calibrated_test_metrics,
         "selected_probabilities": selected_probabilities,
     }
 
@@ -432,11 +472,16 @@ def _market_fusion_report(
     }
 
 
-def _best_summary(candidate: Mapping[str, Any], baseline_test: Mapping[str, float]) -> Dict[str, object]:
+def _best_summary(
+    candidate: Mapping[str, Any],
+    baseline_test: Mapping[str, float],
+    selection_basis: str = "validation",
+) -> Dict[str, object]:
     test_metrics = dict(candidate["test_metrics"])
     return {
         "name": candidate["name"],
         "preset": candidate.get("preset"),
+        "selection_basis": selection_basis,
         "top_k": candidate["top_k"],
         "epochs": candidate["epochs"],
         "weights": candidate["weights"],
