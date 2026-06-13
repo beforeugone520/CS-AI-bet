@@ -226,5 +226,167 @@ class EnrichmentTests(unittest.TestCase):
         self.assertIn("team2_current_streak", enriched[-1])
 
 
+class WinrateKnobTests(unittest.TestCase):
+    """Three independent, default-off winrate refinements: time decay, strength-of-schedule,
+    and bayesian shrinkage. Each must be separately switchable and leakage-free."""
+
+    def _decay_history(self):
+        # Alpha: 3 ancient wins, then 1 recent loss. Recency weighting should pull the
+        # recent-5 winrate below the unweighted 3/4 = 0.75 toward the recent loss.
+        return [
+            {"date": "2025-01-01", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2025-01-08", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2025-01-15", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2026-06-01", "team1": "Alpha", "team2": "Charlie", "winner": "Charlie", "best_of": 1, "map": "mirage"},
+            {"date": "2026-06-05", "team1": "Alpha", "team2": "Delta", "winner": "Delta", "best_of": 1, "map": "mirage"},
+        ]
+
+    def test_default_call_unchanged_when_all_knobs_off(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        rows = self._decay_history()
+        baseline = enrich_match_history(rows)
+        explicit_off = enrich_match_history(
+            rows,
+            winrate_half_life_days=None,
+            enable_sos=False,
+            winrate_shrinkage_pseudocount=0.0,
+        )
+        for a, b in zip(baseline, explicit_off):
+            self.assertAlmostEqual(a["team1_recent_winrate_5"], b["team1_recent_winrate_5"])
+
+    def test_time_decay_downweights_old_results_monotonically(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        rows = self._decay_history()
+        no_decay = enrich_match_history(rows)[-1]["team1_recent_winrate_5"]
+        # Pre-match for the last row: Alpha has 3 old wins + 1 recent loss = 3/4 unweighted.
+        self.assertAlmostEqual(no_decay, 0.75)
+
+        # Shorter half-life weights the recent loss more -> winrate drops monotonically.
+        long_hl = enrich_match_history(rows, winrate_half_life_days=400.0)[-1]["team1_recent_winrate_5"]
+        short_hl = enrich_match_history(rows, winrate_half_life_days=30.0)[-1]["team1_recent_winrate_5"]
+        self.assertLess(long_hl, no_decay)
+        self.assertLess(short_hl, long_hl)
+
+    def test_time_decay_does_not_read_future(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        rows = self._decay_history()
+        baseline = enrich_match_history(rows, winrate_half_life_days=90.0)[-1]["team1_recent_winrate_5"]
+        with_future = list(rows) + [
+            {"date": "2026-07-01", "team1": "Alpha", "team2": "Echo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+        ]
+        enriched = enrich_match_history(with_future, winrate_half_life_days=90.0)
+        same = next(r for r in enriched if r["date"] == "2026-06-05")
+        self.assertAlmostEqual(same["team1_recent_winrate_5"], baseline)
+
+    def test_strength_of_schedule_rewards_beating_strong_opponents(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Strong opponent (Strong) builds a big Elo edge by beating filler teams; weak
+        # opponent (Weak) loses to filler. Hero beats Strong once and Weak once.
+        rows = []
+        for i in range(8):
+            rows.append({"date": f"2026-01-{i+1:02d}", "team1": "Strong", "team2": f"Filler{i}", "winner": "Strong", "best_of": 1, "map": "mirage"})
+            rows.append({"date": f"2026-01-{i+1:02d}", "team1": f"Filler{i}", "team2": "Weak", "winner": f"Filler{i}", "best_of": 1, "map": "mirage"})
+        rows.append({"date": "2026-02-01", "team1": "Hero", "team2": "Strong", "winner": "Hero", "best_of": 1, "map": "mirage"})
+        rows.append({"date": "2026-02-02", "team1": "Hero", "team2": "Weak", "winner": "Hero", "best_of": 1, "map": "mirage"})
+        # Final fixture to read Hero's pre-match SoS-weighted winrate.
+        rows.append({"date": "2026-02-03", "team1": "Hero", "team2": "Foxtrot", "winner": "Hero", "best_of": 1, "map": "mirage"})
+
+        plain = enrich_match_history(rows)[-1]["team1_recent_winrate_5"]
+        weighted = enrich_match_history(rows, enable_sos=True, sos_elo_scale=400.0)[-1]["team1_recent_winrate_5"]
+        # Hero won every game either way (both 1.0), but SoS does not exceed 1.0.
+        self.assertLessEqual(weighted, 1.0)
+        self.assertGreaterEqual(weighted, 0.0)
+        # When mixing a win over a strong team with a loss, SoS weighting raises the
+        # winrate relative to a loss against an equally strong team -> covered below.
+
+    def test_strength_of_schedule_weights_quality_wins_above_quality_losses(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Hero beats a Strong team but loses to a Weak team. SoS should value the
+        # quality win more than the cheap loss, pushing the winrate above the
+        # unweighted 0.5.
+        rows = []
+        for i in range(8):
+            rows.append({"date": f"2026-01-{i+1:02d}", "team1": "Strong", "team2": f"F{i}", "winner": "Strong", "best_of": 1, "map": "mirage"})
+            rows.append({"date": f"2026-01-{i+1:02d}", "team1": f"F{i}", "team2": "Weak", "winner": f"F{i}", "best_of": 1, "map": "mirage"})
+        rows.append({"date": "2026-02-01", "team1": "Hero", "team2": "Strong", "winner": "Hero", "best_of": 1, "map": "mirage"})
+        rows.append({"date": "2026-02-02", "team1": "Hero", "team2": "Weak", "winner": "Weak", "best_of": 1, "map": "mirage"})
+        rows.append({"date": "2026-02-03", "team1": "Hero", "team2": "Zulu", "winner": "Hero", "best_of": 1, "map": "mirage"})
+
+        plain = enrich_match_history(rows)[-1]["team1_recent_winrate_5"]
+        weighted = enrich_match_history(rows, enable_sos=True, sos_elo_scale=400.0)[-1]["team1_recent_winrate_5"]
+        self.assertAlmostEqual(plain, 0.5)
+        self.assertGreater(weighted, plain)
+
+    def test_bayesian_shrinkage_pulls_small_samples_toward_half(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Alpha wins its only prior game -> raw recent winrate 1.0. Shrinkage toward
+        # the 0.5 prior must pull a 1-game sample below 1.0.
+        rows = [
+            {"date": "2026-05-01", "team1": "Alpha", "team2": "Bravo", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+            {"date": "2026-05-02", "team1": "Alpha", "team2": "Charlie", "winner": "Alpha", "best_of": 1, "map": "mirage"},
+        ]
+        raw = enrich_match_history(rows)[-1]["team1_recent_winrate_5"]
+        shrunk = enrich_match_history(rows, winrate_shrinkage_pseudocount=4.0)[-1]["team1_recent_winrate_5"]
+        self.assertAlmostEqual(raw, 1.0)
+        self.assertLess(shrunk, 1.0)
+        self.assertGreater(shrunk, 0.5)
+
+    def test_bayesian_shrinkage_converges_to_raw_as_sample_grows(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Many wins -> shrunk winrate approaches the raw winrate (here ~1.0 limited to last 5).
+        rows = [
+            {"date": f"2026-05-{d:02d}", "team1": "Alpha", "team2": f"Opp{d}", "winner": "Alpha", "best_of": 1, "map": "mirage"}
+            for d in range(1, 12)
+        ]
+        small = enrich_match_history(rows[:2], winrate_shrinkage_pseudocount=4.0)[-1]["team1_recent_winrate_5"]
+        large = enrich_match_history(rows, winrate_shrinkage_pseudocount=4.0)[-1]["team1_recent_winrate_5"]
+        # Larger samples are shrunk less, so the winrate sits closer to the raw 1.0.
+        self.assertGreater(large, small)
+
+    def test_knobs_are_independent(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        rows = self._decay_history()
+        # Turning on only shrinkage leaves the decay path identical to no-decay.
+        only_shrink = enrich_match_history(rows, winrate_shrinkage_pseudocount=2.0)
+        decay_and_shrink = enrich_match_history(
+            rows, winrate_shrinkage_pseudocount=2.0, winrate_half_life_days=30.0
+        )
+        # Decay changes the result on top of shrinkage -> the two differ.
+        self.assertNotAlmostEqual(
+            only_shrink[-1]["team1_recent_winrate_5"],
+            decay_and_shrink[-1]["team1_recent_winrate_5"],
+        )
+
+    def test_sos_weight_is_mean_one_so_it_does_not_amplify_shrinkage(self):
+        from cs2pickem.enrichment import enrich_match_history
+
+        # Hero plays only average-Elo opponents (everyone starts at ELO_BASE and the
+        # first game pre-match Elo is exactly the base), so each strength-of-schedule
+        # weight is ~1.0. With the mean-1 normalisation, SoS must NOT shrink the
+        # effective sample size: SoS+shrinkage should land very close to shrinkage
+        # alone. The old 0.5-centred weight halved the effective N and would pull the
+        # combined statistic noticeably further toward 0.5 -> the two knobs would
+        # cross-talk. Locking near-equality keeps them orthogonal (red-line a).
+        rows = [
+            {"date": f"2026-05-{d:02d}", "team1": "Hero", "team2": f"Opp{d}", "winner": "Hero", "best_of": 1, "map": "mirage"}
+            for d in range(1, 4)
+        ]
+        shrink_only = enrich_match_history(rows, winrate_shrinkage_pseudocount=4.0)[-1]["team1_recent_winrate_5"]
+        shrink_and_sos = enrich_match_history(
+            rows, winrate_shrinkage_pseudocount=4.0, enable_sos=True, sos_elo_scale=400.0
+        )[-1]["team1_recent_winrate_5"]
+        # Average opponents -> SoS weight ~1.0 each -> effective N unchanged -> the
+        # shrunk statistic is essentially identical with or without SoS.
+        self.assertAlmostEqual(shrink_only, shrink_and_sos, places=2)
+
+
 if __name__ == "__main__":
     unittest.main()

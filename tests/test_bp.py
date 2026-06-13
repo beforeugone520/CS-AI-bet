@@ -51,6 +51,56 @@ class BpIntelTests(unittest.TestCase):
         self.assertEqual(merged[0]["team2_bans"], "nuke|ancient")
         self.assertEqual(merged[1]["map"], "unknown")
 
+    def test_structured_features_are_neutral_without_intel(self):
+        from cs2pickem.bp import bp_structured_features
+
+        feats = bp_structured_features({"team1": "Alpha", "team2": "Bravo"})
+        self.assertEqual(feats["bp_applied"], 0.0)
+        self.assertEqual(feats["bp_confidence"], 0.0)
+        self.assertEqual(feats["bp_total_bans"], 0.0)
+        self.assertEqual(feats["bp_ban_overlap"], 0.0)
+        self.assertEqual(feats["bp_total_picks"], 0.0)
+
+    def test_structured_features_count_bans_and_overlap(self):
+        from cs2pickem.bp import bp_structured_features
+
+        feats = bp_structured_features(
+            {
+                "bp_applied": 1,
+                "bp_confidence": 0.82,
+                "team1_bans": "nuke|ancient",
+                "team2_bans": "anubis|nuke",
+                "team1_picks": "mirage",
+                "team2_picks": "inferno",
+            }
+        )
+        self.assertEqual(feats["bp_applied"], 1.0)
+        self.assertAlmostEqual(feats["bp_confidence"], 0.82)
+        self.assertEqual(feats["bp_total_bans"], 4.0)
+        self.assertEqual(feats["bp_ban_overlap"], 1.0)  # "nuke" shared
+        self.assertEqual(feats["bp_total_picks"], 2.0)
+
+    def test_structured_features_are_symmetric_under_team_swap(self):
+        from cs2pickem.bp import bp_structured_features
+
+        row = {
+            "bp_applied": 1,
+            "bp_confidence": 0.7,
+            "team1_bans": "nuke|ancient",
+            "team2_bans": "anubis|nuke",
+            "team1_picks": "mirage|overpass",
+            "team2_picks": "inferno",
+        }
+        swapped = {
+            "bp_applied": 1,
+            "bp_confidence": 0.7,
+            "team1_bans": row["team2_bans"],
+            "team2_bans": row["team1_bans"],
+            "team1_picks": row["team2_picks"],
+            "team2_picks": row["team1_picks"],
+        }
+        self.assertEqual(bp_structured_features(row), bp_structured_features(swapped))
+
     def test_cli_merge_bp_writes_augmented_fixtures(self):
         from cs2pickem.cli import main
         from cs2pickem.data import read_matches_csv, write_matches_csv
