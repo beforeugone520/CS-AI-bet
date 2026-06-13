@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
-from .calibration import ProbabilityCalibrator
+from .calibration import ProbabilityCalibrator, make_calibrator
 from .cleaning import clean_matches
 from .evaluation import accuracy, auc, brier_score, calibration_table, log_loss, profit_loss
 from .features import FeatureBuilder
@@ -12,6 +12,16 @@ from .odds import market_probability_from_row
 from .reliability import PLAYER_STATUS_REQUIRED_FEATURES, UNSTABLE_IDENTITY_FEATURES, prepare_reliability_features
 from .selection import FeatureSelector
 from .splitting import time_series_folds, time_series_split
+from .strategy import (
+    DEFAULT_MODEL_WEIGHT,
+    adjust_probability_toward_market_probability,
+)
+
+# Tuning reports the default (linear-blend) path under the canonical name
+# 'legacy'; strategy's own 'legacy_clip' is accepted as an alias by the resolver.
+# 'logit_pool' is the opt-in geometric/log-odds pool. The real legacy-vs-logit_pool
+# A/B adjudication is deferred to WF-2F; this stage only wires the switch.
+_DEFAULT_TUNING_FUSION_METHOD = "legacy"
 
 
 WEIGHT_PRESETS: Dict[str, Dict[str, float]] = {
@@ -42,6 +52,9 @@ def optimize_match_predictions(
     probability_objective: str = "log_loss",
     elo_modes: Sequence[str] | None = None,
     rating_modes: Sequence[str] | None = None,
+    calibration_methods: Sequence[str] | None = None,
+    fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
+    model_weight: float = DEFAULT_MODEL_WEIGHT,
 ) -> Dict[str, object]:
     """Replay a chronological holdout and compare candidate model configs.
 
@@ -117,6 +130,9 @@ def optimize_match_predictions(
                 rolling_prepared=rolling_cache[cache_key],
                 market_weight=market_weight,
                 probability_objective=probability_objective,
+                calibration_methods=_normalize_calibration_methods(calibration_methods),
+                fusion_method=_resolve_fusion_method(fusion_method),
+                model_weight=model_weight,
             )
         )
     # Authoritative model selection uses ONLY the validation split. The test/holdout
@@ -137,7 +153,10 @@ def optimize_match_predictions(
         "feature_preparation": feature_preparation,
         "rolling_folds": rolling_folds,
         "market_weight": market_weight,
+        "fusion_method": _resolve_fusion_method(fusion_method),
+        "model_weight": float(model_weight),
         "probability_objective": probability_objective,
+        "calibration_methods": _normalize_calibration_methods(calibration_methods),
         "split_counts": {"train": len(split.train), "validation": len(split.validation), "test": len(split.test)},
         "leakage_guard": {
             "max_train_date": split.train[-1]["date"],
@@ -240,6 +259,92 @@ def _config_rating_mode(config: Mapping[str, Any]) -> str:
     return _DEFAULT_RATING_MODE
 
 
+CALIBRATION_METHODS = ("platt", "beta", "temperature")
+
+
+def _normalize_calibration_methods(methods: Sequence[str] | None) -> List[str]:
+    """De-duplicate / validate the requested calibration methods, platt first.
+
+    Platt is always evaluated and kept first so its report stays the headline
+    'calibration' block (back-compat). Unknown methods raise; an empty / falsy
+    request collapses to the default platt-only behaviour.
+    """
+    requested = [str(method).strip().lower() for method in (methods or ["platt"])]
+    ordered: List[str] = ["platt"]
+    for method in requested:
+        if method not in CALIBRATION_METHODS:
+            raise ValueError(f"unknown calibration method: {method!r}")
+        if method not in ordered:
+            ordered.append(method)
+    return ordered
+
+
+_METHOD_SELECTION_CV_FOLDS = 3
+
+
+def _out_of_fold_validation_probabilities(
+    method: str,
+    validation_probabilities: Sequence[float],
+    validation_labels: Sequence[int],
+) -> List[float] | None:
+    """Expanding-window out-of-fold calibrated probabilities on the validation set.
+
+    Method *selection* must not reward a calibrator for fitting the very rows it
+    is then scored on -- an in-sample comparison systematically prefers the
+    highest-DOF method (beta) regardless of generalisation (review red-line (b):
+    choose by held-out, not in-sample, validation quality). For each expanding
+    fold we fit the calibrator ONLY on the rows before the fold and predict the
+    fold rows it has never seen; the concatenated out-of-fold predictions give an
+    honest validation score. The calibrator never sees test labels here either.
+
+    Returns ``None`` when there are too few rows to carve at least two folds, so
+    the caller can fall back to the (full-fit) in-sample metric for that method.
+    """
+    n = len(validation_labels)
+    folds = _METHOD_SELECTION_CV_FOLDS
+    if n < folds + 1:
+        return None
+    fold_size = max(1, n // (folds + 1))
+    predictions: List[float] = [float(p) for p in validation_probabilities]
+    covered = False
+    for fold_index in range(1, folds + 1):
+        train_end = fold_size * fold_index
+        validation_end = min(n, train_end + fold_size)
+        if train_end <= 0 or validation_end <= train_end:
+            break
+        train_probs = list(validation_probabilities[:train_end])
+        train_labels = list(validation_labels[:train_end])
+        if not train_probs:
+            continue
+        calibrator = make_calibrator(method).fit(train_probs, train_labels)
+        held = calibrator.transform(list(validation_probabilities[train_end:validation_end]))
+        for offset, value in enumerate(held):
+            predictions[train_end + offset] = value
+        covered = True
+    return predictions if covered else None
+
+
+def _resolve_fusion_method(fusion_method: str | None) -> str:
+    """Validate / normalise the market-fusion method (defaults to legacy).
+
+    The real A/B between ``legacy`` (the current convex linear blend, behaviour
+    unchanged) and ``logit_pool`` (the geometric/log-odds pool with the frozen
+    ``model_weight`` prior) is deferred to WF-2F's multi-season adjudication; this
+    stage only wires the switch and reports the resolved method. ``'legacy'`` and
+    strategy's ``'legacy_clip'`` are accepted as aliases for the default path,
+    which tuning reports under the canonical name ``'legacy'``.
+    """
+    resolved = str(fusion_method or _DEFAULT_TUNING_FUSION_METHOD).strip().lower()
+    if resolved in {"legacy", "legacy_clip"}:
+        return _DEFAULT_TUNING_FUSION_METHOD
+    if resolved == "logit_pool":
+        return "logit_pool"
+    raise ValueError(
+        f"unknown fusion method: {fusion_method!r}; expected one of "
+        f"{('legacy', 'logit_pool')}"
+    )
+
+
 def _evaluate_candidate(
     prepared: Mapping[str, object],
     config: Mapping[str, Any],
@@ -248,6 +353,9 @@ def _evaluate_candidate(
     rolling_prepared: Sequence[Mapping[str, object]],
     market_weight: float,
     probability_objective: str,
+    calibration_methods: Sequence[str] = ("platt",),
+    fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
+    model_weight: float = DEFAULT_MODEL_WEIGHT,
 ) -> Dict[str, object]:
     top_k = int(config.get("top_k", 25))
     epochs = int(config.get("epochs", 8))
@@ -272,16 +380,56 @@ def _evaluate_candidate(
     calibrated_test_probabilities = raw_test_probabilities
     calibrated_validation_probabilities = validation_probabilities
     calibrated_available = bool(calibrate and validation_probabilities and validation_labels)
+    # Normalise the requested methods, always keeping platt first so its report
+    # remains the headline 'calibration' block (back-compat with existing readers).
+    methods = _normalize_calibration_methods(calibration_methods)
+    method_candidates: list[dict] = []
+    multi_method = len(methods) > 1
     if calibrated_available:
-        calibrator = ProbabilityCalibrator().fit(validation_probabilities, validation_labels)
-        calibrated_test_probabilities = calibrator.transform(raw_test_probabilities)
-        calibrated_validation_probabilities = calibrator.transform(validation_probabilities)
-        calibration_report = calibrator.report()
-        calibration_report["basis"] = "validation_platt_logistic"
+        for method in methods:
+            # The calibrator is fit ONLY on validation (never on test): no test
+            # label ever participates in fitting or selecting the calibrator.
+            calibrator = make_calibrator(method).fit(validation_probabilities, validation_labels)
+            method_validation_probabilities = calibrator.transform(validation_probabilities)
+            method_test_probabilities = calibrator.transform(raw_test_probabilities)
+            report = calibrator.report()
+            report["basis"] = f"validation_{method}" if method != "platt" else "validation_platt_logistic"
+            # Selection metric: when multiple methods compete, score them on
+            # EXPANDING-WINDOW OUT-OF-FOLD validation predictions so the choice is
+            # not biased toward the highest-DOF method by in-sample over-fit
+            # (review red-line (b)). The single (platt) path keeps the historic
+            # in-sample validation metric so default behaviour is unchanged.
+            selection_probabilities = method_validation_probabilities
+            selection_basis = "validation_in_sample"
+            if multi_method:
+                out_of_fold = _out_of_fold_validation_probabilities(
+                    method, validation_probabilities, validation_labels
+                )
+                if out_of_fold is not None:
+                    selection_probabilities = out_of_fold
+                    selection_basis = "validation_out_of_fold"
+            method_candidates.append(
+                {
+                    "method": method,
+                    "basis": f"calibrated_{method}",
+                    "report": report,
+                    "validation_probabilities": method_validation_probabilities,
+                    "validation_metrics": _metric_summary(validation_labels, selection_probabilities, validation_rows),
+                    "selection_metric_basis": selection_basis,
+                    "test_probabilities": method_test_probabilities,
+                }
+            )
+        # The headline calibration block / the legacy calibrated-on-test arrays
+        # track the first (platt) method so existing reports are unchanged.
+        primary = method_candidates[0]
+        calibration_report = dict(primary["report"])
+        calibrated_test_probabilities = list(primary["test_probabilities"])
+        calibrated_validation_probabilities = list(primary["validation_probabilities"])
     # The raw-vs-calibrated decision is made ONLY on the validation split so that
     # no test label ever participates in model/probability selection. The chosen
     # basis is then applied to the test probabilities; test metrics are reported
-    # for both bases but never drive the choice.
+    # for both bases but never drive the choice. With a single (platt) method the
+    # method_candidates path reduces exactly to the historic raw-vs-platt pick.
     probability_selection = _probability_selection(
         validation_labels,
         validation_probabilities,
@@ -293,9 +441,17 @@ def _evaluate_candidate(
         test_rows,
         objective=probability_objective,
         calibrated_available=calibrated_available,
+        method_candidates=method_candidates if (calibrated_available and len(methods) > 1) else None,
     )
     test_probabilities = probability_selection["selected_probabilities"]
-    market_fusion = _market_fusion_report(test_labels, test_probabilities, test_rows, market_weight=market_weight)
+    market_fusion = _market_fusion_report(
+        test_labels,
+        test_probabilities,
+        test_rows,
+        market_weight=market_weight,
+        fusion_method=fusion_method,
+        model_weight=model_weight,
+    )
     return {
         "name": str(config.get("name") or config.get("preset") or "candidate"),
         "preset": config.get("preset"),
@@ -439,6 +595,13 @@ def _mean_metric_summary(metric_rows: Sequence[Mapping[str, float]]) -> Dict[str
     return {key: sum(float(row.get(key, 0.0)) for row in metric_rows) / len(metric_rows) for key in keys}
 
 
+def _objective_is_better(objective: str, candidate: Mapping[str, float], incumbent: Mapping[str, float]) -> bool:
+    """Lower-is-better for log_loss/brier_score/ece, higher-is-better for accuracy."""
+    if objective == "accuracy":
+        return candidate["accuracy"] > incumbent["accuracy"]
+    return candidate[objective] < incumbent[objective]
+
+
 def _probability_selection(
     validation_labels: Sequence[int],
     validation_raw_probabilities: Sequence[float],
@@ -450,35 +613,62 @@ def _probability_selection(
     test_rows: Sequence[dict],
     objective: str,
     calibrated_available: bool,
+    method_candidates: "Sequence[Mapping[str, object]] | None" = None,
 ) -> Dict[str, object]:
     objective = objective if objective in {"accuracy", "log_loss", "brier_score", "ece"} else "log_loss"
-    # Decide raw-vs-calibrated purely on the validation split: test labels must
-    # never influence which probability basis is selected.
+    # Decide the probability basis purely on the validation split: test labels
+    # must never influence which basis is selected. Per the review red-line,
+    # tuning chooses among {raw, platt, beta, temperature} on VALIDATION only.
     validation_raw_metrics = _metric_summary(validation_labels, validation_raw_probabilities, validation_rows)
     validation_calibrated_metrics = _metric_summary(validation_labels, validation_calibrated_probabilities, validation_rows)
-    if not calibrated_available:
-        selected_basis = "raw_model"
-    elif objective == "accuracy":
-        selected_basis = (
-            "calibrated_model"
-            if validation_calibrated_metrics["accuracy"] > validation_raw_metrics["accuracy"]
-            else "raw_model"
-        )
-    else:
-        selected_basis = (
-            "calibrated_model"
-            if validation_calibrated_metrics[objective] < validation_raw_metrics[objective]
-            else "raw_model"
-        )
-    use_calibrated = selected_basis == "calibrated_model"
-    selected_probabilities = list(test_calibrated_probabilities if use_calibrated else test_raw_probabilities)
-    # Test metrics are reported for transparency/audit but are NOT used to choose
-    # the basis above.
     raw_test_metrics = _metric_summary(test_labels, test_raw_probabilities, test_rows)
     calibrated_test_metrics = _metric_summary(test_labels, test_calibrated_probabilities, test_rows)
-    return {
+
+    # Build the candidate pool. The default single-calibrator path keeps the
+    # historic 'raw_model' / 'calibrated_model' basis labels byte-identical; a
+    # method_candidates list (one entry per fitted calibration method) opts into
+    # the multi-method validation-based selection. 'raw_model' is always present.
+    pool: list[dict] = [
+        {
+            "basis": "raw_model",
+            "method": "raw",
+            "validation_metrics": validation_raw_metrics,
+            "test_probabilities": list(test_raw_probabilities),
+        }
+    ]
+    if method_candidates:
+        for candidate in method_candidates:
+            pool.append(
+                {
+                    "basis": str(candidate.get("basis", f"calibrated_{candidate.get('method', 'platt')}")),
+                    "method": str(candidate.get("method", "platt")),
+                    "validation_metrics": dict(candidate["validation_metrics"]),
+                    "test_probabilities": list(candidate["test_probabilities"]),
+                }
+            )
+    elif calibrated_available:
+        pool.append(
+            {
+                "basis": "calibrated_model",
+                "method": "platt",
+                "validation_metrics": validation_calibrated_metrics,
+                "test_probabilities": list(test_calibrated_probabilities),
+            }
+        )
+
+    # Greedy pick over the validation objective; ties keep the earlier (rawer)
+    # candidate so an uninformative calibrator never displaces the raw model.
+    chosen = pool[0]
+    for candidate in pool[1:]:
+        if _objective_is_better(objective, candidate["validation_metrics"], chosen["validation_metrics"]):
+            chosen = candidate
+    selected_basis = chosen["basis"]
+    selected_probabilities = list(chosen["test_probabilities"])
+
+    result = {
         "objective": objective,
         "selected_basis": selected_basis,
+        "selected_method": chosen["method"],
         "selection_basis": "validation_only",
         "validation_raw_metrics": validation_raw_metrics,
         "validation_calibrated_metrics": validation_calibrated_metrics,
@@ -486,6 +676,11 @@ def _probability_selection(
         "calibrated_test_metrics": calibrated_test_metrics,
         "selected_probabilities": selected_probabilities,
     }
+    if method_candidates:
+        result["method_validation_metrics"] = {
+            candidate["method"]: candidate["validation_metrics"] for candidate in pool
+        }
+    return result
 
 
 def _market_fusion_report(
@@ -493,13 +688,18 @@ def _market_fusion_report(
     model_probabilities: Sequence[float],
     rows: Sequence[dict],
     market_weight: float,
+    fusion_method: str = _DEFAULT_TUNING_FUSION_METHOD,
+    model_weight: float = DEFAULT_MODEL_WEIGHT,
 ) -> Dict[str, object]:
     market_weight = max(0.0, min(1.0, float(market_weight)))
+    fusion_method = _resolve_fusion_method(fusion_method)
     signals = [(index, market_probability_from_row(row)) for index, row in enumerate(rows)]
     market_signals = [(index, signal) for index, signal in signals if signal is not None]
     if not market_signals:
         return {
             "market_weight": market_weight,
+            "fusion_method": fusion_method,
+            "model_weight": float(model_weight),
             "test_rows_with_market": 0,
             "proxy_rows": 0,
             "signal_counts": {},
@@ -510,7 +710,13 @@ def _market_fusion_report(
     market_probabilities = [float(signal["probability_team1"]) for _, signal in market_signals]
     model_subset = [model_probabilities[index] for index in market_indexes]
     fused_subset = [
-        _clip_probability((1.0 - market_weight) * model_probability + market_weight * market_probability)
+        _fuse_probability(
+            model_probability,
+            market_probability,
+            market_weight=market_weight,
+            fusion_method=fusion_method,
+            model_weight=model_weight,
+        )
         for model_probability, market_probability in zip(model_subset, market_probabilities)
     ]
     subset_labels = [labels[index] for index in market_indexes]
@@ -527,6 +733,8 @@ def _market_fusion_report(
         sources[source] = sources.get(source, 0) + 1
     return {
         "market_weight": market_weight,
+        "fusion_method": fusion_method,
+        "model_weight": float(model_weight),
         "test_rows_with_market": len(market_indexes),
         "proxy_rows": proxy_rows,
         "signal_counts": signal_counts,
@@ -535,6 +743,31 @@ def _market_fusion_report(
         "model_subset_test_metrics": _metric_summary(subset_labels, model_subset, subset_rows),
         "fused_test_metrics": _metric_summary(subset_labels, fused_subset, subset_rows),
     }
+
+
+def _fuse_probability(
+    model_probability: float,
+    market_probability: float,
+    market_weight: float,
+    fusion_method: str,
+    model_weight: float,
+) -> float:
+    """Blend one model/market probability per the resolved ``fusion_method``.
+
+    ``legacy`` keeps the historic convex linear blend
+    ``(1 - market_weight)*p_model + market_weight*p_market`` byte-identical (so the
+    existing market_weight-passthrough tests stay green). ``logit_pool`` delegates
+    to strategy's logarithmic opinion pool with the frozen ``model_weight`` prior
+    (``market_weight`` is ignored on that path, by design).
+    """
+    if fusion_method == "logit_pool":
+        return adjust_probability_toward_market_probability(
+            model_probability,
+            market_probability,
+            fusion_method="logit_pool",
+            model_weight=model_weight,
+        )
+    return _clip_probability((1.0 - market_weight) * model_probability + market_weight * market_probability)
 
 
 def _best_summary(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Mapping, Optional
 
-from .calibration import ProbabilityCalibrator
+from .calibration import ProbabilityCalibrator, make_calibrator
 from .cleaning import clean_matches
 from .features import FeatureBuilder
 from .imbalance import rebalance_training_data
@@ -66,6 +66,8 @@ class MatchPredictor:
         calibration_ratio: float = 0.15,
         minimum_calibration_rows: int = 30,
         inject_elo: bool = True,
+        calibration_method: str = "platt",
+        calibration_cv_folds: int = 0,
     ) -> "MatchPredictor":
         cleaned_history = sorted(clean_matches([dict(row) for row in history_rows], reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
         prepared_history, final_elo, feature_preparation = prepare_reliability_features(cleaned_history, inject_elo=inject_elo)
@@ -84,7 +86,14 @@ class MatchPredictor:
         selected = selector.fit_transform(dataset.rows, dataset.labels, dataset.feature_names)
         rebalanced = rebalance_training_data(selected.rows, dataset.labels)
         model = default_ensemble(seed=seed, epochs=epochs, weights=ensemble_weights).fit(rebalanced.rows, rebalanced.labels, sample_weights=rebalanced.sample_weights)
-        calibrator, calibration_report = _fit_holdout_calibrator(builder, selector, model, calibration_rows)
+        calibrator, calibration_report = _fit_holdout_calibrator(
+            builder,
+            selector,
+            model,
+            calibration_rows,
+            method=calibration_method,
+            cv_folds=calibration_cv_folds,
+        )
         return cls(
             builder,
             selector,
@@ -208,6 +217,9 @@ def _fit_holdout_calibrator(
     selector: FeatureSelector,
     model: object,
     calibration_rows: list[dict],
+    *,
+    method: str = "platt",
+    cv_folds: int = 0,
 ) -> tuple[ProbabilityCalibrator | None, Dict[str, object]]:
     if not calibration_rows:
         return None, {"basis": "not_applied", "calibration_count": 0}
@@ -215,9 +227,13 @@ def _fit_holdout_calibrator(
     selected_rows = selector.transform(transformed).rows
     labels = [1 if row.get("winner") == row.get("team1") else 0 for row in calibration_rows]
     probabilities = model.predict_proba(selected_rows)
-    calibrator = ProbabilityCalibrator().fit(probabilities, labels)
+    calibrator = make_calibrator(method, cv_folds=cv_folds).fit(probabilities, labels)
     report = calibrator.report()
-    report.update({"basis": "holdout_platt_logistic", "calibration_count": len(calibration_rows)})
+    # Preserve the historic basis string for the default platt single-split path
+    # (locked by tests); non-default methods get a descriptive '<scope>_<method>'
+    # basis so reports/readers can tell which calibrator was applied.
+    basis = "holdout_platt_logistic" if method == "platt" and not cv_folds else f"holdout_{method}"
+    report.update({"basis": basis, "calibration_count": len(calibration_rows)})
     return calibrator, report
 
 

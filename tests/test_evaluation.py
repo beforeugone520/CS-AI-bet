@@ -557,5 +557,35 @@ class ProbabilityCalibratorTests(unittest.TestCase):
         self.assertEqual(calibrator.report()["basis"], "platt_logistic")
 
 
+class MultiMethodCalibrationMetricTests(unittest.TestCase):
+    def test_each_method_lowers_brier_on_miscalibrated_input(self):
+        from cs2pickem.calibration import make_calibrator
+        from cs2pickem.evaluation import brier_score
+
+        # systematically under-confident: predict 0.3 but win 50% of the time.
+        labels = [0, 1] * 30
+        probabilities = [0.3] * 60
+        for method in ("platt", "beta", "temperature"):
+            calibrator = make_calibrator(method).fit(probabilities, labels)
+            calibrated = calibrator.transform(probabilities)
+            self.assertLessEqual(
+                brier_score(labels, calibrated),
+                brier_score(labels, probabilities) + 1e-9,
+                msg=f"{method} worsened Brier",
+            )
+
+    def test_method_calibrator_preserves_auc_like_platt(self):
+        from cs2pickem.calibration import make_calibrator
+        from cs2pickem.evaluation import auc
+
+        labels = [1, 0, 1, 0, 1, 1, 0, 0]
+        probabilities = [0.9, 0.8, 0.6, 0.55, 0.4, 0.2, 0.3, 0.1]
+        before = auc(labels, probabilities)
+        for method in ("platt", "beta", "temperature"):
+            calibrator = make_calibrator(method).fit(probabilities, labels)
+            after = auc(labels, calibrator.transform(probabilities))
+            self.assertAlmostEqual(before, after, places=6, msg=f"{method} changed AUC")
+
+
 if __name__ == "__main__":
     unittest.main()

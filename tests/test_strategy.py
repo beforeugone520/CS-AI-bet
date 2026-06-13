@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import unittest
@@ -5,6 +6,139 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(ROOT, "src"))
+
+
+class MarketFusionTests(unittest.TestCase):
+    def test_default_fusion_method_is_legacy_clip_and_unchanged(self):
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        # Default path = historic arithmetic +/-0.03 truncation toward the market.
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.60, 0.90),
+            0.63,
+        )
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.60, 0.40),
+            0.57,
+        )
+        # Within the cap the model simply moves to the market value.
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.60, 0.61),
+            0.61,
+        )
+        # Explicitly naming legacy_clip is identical to the default.
+        self.assertEqual(
+            adjust_probability_toward_market_probability(0.60, 0.90),
+            adjust_probability_toward_market_probability(0.60, 0.90, fusion_method="legacy_clip"),
+        )
+
+    def test_legacy_clip_respects_custom_max_adjustment_and_clips_to_unit_interval(self):
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.50, 0.90, max_adjustment=0.10),
+            0.60,
+        )
+        self.assertEqual(
+            adjust_probability_toward_market_probability(0.99, 0.10, max_adjustment=0.50),
+            0.49,
+        )
+        self.assertGreaterEqual(adjust_probability_toward_market_probability(0.02, 0.0, max_adjustment=0.5), 0.0)
+        self.assertLessEqual(adjust_probability_toward_market_probability(0.98, 1.0, max_adjustment=0.5), 1.0)
+
+    def test_logit_pool_matches_log_odds_average_with_frozen_default_weight(self):
+        from cs2pickem.strategy import DEFAULT_MODEL_WEIGHT, adjust_probability_toward_market_probability
+
+        p_model, p_market = 0.60, 0.80
+        w = DEFAULT_MODEL_WEIGHT
+        expected_logit = w * math.log(p_model / (1 - p_model)) + (1 - w) * math.log(p_market / (1 - p_market))
+        expected = 1.0 / (1.0 + math.exp(-expected_logit))
+        fused = adjust_probability_toward_market_probability(p_model, p_market, fusion_method="logit_pool")
+        self.assertAlmostEqual(fused, expected, places=9)
+        # Pro-market default => fused lands between the model and the market.
+        self.assertGreater(fused, p_model)
+        self.assertLess(fused, p_market)
+
+    def test_logit_pool_weight_boundaries_recover_each_expert(self):
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        # w = 1 -> pure model; w = 0 -> pure market (each clipped to the unit interval).
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.62, 0.81, fusion_method="logit_pool", model_weight=1.0),
+            0.62,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.62, 0.81, fusion_method="logit_pool", model_weight=0.0),
+            0.81,
+            places=6,
+        )
+        # Out-of-range weights are clamped (boundary check, not an MLE), not raised.
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.62, 0.81, fusion_method="logit_pool", model_weight=5.0),
+            0.62,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            adjust_probability_toward_market_probability(0.62, 0.81, fusion_method="logit_pool", model_weight=-3.0),
+            0.81,
+            places=6,
+        )
+
+    def test_logit_pool_never_overflows_on_extreme_probabilities(self):
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        for p_model in (0.0, 1.0, 0.5):
+            for p_market in (0.0, 1.0, 0.5):
+                for w in (0.0, 0.35, 1.0):
+                    fused = adjust_probability_toward_market_probability(
+                        p_model, p_market, fusion_method="logit_pool", model_weight=w
+                    )
+                    self.assertGreater(fused, 0.0)
+                    self.assertLess(fused, 1.0)
+
+    def test_logit_pool_consumes_devigged_fair_prob_from_odds(self):
+        from cs2pickem.odds import devig_market
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        audit = devig_market(1.50, 2.80)
+        fair = audit["fair_prob_team1"]
+        # The de-vigged fair prob (margin removed) is the market input, not the raw
+        # implied 1/odds. The fused value must lie strictly between the experts.
+        self.assertLess(fair, 1.0 / 1.50)
+        fused = adjust_probability_toward_market_probability(0.55, fair, fusion_method="logit_pool")
+        self.assertGreater(fused, min(0.55, fair))
+        self.assertLess(fused, max(0.55, fair))
+
+    def test_adjust_probability_with_market_supports_logit_pool(self):
+        from cs2pickem.odds import devig_market
+        from cs2pickem.strategy import adjust_probability_with_market
+
+        fused = adjust_probability_with_market(0.55, 1.50, 2.80, fusion_method="logit_pool")
+        fair = devig_market(1.50, 2.80)["fair_prob_team1"]
+        expected = adjust_probability_with_market(0.55, 1.50, 2.80, fusion_method="logit_pool")
+        # adjust_probability_with_market should de-vig internally to the same fair prob.
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        self.assertAlmostEqual(
+            fused,
+            adjust_probability_toward_market_probability(0.55, fair, fusion_method="logit_pool"),
+            places=9,
+        )
+        self.assertEqual(fused, expected)
+        # Single source of truth: adjust_probability_with_market must consume the
+        # SAME de-vigged fair prob as odds.devig_market (no second hard-coded
+        # de-vig copy that could silently drift if the default method changes).
+        self.assertEqual(
+            fused,
+            adjust_probability_toward_market_probability(0.55, fair, fusion_method="logit_pool"),
+        )
+
+    def test_unknown_fusion_method_raises(self):
+        from cs2pickem.strategy import adjust_probability_toward_market_probability
+
+        with self.assertRaises(ValueError):
+            adjust_probability_toward_market_probability(0.6, 0.7, fusion_method="bogus")
 
 
 class StageStrategyTests(unittest.TestCase):

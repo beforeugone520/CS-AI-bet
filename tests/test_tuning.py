@@ -86,6 +86,223 @@ class MatchTuningTests(unittest.TestCase):
         self.assertIn("fused_test_metrics", result["market_fusion"])
         self.assertIn("market_fusion", report["best_by_validation_log_loss"])
 
+    def test_market_fusion_defaults_to_legacy_method(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+        )
+        # Default skeleton: legacy linear blend, frozen model_weight prior reported.
+        self.assertEqual(report["fusion_method"], "legacy")
+        self.assertAlmostEqual(report["model_weight"], 0.35)
+        fusion = report["candidate_results"][0]["market_fusion"]
+        self.assertEqual(fusion["fusion_method"], "legacy")
+        self.assertEqual(fusion["market_weight"], 0.30)
+        self.assertAlmostEqual(fusion["model_weight"], 0.35)
+
+    def test_market_fusion_logit_pool_is_opt_in_and_reported(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        rows = chronological_matches()
+        rows[-2]["odds_team1"] = ""
+        rows[-2]["odds_team2"] = ""
+        rows[-2]["market_probability_team1"] = 0.72
+        rows[-1]["odds_team1"] = 1.50
+        rows[-1]["odds_team2"] = 2.80
+
+        report = optimize_match_predictions(
+            rows,
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+            fusion_method="logit_pool",
+            model_weight=0.40,
+        )
+        self.assertEqual(report["fusion_method"], "logit_pool")
+        self.assertAlmostEqual(report["model_weight"], 0.40)
+        fusion = report["candidate_results"][0]["market_fusion"]
+        self.assertEqual(fusion["fusion_method"], "logit_pool")
+        self.assertAlmostEqual(fusion["model_weight"], 0.40)
+        # Existing keys remain intact regardless of the fusion method.
+        self.assertIn("fused_test_metrics", fusion)
+        self.assertIn("market_only_test_metrics", fusion)
+
+    def test_unknown_fusion_method_raises(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        with self.assertRaises(ValueError):
+            optimize_match_predictions(
+                chronological_matches(),
+                reference_date="2026-05-31",
+                train_ratio=0.6,
+                validation_ratio=0.2,
+                max_age_days=180,
+                candidate_configs=[
+                    {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+                ],
+                fusion_method="bogus",
+            )
+
+    def test_default_calibration_method_keeps_legacy_basis_labels(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+        )
+        self.assertEqual(report["calibration_methods"], ["platt"])
+        result = report["candidate_results"][0]
+        # Single-platt path keeps the historic raw_model / calibrated_model labels
+        # and never advertises a multi-method block.
+        self.assertIn(result["probability_selection"]["selected_basis"], {"raw_model", "calibrated_model"})
+        self.assertNotIn("method_validation_metrics", result["probability_selection"])
+        self.assertEqual(result["calibration"]["basis"], "validation_platt_logistic")
+
+    def test_optimize_match_predictions_selects_calibration_method_on_validation(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+            calibration_methods=["platt", "beta", "temperature"],
+            probability_objective="log_loss",
+        )
+        self.assertEqual(report["calibration_methods"], ["platt", "beta", "temperature"])
+        selection = report["candidate_results"][0]["probability_selection"]
+        # Multi-method run reports every method's VALIDATION metrics and chooses
+        # among {raw, platt, beta, temperature} -- never peeking at test labels.
+        self.assertEqual(selection["selection_basis"], "validation_only")
+        self.assertIn("method_validation_metrics", selection)
+        self.assertEqual(
+            set(selection["method_validation_metrics"]),
+            {"raw", "platt", "beta", "temperature"},
+        )
+        self.assertIn(selection["selected_method"], {"raw", "platt", "beta", "temperature"})
+        # The chosen method must be (weakly) the best on the validation objective.
+        chosen = selection["selected_method"]
+        chosen_ll = selection["method_validation_metrics"][chosen]["log_loss"]
+        for metrics in selection["method_validation_metrics"].values():
+            self.assertLessEqual(chosen_ll, metrics["log_loss"] + 1e-9)
+
+    def test_calibration_method_choice_ignores_test_labels(self):
+        from cs2pickem.tuning import _probability_selection, _metric_summary
+
+        validation_labels = [1, 1, 0, 0] * 4
+        validation_rows = [{} for _ in validation_labels]
+        validation_raw = [0.55, 0.55, 0.45, 0.45] * 4
+        test_labels = [1, 1, 0, 0] * 4
+        test_rows = [{} for _ in test_labels]
+        test_raw = [0.55] * 16
+
+        # temperature is confidently correct on validation -> must be selected
+        # regardless of how the test labels are arranged.
+        temperature_val = [0.95, 0.95, 0.05, 0.05] * 4
+        method_candidates = [
+            {
+                "method": "platt",
+                "basis": "calibrated_platt",
+                "validation_metrics": _metric_summary(validation_labels, [0.7, 0.7, 0.3, 0.3] * 4, validation_rows),
+                "test_probabilities": [0.7] * 16,
+            },
+            {
+                "method": "temperature",
+                "basis": "calibrated_temperature",
+                "validation_metrics": _metric_summary(validation_labels, temperature_val, validation_rows),
+                "test_probabilities": [0.99] * 16,
+            },
+        ]
+
+        first = _probability_selection(
+            validation_labels, validation_raw, [0.7, 0.7, 0.3, 0.3] * 4, validation_rows,
+            test_raw, [0.7] * 16, test_labels, test_rows,
+            objective="log_loss", calibrated_available=True, method_candidates=method_candidates,
+        )
+        flipped = _probability_selection(
+            validation_labels, validation_raw, [0.7, 0.7, 0.3, 0.3] * 4, validation_rows,
+            test_raw, [0.7] * 16, [0, 0, 1, 1] * 4, test_rows,
+            objective="log_loss", calibrated_available=True, method_candidates=method_candidates,
+        )
+        self.assertEqual(first["selected_method"], "temperature")
+        self.assertEqual(first["selected_basis"], flipped["selected_basis"])
+        self.assertEqual(first["selected_probabilities"], flipped["selected_probabilities"])
+
+    def test_out_of_fold_selection_metric_is_not_in_sample(self):
+        import random
+
+        from cs2pickem.tuning import _out_of_fold_validation_probabilities
+
+        # Pure noise: labels independent of probabilities. An IN-SAMPLE beta fit
+        # (3 DOF) can drive its own validation log-loss down by over-fitting; the
+        # expanding-window OUT-OF-FOLD predictions must NOT reproduce that
+        # in-sample optimism (review red-line (b): held-out, not in-sample).
+        rng = random.Random(2026)
+        probabilities = [rng.uniform(0.1, 0.9) for _ in range(40)]
+        labels = [1 if rng.random() < 0.5 else 0 for _ in range(40)]
+
+        out_of_fold = _out_of_fold_validation_probabilities("beta", probabilities, labels)
+        self.assertIsNotNone(out_of_fold)
+        self.assertEqual(len(out_of_fold), len(probabilities))
+        # The out-of-fold vector differs from a full-fit in-sample transform: the
+        # earliest rows (before the first fold's train window) stay raw and the
+        # held rows are predicted by a calibrator that never saw them.
+        from cs2pickem.calibration import make_calibrator
+
+        in_sample = make_calibrator("beta").fit(probabilities, labels).transform(probabilities)
+        self.assertNotEqual(out_of_fold, in_sample)
+
+    def test_out_of_fold_selection_falls_back_when_too_few_rows(self):
+        from cs2pickem.tuning import _out_of_fold_validation_probabilities
+
+        # Below the fold threshold there is no honest held-out split -> None, so
+        # the caller uses the in-sample metric rather than fabricating folds.
+        self.assertIsNone(
+            _out_of_fold_validation_probabilities("beta", [0.4, 0.6, 0.5], [1, 0, 1])
+        )
+
+    def test_multi_method_selection_uses_out_of_fold_basis(self):
+        from cs2pickem.tuning import optimize_match_predictions
+
+        report = optimize_match_predictions(
+            chronological_matches(),
+            reference_date="2026-05-31",
+            train_ratio=0.6,
+            validation_ratio=0.2,
+            max_age_days=180,
+            candidate_configs=[
+                {"name": "logistic_small", "top_k": 8, "epochs": 3, "weights": {"logistic": 1.0}},
+            ],
+            calibration_methods=["platt", "beta", "temperature"],
+            probability_objective="log_loss",
+        )
+        selection = report["candidate_results"][0]["probability_selection"]
+        # Multi-method runs report every method's (held-out where possible)
+        # validation metric and still never peek at test for the choice.
+        self.assertEqual(selection["selection_basis"], "validation_only")
+        self.assertIn("method_validation_metrics", selection)
+
     def test_optimize_match_predictions_can_compare_with_and_without_elo(self):
         from cs2pickem.tuning import optimize_match_predictions
 

@@ -1,9 +1,29 @@
 from __future__ import annotations
 
+import math
+
 from typing import Dict, List, Mapping, Optional
 
 
 DEFAULT_SLOTS = {"3-0": 2, "advance": 6, "0-3": 2}
+
+# Fusion methods for blending the model probability toward the market signal.
+#   ``legacy_clip`` -- the historic arithmetic +/-``max_adjustment`` nudge (default,
+#     bit-for-bit unchanged behaviour).
+#   ``logit_pool``  -- a logarithmic opinion pool (geometric mean of the two
+#     probabilistic experts): logit(p_fused) = w*logit(p_model) + (1-w)*logit(p_market)
+#     with ``w`` (the model weight) FROZEN to a literature prior, never fitted.
+FUSION_METHODS = ("legacy_clip", "logit_pool")
+DEFAULT_FUSION_METHOD = "legacy_clip"
+# Frozen literature prior on the MODEL's weight in the logit pool. ~0.35 leans on
+# the market (~0.65 weight on the de-vigged fair probability) because the market is
+# a strong, near-calibrated aggregator. This is a documented hyperparameter default
+# -- it is deliberately NOT estimated on a single event's tiny holdout (review point
+# 8: that fits noise). Multi-season re-litigation is deferred to WF-2F.
+DEFAULT_MODEL_WEIGHT = 0.35
+# Logit-pool guard: clip probabilities into [_LOGIT_POOL_EPS, 1 - _LOGIT_POOL_EPS]
+# before taking logits and clip the pooled output so 0/1 inputs never overflow.
+_LOGIT_POOL_EPS = 1e-6
 
 
 def adjust_probability_with_market(
@@ -11,19 +31,82 @@ def adjust_probability_with_market(
     odds_team1: float,
     odds_team2: float,
     max_adjustment: float = 0.03,
+    fusion_method: str = DEFAULT_FUSION_METHOD,
+    model_weight: float = DEFAULT_MODEL_WEIGHT,
 ) -> float:
     market_probability = _market_probability(odds_team1, odds_team2)
-    return adjust_probability_toward_market_probability(model_probability, market_probability, max_adjustment=max_adjustment)
+    return adjust_probability_toward_market_probability(
+        model_probability,
+        market_probability,
+        max_adjustment=max_adjustment,
+        fusion_method=fusion_method,
+        model_weight=model_weight,
+    )
 
 
 def adjust_probability_toward_market_probability(
     model_probability: float,
     market_probability: float,
     max_adjustment: float = 0.03,
+    fusion_method: str = DEFAULT_FUSION_METHOD,
+    model_weight: float = DEFAULT_MODEL_WEIGHT,
 ) -> float:
+    """Blend ``model_probability`` toward ``market_probability``.
+
+    ``fusion_method``:
+
+    * ``legacy_clip`` (default) -- the historic arithmetic nudge: move at most
+      ``max_adjustment`` toward the market, then clip to [0, 1]. Behaviour is
+      bit-for-bit unchanged.
+    * ``logit_pool`` -- a logarithmic opinion pool (geometric-mean consensus of
+      two probabilistic experts): ``logit(p_fused) = w*logit(p_model) +
+      (1 - w)*logit(p_market)`` with the model weight ``w = model_weight``
+      FROZEN to a literature prior (default ~0.35, i.e. pro-market). ``w`` is a
+      documented hyperparameter, NOT fitted on this event (review red-line). The
+      ``market_probability`` should already be the de-vigged fair probability
+      (see :func:`cs2pickem.odds.devig_market`). ``max_adjustment`` is ignored on
+      this path.
+    """
+    method = _resolve_fusion_method(fusion_method)
+    if method == "logit_pool":
+        return _logit_pool(model_probability, market_probability, model_weight)
     delta = market_probability - model_probability
     capped_delta = max(-max_adjustment, min(max_adjustment, delta))
     return _clip(model_probability + capped_delta)
+
+
+def _resolve_fusion_method(fusion_method: Optional[str]) -> str:
+    resolved = str(fusion_method or DEFAULT_FUSION_METHOD).strip().lower()
+    if resolved not in FUSION_METHODS:
+        raise ValueError(f"unknown fusion method: {fusion_method!r}; expected one of {FUSION_METHODS}")
+    return resolved
+
+
+def _logit_pool(model_probability: float, market_probability: float, model_weight: float) -> float:
+    """Logarithmic opinion pool of two probabilities with a frozen model weight.
+
+    Clamps ``model_weight`` to [0, 1] (boundary check; not an MLE), clips both
+    inputs into ``[_LOGIT_POOL_EPS, 1 - _LOGIT_POOL_EPS]`` before taking logits,
+    and clips the pooled output to avoid 0/1 overflow. With ``w = 1`` the result
+    collapses to the (clipped) model probability and with ``w = 0`` to the
+    (clipped) market probability.
+    """
+    weight = max(0.0, min(1.0, float(model_weight)))
+    pooled_logit = weight * _logit(model_probability) + (1.0 - weight) * _logit(market_probability)
+    return _clip(_sigmoid(pooled_logit))
+
+
+def _logit(probability: float) -> float:
+    clipped = min(1.0 - _LOGIT_POOL_EPS, max(_LOGIT_POOL_EPS, float(probability)))
+    return math.log(clipped / (1.0 - clipped))
+
+
+def _sigmoid(value: float) -> float:
+    if value < -60.0:
+        return 0.0
+    if value > 60.0:
+        return 1.0
+    return 1.0 / (1.0 + math.exp(-value))
 
 
 def single_match_pick(
@@ -270,10 +353,20 @@ def _prefer_weak_multiplier(rank: int) -> float:
 
 
 def _market_probability(odds_team1: float, odds_team2: float) -> float:
-    inv1 = 1.0 / odds_team1 if odds_team1 > 0 else 0.5
-    inv2 = 1.0 / odds_team2 if odds_team2 > 0 else 0.5
-    total = inv1 + inv2
-    return inv1 / total if total else 0.5
+    """De-vigged fair probability for team1, via the single de-vig source.
+
+    Delegates to :func:`cs2pickem.odds.devig_market` (the canonical de-vig
+    implementation) so there is exactly ONE de-vig truth: if the default de-vig
+    method ever changes (e.g. to power/shin), the market signal consumed here and
+    by the rest of the pipeline stays consistent instead of silently diverging
+    from a second hard-coded proportional-normalisation copy. The historic
+    ``odds <= 0 -> 0.5`` guard is preserved for malformed inputs.
+    """
+    if not (odds_team1 > 0 and odds_team2 > 0):
+        return 0.5
+    from .odds import devig_market
+
+    return float(devig_market(odds_team1, odds_team2)["fair_prob_team1"])
 
 
 def _picked_player_status_risk(
