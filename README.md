@@ -32,12 +32,13 @@
 
 ## ✨ 这是什么
 
-`site/` 是一个**零构建、纯 ES Module** 的静态站点，把 IEM Cologne Major 2026 的瑞士轮做成一块 **broadcast 级战术情报终端**：
+`site/` 是一个**零构建、纯 ES Module** 的静态站点，把 IEM Cologne Major 2026 的瑞士轮做成一块 **broadcast 级战术情报终端**，核心是一个 **majors.im 式的全交互瑞士轮预测器**：
 
-- **🟢 赛果已锁定** —— Round 1–4 的真实 BO3 结果直接写死，状态色一眼可读（薄荷=晋级 / 电光青=存活 / 绯红=出局 / 金=2-2 决胜）。
-- **🎮 本地推演** —— 点击任意未完成对局的战队即可在浏览器内模拟胜负，战绩榜与 Pick'em 兑现状态实时联动，支持 Undo / Reset。
-- **📊 三路融合情报** —— 每个 Pick'em 槽位都展开为一张情报卡：融合置信度雷达、模型分布条（晋级 / 3-0 / 0-3）、专家投票分布、市场对比 edge。
-- **🛰️ 四种视图** —— Simple / Minimal / Bracket / Classic，一键切换信息密度。
+- **🎯 PREDICT 预测模式（默认）** —— 像 [majors.im](https://majors.im) 一样逐场点选胜者，整张瑞士轮从 `0-0` 开始按 **种子 + Buchholz** 自动重新配对、流入晋级 / 淘汰终列。改动任意一场都会即时重排下游对阵。
+- **🛰 LIVE 实况模式** —— Round 1–4 真实 BO3 赛果锁定，仅 Round 5 决胜可本地模拟。一键在两种模式间切换。
+- **🧬 真实 / 模拟 混合引擎** —— 当你的选择与真实赛果一致时，看板**精确复现真实对阵**（卡片标 `REAL`）；一旦出现冷门，下游立即切换到引擎模拟配对（标 `SIM`），避免重赛、3 胜晋级 / 3 负淘汰。
+- **📊 三路融合情报** —— 每个 Pick'em 槽位展开为一张情报卡：按状态着色的融合置信度雷达、模型边际概率条（晋级 / 3-0 / 0-3）、专家投票分布、市场对比 edge；战绩榜与 Pick'em 兑现随预测实时联动。
+- **🎛 四种视图 + 双主题** —— Simple / Minimal / Bracket / Classic 信息密度切换，琥珀 / 极地强调色一键切换。
 
 > 仓库快照停在 **2026-06-05 Round 5 开赛前**。Round 4 赛果已收齐，Stage 1 未完赛前只写 checkpoint，不提前回测最终 Pick'em。
 
@@ -45,13 +46,15 @@
 
 <div align="center">
 
-### 🗺️ 瑞士轮战绩池看板
+### 🎯 瑞士轮预测器（majors.im 式）
 
-<img src="docs/images/site-board.png" width="880" alt="瑞士轮战绩池看板：按 0-0 → 1-0/0-1 → 2-0/1-1/0-2 → 2-1/1-2 → 2-2 决胜 左右推进" />
+<img src="docs/images/site-predict.png" width="900" alt="majors.im 式瑞士轮预测器：逐场点选胜者，战绩池 0-0 → 1-0/0-1 → 2-0/1-1/0-2 → 2-1/1-2 → 2-2 自动重排，流入晋级/淘汰终列" />
 
-### 🎯 Pick'em 情报卡 · 兑现追踪
+<sub>逐场点选 → 按种子 / Buchholz 自动重排 → 流入 ADVANCED / ELIMINATED 终列。<code>REAL</code>=与真实赛果一致，<code>SIM</code>=引擎模拟配对。</sub>
 
-<img src="docs/images/site-objectives.png" width="880" alt="Pick'em 情报卡：融合置信度雷达 + 模型分布条 + 专家投票分布 + 状态" />
+### 📊 Pick'em 情报卡 · 兑现追踪
+
+<img src="docs/images/site-objectives.png" width="900" alt="Pick'em 情报卡：融合置信度雷达 + 模型分布条 + 专家投票分布 + 状态" />
 
 </div>
 
@@ -283,6 +286,7 @@ PYTHONPATH=src AI_UPDATE_NOTES="本次只分析最新完赛结果" \
 | 关注点 | 选型 | 说明 |
 | --- | --- | --- |
 | 框架 | **无** —— 原生 ES Module | `site/src/*.js`，浏览器直接加载，零打包 |
+| 瑞士轮引擎 | 纯函数 `swissSim.js` | 端口自 Python `swiss.py`：种子 + Buchholz 配对、避免重赛、真实/模拟混合，确定性从 picks 重建 |
 | 字体 | Chakra Petch · Outfit · JetBrains Mono | Google Fonts，含系统字体回退 |
 | 动效 | GSAP 3.15（jsDelivr CDN） | 计数入场，`if (window.gsap)` 特性检测，离线降级 |
 | 数据可视化 | 手写内联 SVG / CSS | 雷达仪表盘（`r=15.915` 周长=100 技巧）、概率条、投票 pip，零图表库依赖 |
@@ -290,7 +294,7 @@ PYTHONPATH=src AI_UPDATE_NOTES="本次只分析最新完赛结果" \
 | 图标 | 内联 SVG（lucide 风格） | `currentColor` 继承，离线安全 |
 | 可访问性 | `prefers-reduced-motion` 全门控 · `:focus-visible` · ARIA | 动效全部可优雅降级到终态 |
 
-逻辑模块（`swiss.js` / `pickem.js` / `bracket.js`）为纯函数，带单元测试；`render.js` 为纯字符串渲染，DOM 安全。
+逻辑模块（`swissSim.js` / `swiss.js` / `pickem.js` / `bracket.js`）为纯函数，带 **29 项浏览器单元测试**（含引擎复现真实赛果与 PREDICT 渲染契约）；`render.js` / `renderPredict.js` 为纯字符串渲染，DOM 安全。
 
 </details>
 

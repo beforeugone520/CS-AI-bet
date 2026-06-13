@@ -2,16 +2,29 @@ import { loadSiteData } from "./data.js";
 import { resetSwissState, applySwissWinner, clearSwissSelections, fixtureKey, groupSwissRecords, undoSwiss } from "./swiss.js";
 import { emptyBracketState, applyBracketWinner } from "./bracket.js";
 import { classifyPickem, summarizePickem } from "./pickem.js";
-import { renderApp } from "./render.js";
+import { buildSwiss, picksFromResults, realRoundsFromStage, countPicks } from "./swissSim.js";
+import { renderApp, renderHero } from "./render.js";
+import { renderPredictWorkspace } from "./renderPredict.js";
 import { initChrome, afterRender, setSignal } from "./effects.js";
 
 const root = document.querySelector("#app");
-let appData = null;
+
+let siteData = null;       // raw loaded payload
+let appData = null;        // prepared (live mode)
 let swissState = null;
 let bracketState = null;
 let swissViewMode = "simple";
 
-const handlers = { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner };
+// PREDICT mode state
+let swissMode = "predict"; // 'predict' (majors.im sim) | 'live' (real results board)
+let realData = null;       // { realByRound, realWinners }
+let predictPicks = {};     // { matchKey: winner }
+let predictOrder = [];     // pick order for undo
+
+const handlers = {
+  onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner,
+  onSwissMode, onPredictPick, onPredictUndo, onPredictReset, onPredictLoadReal
+};
 
 initChrome();
 loadCurrentRoute();
@@ -20,10 +33,17 @@ window.addEventListener("hashchange", loadCurrentRoute);
 function loadCurrentRoute() {
   loadSiteData(window.location.hash || "#/")
     .then((data) => {
+      siteData = data;
       swissState = null;
       bracketState = null;
+      realData = null;
+      predictPicks = {};
+      predictOrder = [];
       if (data.stage.format === "swiss" && !data.stage.empty_state) {
         swissState = resetSwissState(data.stage.standings);
+        realData = realRoundsFromStage(data.stage);
+        predictPicks = picksFromResults(data.stage.results);
+        predictOrder = Object.keys(predictPicks);
       }
       if (data.stage.format === "playoff" && !data.stage.empty_state) {
         bracketState = emptyBracketState(data.stage.bracket);
@@ -37,30 +57,115 @@ function loadCurrentRoute() {
     });
 }
 
+function isPredictable() {
+  return siteData && siteData.stage && siteData.stage.format === "swiss" && !siteData.stage.empty_state;
+}
+
 function paint(animate) {
-  renderApp(root, appData, handlers);
+  if (isPredictable() && swissMode === "predict") {
+    renderPredictBoard(animate);
+  } else {
+    renderApp(root, appData, handlers);
+    afterRender(root, { animate });
+  }
+}
+
+/* ---------- PREDICT mode ---------- */
+function renderPredictBoard(animate) {
+  let bracket = buildSwiss(predictPicks, realData);
+  // drop picks that no longer reference a generated matchup, or whose winner is
+  // not actually a participant of that matchup, then rebuild
+  const teamsByKey = new Map();
+  for (const rd of bracket.rounds) for (const m of rd.matches) teamsByKey.set(m.key, [m.team1, m.team2]);
+  const pruned = {};
+  for (const [k, v] of Object.entries(predictPicks)) {
+    const teams = teamsByKey.get(k);
+    if (teams && teams.includes(v)) pruned[k] = v;
+  }
+  if (Object.keys(pruned).length !== Object.keys(predictPicks).length) {
+    predictPicks = pruned;
+    predictOrder = predictOrder.filter((k) => Object.prototype.hasOwnProperty.call(pruned, k));
+    bracket = buildSwiss(predictPicks, realData);
+  }
+
+  const records = {};
+  for (const s of bracket.standings) records[s.team] = s;
+  const pickem = siteData.pickem;
+  const rows = pickem && pickem.picks ? classifyPickem(pickem, records) : null;
+  const pickemRuntime = rows ? { rows, summary: summarizePickem(rows) } : null;
+
+  const heroData = {
+    ...siteData,
+    stage: { ...siteData.stage, standings: bracket.standings },
+    pickemRuntime,
+    swissViewMode
+  };
+
+  root.innerHTML = renderHero(heroData);
+  const predictor = root.querySelector("#predictor");
+  if (predictor) {
+    renderPredictWorkspace(predictor, bracket, handlers, pickemRuntime, swissViewMode, {
+      pickCount: countPicks(predictPicks, bracket.validKeys)
+    });
+  }
   afterRender(root, { animate });
 }
 
+function onSwissMode(mode) {
+  swissMode = mode === "live" ? "live" : "predict";
+  paint(false);
+}
+
+function onPredictPick(mk, team) {
+  if (!mk || !team) return;
+  if (predictPicks[mk] === team) {
+    delete predictPicks[mk];                         // click winner again -> deselect
+    predictOrder = predictOrder.filter((k) => k !== mk);
+  } else {
+    predictPicks[mk] = team;
+    if (!predictOrder.includes(mk)) predictOrder.push(mk);
+  }
+  renderPredictBoard(false);
+}
+
+function onPredictUndo() {
+  const last = predictOrder.pop();
+  if (last) delete predictPicks[last];
+  renderPredictBoard(false);
+}
+
+function onPredictReset() {
+  predictPicks = {};
+  predictOrder = [];
+  renderPredictBoard(false);
+}
+
+function onPredictLoadReal() {
+  predictPicks = picksFromResults(siteData.stage.results);
+  predictOrder = Object.keys(predictPicks);
+  renderPredictBoard(false);
+}
+
+/* ---------- LIVE mode (existing) ---------- */
 function onSwissWinner(fixtureIndex, winner) {
   const fixture = appData.stage.fixtures[fixtureIndex];
   swissState = applySwissWinner(swissState, fixture, winner);
-  rerender();
+  rerenderLive();
 }
 
 function onSwissUndo() {
   swissState = undoSwiss(swissState);
-  rerender();
+  rerenderLive();
 }
 
 function onSwissReset() {
   swissState = clearSwissSelections(swissState);
-  rerender();
+  rerenderLive();
 }
 
 function onSwissViewMode(mode) {
   swissViewMode = mode;
-  rerender();
+  paint(false);
 }
 
 function onBracketWinner(matchId, winner) {
@@ -73,12 +178,14 @@ function onBracketWinner(matchId, winner) {
       champion_path: { champion: bracketState.champion }
     }
   });
-  paint(false);
+  renderApp(root, appData, handlers);
+  afterRender(root, { animate: false });
 }
 
-function rerender() {
+function rerenderLive() {
   appData = prepareAppData(appData);
-  paint(false);
+  renderApp(root, appData, handlers);
+  afterRender(root, { animate: false });
 }
 
 function prepareAppData(data) {

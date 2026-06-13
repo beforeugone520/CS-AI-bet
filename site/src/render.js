@@ -5,21 +5,19 @@ import { fixtureKey } from "./swiss.js";
    Pure string rendering (DOM-safe for unit tests) + post-render event wiring.
    ========================================================================== */
 
-export function renderApp(root, data, handlers) {
-  const stage = data.stage || {};
+export function renderHero(data) {
   const m = heroMetrics(data);
   const ss = data.sourceStatus || {};
   const latest = data.latest || {};
   const statusCls = sourceStatusClass(latest.source_status);
-
-  root.innerHTML = `
+  return `
     <section class="simulator-page">
       <header class="command-hero hud reveal" style="--i:0">
         <span class="hud-c1"></span><span class="hud-c2"></span>
         <div class="command-hero__intel">
           <span class="kicker">// IEM COLOGNE MAJOR 2026 · STAGE 01 SWISS</span>
           <h1 class="command-hero__title">IEM Cologne Major 2026 Simulator</h1>
-          <p class="command-hero__sub">瑞士轮赛果已锁定，未完成对局可在浏览器内本地推演 —— 融合 <b>模型 / 专家 / 市场</b> 三路信号，实时追踪 Pick'em 提交答案单的兑现状态。</p>
+          <p class="command-hero__sub">完整可交互的瑞士轮推演 —— 逐场点选胜者、战绩池按种子 / Buchholz 自动重排，实时联动晋级名额与 <b>模型 / 专家 / 市场</b> 三路融合的 Pick'em 兑现。</p>
           <div class="update-strip">
             <span class="signal-chip ${statusCls}"><span class="dot"></span>${escapeHtml(ss.visible_status || latest.source_status || "—")}</span>
             <span class="mono">UPDATED · ${escapeHtml(formatStamp(latest.last_updated))}</span>
@@ -39,11 +37,24 @@ export function renderApp(root, data, handlers) {
       <div id="predictor"></div>
     </section>
   `;
+}
 
+export function renderApp(root, data, handlers) {
+  root.innerHTML = renderHero(data);
   const predictor = root.querySelector("#predictor");
   if (predictor) {
-    renderPredictor(predictor, stage, handlers, data.pickemRuntime, data.swissViewMode || "simple");
+    renderPredictor(predictor, data.stage || {}, handlers, data.pickemRuntime, data.swissViewMode || "simple");
   }
+}
+
+export function renderModeSwitch(mode) {
+  const m = mode === "live" ? "live" : "predict";
+  return `
+    <div class="mode-switch" role="group" aria-label="瑞士轮模式">
+      <button class="mode-tab ${m === "predict" ? "active" : ""}" type="button" aria-pressed="${m === "predict"}" data-swiss-mode="predict">🎯 预测 PREDICT</button>
+      <button class="mode-tab ${m === "live" ? "active" : ""}" type="button" aria-pressed="${m === "live"}" data-swiss-mode="live">🛰 实况 LIVE</button>
+    </div>
+  `;
 }
 
 function statCell(variant, label, value, sub) {
@@ -101,6 +112,9 @@ export function renderPredictor(root, stage, handlers, pickemRuntime = null, vie
     root.querySelectorAll("[data-view-mode]").forEach((button) => {
       button.addEventListener("click", () => handlers.onSwissViewMode?.(button.dataset.viewMode));
     });
+    root.querySelectorAll("[data-swiss-mode]").forEach((button) => {
+      button.addEventListener("click", () => handlers.onSwissMode?.(button.dataset.swissMode));
+    });
     root.querySelector("[data-swiss-undo]")?.addEventListener("click", () => handlers.onSwissUndo());
     root.querySelector("[data-swiss-reset]")?.addEventListener("click", () => handlers.onSwissReset());
     return;
@@ -148,6 +162,7 @@ function renderSwissWorkspace(stage, runtime, viewMode = "simple") {
   return `
     <div class="matchup-shell view-${escapeHtml(viewMode)}">
       ${renderStageControls(stage.stage_id, viewMode)}
+      ${renderModeSwitch("live")}
       <div class="matchup-header ${picks ? "has-local-picks" : ""}">
         <div class="matchup-header__title">
           <span class="kicker">// SWISS BRACKET · 战绩池推进</span>
@@ -197,7 +212,7 @@ function renderFutureStage(stage, viewMode = "simple") {
   `;
 }
 
-function renderStageControls(currentStageId, viewMode = "simple") {
+export function renderStageControls(currentStageId, viewMode = "simple") {
   const current = currentStageId || "stage-1";
   const mode = normalizeViewMode(viewMode);
   return `
@@ -293,7 +308,7 @@ function renderSwissTeamButton(team, selected, options, match, side) {
 }
 
 /* ----- Pick'em objectives ----- */
-function renderPickemImpact(runtime) {
+export function renderPickemImpact(runtime) {
   if (!runtime || !runtime.rows || !runtime.rows.length) {
     return `
       <section class="pickem-dock">
@@ -414,7 +429,7 @@ function nextStep(row) {
 }
 
 /* ----- Standings ----- */
-function renderRecordGroup(label, rows, grp) {
+export function renderRecordGroup(label, rows, grp) {
   return `
     <section class="record-group reveal" data-grp="${grp}" style="--i:7">
       <div class="section-label"><h3>${escapeHtml(label)}</h3><span class="group-count mono">${rows.length}</span></div>
@@ -550,7 +565,7 @@ function teamInitials(team) {
   return String(team || "?").split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 3).toUpperCase();
 }
 
-function teamMark(team) {
+export function teamMark(team) {
   const marks = {
     "BetBoom": "BB", "FlyQuest": "FQ", "Gaimin Gladiators": "GG", "GamerLegion": "GL",
     "HEROIC": "H", "Liquid": "TL", "Lynn Vision": "LV", "Sharks": "SH",
@@ -559,7 +574,7 @@ function teamMark(team) {
   return marks[team] || teamInitials(team);
 }
 
-function teamLogoFile(team) {
+export function teamLogoFile(team) {
   const logos = {
     "B8": "b8", "BIG": "big", "BetBoom": "betb", "FlyQuest": "fly", "Gaimin Gladiators": "gg",
     "GamerLegion": "gl", "HEROIC": "hero", "Liquid": "liqu", "Lynn Vision": "lvg", "M80": "m80",
@@ -568,7 +583,7 @@ function teamLogoFile(team) {
   return logos[team] || "";
 }
 
-function teamAccent(team) {
+export function teamAccent(team) {
   const accents = {
     "B8": "#2f7bff", "BetBoom": "#ff4554", "BIG": "#cdd6e3", "FlyQuest": "#00d570",
     "Gaimin Gladiators": "#d4a02a", "GamerLegion": "#e8243b", "HEROIC": "#e01b38", "Liquid": "#2f74e0",
@@ -578,7 +593,7 @@ function teamAccent(team) {
   return accents[team] || "#ffb267";
 }
 
-function teamSlug(team) {
+export function teamSlug(team) {
   return String(team).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "team";
 }
 
@@ -587,7 +602,7 @@ function resultKey(result) {
   return [result.round || "round", result.team1 || "", result.team2 || "", result.winner || "", score].join(":");
 }
 
-function clampPct(value) {
+export function clampPct(value) {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -604,7 +619,7 @@ function sourceStatusClass(status) {
   return "status-good";
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);

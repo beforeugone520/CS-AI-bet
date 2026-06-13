@@ -642,12 +642,15 @@ a { color: inherit; }
 }
 .round-heading {
   display: grid;
-  gap: 3px;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 1px 6px;
   padding: 0 2px 8px;
   border-bottom: 1px solid var(--line-faint);
   text-align: left;
 }
 .round-heading h3 {
+  grid-column: 1;
   margin: 0;
   font-family: var(--font-mono);
   font-weight: 700;
@@ -657,18 +660,16 @@ a { color: inherit; }
   color: var(--ink);
 }
 .pool-label {
+  grid-column: 1 / -1;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   color: var(--muted);
 }
-.pool-count {
-  position: absolute;
-  margin-top: -2px;
-}
-.round-heading { position: relative; }
 .round-heading .pool-count {
-  right: 2px; top: 0;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
   font-size: 10px;
   color: var(--faint);
 }
@@ -1194,6 +1195,91 @@ a { color: inherit; }
 .swiss-round-board::-webkit-scrollbar { height: 8px; }
 .swiss-round-board::-webkit-scrollbar-track { background: rgba(255,255,255,.03); }
 .swiss-round-board::-webkit-scrollbar-thumb { background: rgba(255, 138, 46, 0.4); border-radius: 4px; }
+
+/* ---------- 18b. PREDICT mode (majors.im-style simulator) ---------- */
+.mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+.mode-tab {
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: color .2s, background .2s;
+}
+.mode-tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
+.mode-tab.active { background: var(--ember); color: #160a02; box-shadow: 0 0 18px -6px var(--ember-glow); }
+.mode-tab.active:focus-visible { outline-color: var(--ink); }
+
+.tag-real { color: var(--mint); font-weight: 700; }
+.tag-sim { color: var(--gold); font-weight: 700; }
+
+.match-ribbon strong.ribbon-src { font-size: 10px; letter-spacing: 0.12em; }
+.ribbon-src.src-real { color: var(--mint); }
+.ribbon-src.src-sim { color: var(--gold); }
+.predict-card.is-decider { border-color: rgba(245, 196, 81, 0.34); }
+.predict-card .match-card-meta { display: flex; }
+
+/* terminal columns */
+.term-column { flex: 0 0 198px; min-width: 186px; }
+.term-column .round-heading h3 { font-family: var(--font-display); letter-spacing: 0.06em; }
+.term-advanced .round-heading h3 { color: var(--mint); }
+.term-eliminated .round-heading h3 { color: var(--crimson); }
+
+.term-chip {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--team, #2a2118) 14%, transparent), transparent);
+}
+.term-chip[data-status="advanced"] { border-left-color: var(--mint); }
+.term-chip[data-status="eliminated"] { border-left-color: var(--crimson); opacity: 0.82; }
+.term-chip__logo { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 4px; background: rgba(255, 255, 255, 0.03); overflow: hidden; }
+.term-chip__logo img { width: 20px; height: 20px; object-fit: contain; }
+.term-chip__name { font-family: var(--font-display); font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.term-chip__rec { font-size: 11px; padding: 3px 7px; }
+.term-chip[data-status="advanced"] .term-chip__rec { color: var(--mint); border-color: rgba(78, 230, 168, 0.3); background: var(--mint-fill); }
+.term-chip[data-status="eliminated"] .term-chip__rec { color: var(--crimson); border-color: rgba(255, 84, 104, 0.3); background: var(--crimson-fill); }
+
+/* predict cards: both teams always pickable -> show names a touch larger */
+.predict-board .team-slot { padding: 7px 6px; }
+
+/* the predict board always overflows (5 rounds + 2 terminal cols) — fade the
+   right edge at all widths to signal horizontal scroll */
+.predict-board {
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 36px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 36px), transparent 100%);
+}
+
+.predict-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.predict-legend .lg-real { color: var(--mint); }
+.predict-legend .lg-sim { color: var(--gold); }
 
 /* ---------- 19. Responsive ---------- */
 @media (max-width: 1080px) {
