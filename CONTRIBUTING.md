@@ -32,6 +32,12 @@ pip install -e ".[viz]"     # matplotlib
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
+改动前端静态站（`site/`）时，请另跑浏览器逻辑测试（与 CI 同口径，需 Node 18+）：
+
+```bash
+node --test site/tests/*.test.mjs
+```
+
 快速冒烟测试：
 
 ```bash

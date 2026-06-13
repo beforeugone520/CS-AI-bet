@@ -297,7 +297,7 @@ PYTHONPATH=src AI_UPDATE_NOTES="本次只分析最新完赛结果" \
 | 图标 | 内联 SVG（lucide 风格） | `currentColor` 继承，离线安全 |
 | 可访问性 | `prefers-reduced-motion` 全门控 · `:focus-visible` · ARIA | 动效全部可优雅降级到终态 |
 
-逻辑模块（`swissSim.js` / `swiss.js` / `pickem.js` / `bracket.js`）为纯函数，带 **29 项浏览器单元测试**（含引擎复现真实赛果与 PREDICT 渲染契约）；`render.js` / `renderPredict.js` 为纯字符串渲染，DOM 安全。
+逻辑模块（`swissSim.js` / `swiss.js` / `pickem.js` / `bracket.js`）为纯函数，带 **30 项浏览器单元测试**（含引擎复现真实赛果、300 局无重赛 fuzz 与 PREDICT 渲染契约）；`render.js` / `renderPredict.js` 为纯字符串渲染，DOM 安全。
 
 </details>
 
