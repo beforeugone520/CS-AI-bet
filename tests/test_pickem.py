@@ -432,5 +432,80 @@ class PickemTests(unittest.TestCase):
         self.assertGreaterEqual(report["market_adjustment_summary"]["adjusted_matchups"], 1)
 
 
+class PickemObjectiveIntegrationTests(unittest.TestCase):
+    def _report(self, **overrides):
+        from cs2pickem.pickem import model_driven_pickems
+
+        kwargs = dict(
+            history_rows=history_rows(),
+            team_rows=team_rows(),
+            reference_date="2026-05-31",
+            profiles=profiles(),
+            simulations=120,
+            seed=5,
+            top_k=6,
+            epochs=3,
+            slots={"3-0": 1, "advance": 2, "0-3": 1},
+        )
+        kwargs.update(overrides)
+        return model_driven_pickems(**kwargs)
+
+    def test_default_objective_is_expected_hits_and_skips_joint_distribution(self):
+        report = self._report()
+        self.assertEqual(report["pickem_objective"], "expected_hits")
+        # No joint sampling cost on the default path.
+        self.assertIsNone(report["pickem_distribution"])
+        # Ticket shape preserved.
+        self.assertEqual(len(report["pickems"]["3-0"]), 1)
+        self.assertEqual(len(report["pickems"]["advance"]), 2)
+        self.assertEqual(len(report["pickems"]["0-3"]), 1)
+
+    def test_threshold_objective_reports_joint_distribution_with_samples(self):
+        report = self._report(pickem_objective="threshold_prob", pickem_threshold=3)
+        self.assertEqual(report["pickem_objective"], "threshold_prob")
+        distribution = report["pickem_distribution"]
+        self.assertIsNotNone(distribution)
+        self.assertEqual(distribution["samples"], 120)
+        self.assertEqual(distribution["threshold"], 3)
+        # Probability is a valid MC estimate with a confidence interval.
+        self.assertGreaterEqual(distribution["threshold_probability"], 0.0)
+        self.assertLessEqual(distribution["threshold_probability"], 1.0)
+        lo, hi = distribution["threshold_probability_ci95"]
+        self.assertLessEqual(lo, hi)
+        # Ticket shape and dedup still hold.
+        all_teams = [t for teams in report["pickems"].values() for t in teams]
+        self.assertEqual(len(all_teams), len(set(all_teams)))
+
+    def test_leveraged_objective_runs_and_preserves_ticket_shape(self):
+        report = self._report(pickem_objective="leveraged", leverage_strength=2.0)
+        self.assertEqual(report["pickem_objective"], "leveraged")
+        self.assertIsNotNone(report["pickem_distribution"])
+        self.assertEqual(len(report["pickems"]["advance"]), 2)
+        all_teams = [t for teams in report["pickems"].values() for t in teams]
+        self.assertEqual(len(all_teams), len(set(all_teams)))
+
+    def test_series_uplift_amplifies_bo3_edge_over_map_probability(self):
+        # With series uplift on, a >50% map favourite gets a HIGHER BO3 series
+        # win probability than the raw map probability (series_win_prob convexity).
+        report = self._report(series_uplift=True)
+        bo3_keys = [k for k in report["sample_match_probabilities"] if k.endswith("__bo3")]
+        # At least confirm the detail bookkeeping is present and self-consistent.
+        for key, details in report["sample_match_details"].items():
+            if not key.endswith("__bo3"):
+                continue
+            if not details.get("series_uplift_applied"):
+                continue
+            map_p = details["map_probability_team1"]
+            series_p = details["adjusted_probability_team1"]
+            if map_p > 0.5:
+                self.assertGreater(series_p, map_p)
+            elif map_p < 0.5:
+                self.assertLess(series_p, map_p)
+
+    def test_unknown_objective_raises_in_pipeline(self):
+        with self.assertRaises(ValueError):
+            self._report(pickem_objective="bogus")
+
+
 if __name__ == "__main__":
     unittest.main()

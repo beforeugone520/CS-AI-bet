@@ -2,10 +2,43 @@ from __future__ import annotations
 
 import math
 
-from typing import Dict, List, Mapping, Optional
+from typing import Dict, List, Mapping, Optional, Sequence
 
 
 DEFAULT_SLOTS = {"3-0": 2, "advance": 6, "0-3": 2}
+
+# Pick'em selection objectives.
+#   ``expected_hits`` (default) -- target the EXPECTED number of correct slots
+#     via per-slot greedy top-N on the (risk-adjusted) marginal score. NOTE on
+#     optimality: greedy-by-margin is exactly optimal for the separable
+#     expected-hit objective (E[hits] = Σ_slot Σ_team∈slot P(team hits slot))
+#     ONLY within a single category. Across categories it is a HEURISTIC, not a
+#     proof: ``choose_pickems`` processes categories in a FIXED order
+#     (3-0 -> 0-3 -> advance) and dedupes via a shared ``picked`` set, so an
+#     earlier category can claim a strong team an unfilled later category would
+#     have used more profitably -- the cross-category dedup couples the
+#     categories. Additionally the score being ordered is risk-adjusted
+#     (upset/stage/player multipliers are documented marginal-probability priors,
+#     NOT a joint distribution), so it is not raw P(correct) even per category.
+#     This path is the LOCKED historic heuristic (BYTE-FOR-BYTE unchanged,
+#     regression baseline, review red line a) -- intentionally frozen, NOT a
+#     claim of global optimality.
+#   ``threshold_prob`` -- maximise P(correct slots >= K) over the swiss
+#     ``joint_samples`` (the full per-bracket outcome vectors). Used for the
+#     "make the pass line" scenario. Search = greedy EV seed + deterministic
+#     single-pick local swaps on the Monte-Carlo P(hits >= K); it NEVER enumerates
+#     the full combinatorial ticket space (red line b).
+#   ``leveraged`` -- contrarian / EV-leverage tilt. Same joint-sample +
+#     local-swap machinery, but the objective is an expected pool-share-style
+#     reward that pays MORE when the ticket hits a low-consensus outcome the
+#     "field" tends to miss. With no real crowd data the field is approximated by
+#     the marginal hit probabilities (documented degradation).
+PICKEM_OBJECTIVES = ("expected_hits", "threshold_prob", "leveraged")
+DEFAULT_PICKEM_OBJECTIVE = "expected_hits"
+
+# Category -> per-team boolean key inside a joint-sample outcome vector. The swiss
+# encoder (swiss._encode_joint_outcome) stores exactly these keys.
+_PICKEM_CATEGORY_KEYS = ("3-0", "advance", "0-3")
 
 # Fusion methods for blending the model probability toward the market signal.
 #   ``legacy_clip`` -- the historic arithmetic +/-``max_adjustment`` nudge (default,
@@ -155,10 +188,92 @@ def choose_pickems(
     upset_rank_limit: int = 15,
     stage: str = "default",
     team_features: Optional[Mapping[str, Mapping[str, float]]] = None,
+    objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    joint_samples: Optional[Sequence[Mapping[str, Mapping[str, object]]]] = None,
+    threshold: Optional[int] = None,
+    crowd_probabilities: Optional[Mapping[str, Mapping[str, float]]] = None,
+    leverage_strength: float = 1.0,
+    max_swaps: int = 64,
 ) -> Dict[str, List[str]]:
+    """Select a pick'em ticket under one of :data:`PICKEM_OBJECTIVES`.
+
+    ``objective`` (default ``expected_hits``):
+
+    * ``expected_hits`` -- per-slot greedy top-N on the risk-adjusted marginal
+      score. This is the historic behaviour and is BYTE-FOR-BYTE unchanged; the
+      ``joint_samples``/``threshold``/``crowd_*``/``leverage_*`` arguments are
+      ignored on this path. Greedy is exactly optimal WITHIN a category (the
+      expected-hit objective is separable there) but is a HEURISTIC across
+      categories -- the fixed processing order plus cross-category ``picked``
+      dedup couples them, so this is the locked historic heuristic, not a
+      global-optimality guarantee (see the module-level PICKEM_OBJECTIVES note).
+    * ``threshold_prob`` -- start from the ``expected_hits`` ticket as a seed and
+      run deterministic single-pick local swaps to maximise the Monte-Carlo
+      ``P(hits >= K)`` estimated over ``joint_samples`` (``K = threshold``,
+      default = total slot count, i.e. "all picks correct"). Requires
+      ``joint_samples`` (raises ``ValueError`` otherwise). Never enumerates the
+      full ticket space.
+    * ``leveraged`` -- same seed + local-swap search, but the objective is an
+      expected pool-share reward that rewards hitting outcomes the field misses
+      (contrarian). Requires ``joint_samples``.
+
+    The return shape is always ``{"3-0": [...], "advance": [...], "0-3": [...]}``.
+    """
+    resolved_objective = _resolve_pickem_objective(objective)
     slots = dict(slots or DEFAULT_SLOTS)
     rankings = dict(rankings or {})
     team_features = dict(team_features or {})
+
+    seed_ticket = _choose_pickems_expected_hits(
+        team_probabilities,
+        rankings=rankings,
+        slots=slots,
+        upset_rank_limit=upset_rank_limit,
+        stage=stage,
+        team_features=team_features,
+    )
+    if resolved_objective == "expected_hits":
+        return seed_ticket
+
+    if not joint_samples:
+        raise ValueError(
+            f"objective={resolved_objective!r} requires non-empty joint_samples "
+            "(simulate_swiss(..., collect_joint=True))"
+        )
+    return _choose_pickems_joint(
+        resolved_objective,
+        seed_ticket=seed_ticket,
+        team_probabilities=team_probabilities,
+        rankings=rankings,
+        slots=slots,
+        upset_rank_limit=upset_rank_limit,
+        stage=stage,
+        team_features=team_features,
+        joint_samples=joint_samples,
+        threshold=threshold,
+        crowd_probabilities=crowd_probabilities,
+        leverage_strength=leverage_strength,
+        max_swaps=max_swaps,
+    )
+
+
+def _resolve_pickem_objective(objective: Optional[str]) -> str:
+    resolved = str(objective or DEFAULT_PICKEM_OBJECTIVE).strip().lower()
+    if resolved not in PICKEM_OBJECTIVES:
+        raise ValueError(
+            f"unknown pickem objective: {objective!r}; expected one of {PICKEM_OBJECTIVES}"
+        )
+    return resolved
+
+
+def _choose_pickems_expected_hits(
+    team_probabilities: Mapping[str, Mapping[str, float]],
+    rankings: Mapping[str, int],
+    slots: Mapping[str, int],
+    upset_rank_limit: int,
+    stage: str,
+    team_features: Mapping[str, Mapping[str, float]],
+) -> Dict[str, List[str]]:
     picked: set[str] = set()
 
     three_zero = _top_teams(team_probabilities, "3-0", slots.get("3-0", 0), rankings, upset_rank_limit, picked, stage=stage, team_features=team_features)
@@ -285,6 +400,299 @@ def describe_pickem_risk(
             )
         details[key] = sorted(entries, key=lambda entry: (-float(entry["final_score"]), int(entry["rank"]), str(entry["team"])))
     return details
+
+
+# --------------------------------------------------------------------------- #
+# Joint-sample pick'em objectives (threshold_prob / leveraged).
+#
+# A pick'em "ticket" is a category -> [team, ...] mapping; a single pick (cat,
+# team) "hits" a finished bracket sample iff sample[team][cat] is truthy. The
+# swiss MC encoder (swiss._encode_joint_outcome) stores those per-team booleans
+# for "3-0" / "advance" / "0-3". All objectives below evaluate the ticket against
+# the SHARED set of joint_samples instead of enumerating the ~10^7 combinatorial
+# ticket space (review red line b). Search is a greedy expected-hits seed plus
+# deterministic single-pick local swaps -- O(samples x swaps), not combinatorial.
+#
+# MONTE-CARLO CAVEAT: every probability below is a sample-mean estimate. Its
+# standard error is ~sqrt(p(1-p)/N); evaluate_ticket_distribution reports N and a
+# 95% normal-approx CI so callers can judge whether two tickets are separable.
+# --------------------------------------------------------------------------- #
+
+
+def _flatten_ticket(ticket: Mapping[str, Sequence[str]]) -> List[tuple[str, str]]:
+    """Flatten a ticket into an ordered list of (category, team) picks."""
+    picks: List[tuple[str, str]] = []
+    for category in _PICKEM_CATEGORY_KEYS:
+        for team in ticket.get(category, []) or []:
+            picks.append((category, str(team)))
+    return picks
+
+
+def ticket_hits_in_sample(
+    ticket: Mapping[str, Sequence[str]],
+    sample: Mapping[str, Mapping[str, object]],
+) -> int:
+    """Number of (category, team) picks in ``ticket`` correct in one bracket sample."""
+    hits = 0
+    for category, team in _flatten_ticket(ticket):
+        outcome = sample.get(team)
+        if outcome is not None and bool(outcome.get(category)):
+            hits += 1
+    return hits
+
+
+def ticket_threshold_probability(
+    ticket: Mapping[str, Sequence[str]],
+    joint_samples: Sequence[Mapping[str, Mapping[str, object]]],
+    threshold: int,
+) -> float:
+    """Monte-Carlo estimate of P(ticket correct picks >= ``threshold``)."""
+    if not joint_samples:
+        return 0.0
+    successes = sum(1 for sample in joint_samples if ticket_hits_in_sample(ticket, sample) >= threshold)
+    return successes / len(joint_samples)
+
+
+def evaluate_ticket_distribution(
+    ticket: Mapping[str, Sequence[str]],
+    joint_samples: Sequence[Mapping[str, Mapping[str, object]]],
+    threshold: Optional[int] = None,
+) -> Dict[str, object]:
+    """Summarise a ticket's hit distribution over the shared joint samples.
+
+    Reports the expected hits, the full hit histogram, and -- for ``threshold``
+    (default = total picks) -- the Monte-Carlo P(hits >= K) with its sample size
+    and a 95% normal-approximation confidence interval (the estimate is a
+    sample mean; two tickets whose CIs overlap are not statistically separable).
+    """
+    picks = _flatten_ticket(ticket)
+    total_picks = len(picks)
+    k = total_picks if threshold is None else int(threshold)
+    n = len(joint_samples)
+    histogram: Dict[int, int] = {}
+    total_hits = 0
+    successes = 0
+    for sample in joint_samples:
+        hits = ticket_hits_in_sample(ticket, sample)
+        histogram[hits] = histogram.get(hits, 0) + 1
+        total_hits += hits
+        if hits >= k:
+            successes += 1
+    probability = successes / n if n else 0.0
+    half_width = 1.96 * math.sqrt(probability * (1.0 - probability) / n) if n else 0.0
+    return {
+        "total_picks": total_picks,
+        "threshold": k,
+        "samples": n,
+        "expected_hits": (total_hits / n) if n else 0.0,
+        "hit_histogram": dict(sorted(histogram.items())),
+        "threshold_probability": probability,
+        "threshold_probability_ci95": (
+            max(0.0, probability - half_width),
+            min(1.0, probability + half_width),
+        ),
+    }
+
+
+def _candidate_pool(
+    team_probabilities: Mapping[str, Mapping[str, float]],
+    rankings: Mapping[str, int],
+    upset_rank_limit: int,
+    stage: str,
+    team_features: Mapping[str, Mapping[str, float]],
+) -> Dict[str, List[str]]:
+    """Per-category candidate teams ordered by risk-adjusted marginal score.
+
+    Reuses the exact ``expected_hits`` scoring so the local search explores the
+    same risk-aware ordering the EV seed came from (the contrarian tilt for the
+    leveraged objective is applied later, in the swap acceptance test).
+    """
+    pool: Dict[str, List[str]] = {}
+    for category in _PICKEM_CATEGORY_KEYS:
+        prefer_weak = category == "0-3"
+        ordered = _top_teams(
+            team_probabilities,
+            category,
+            len(team_probabilities),
+            rankings,
+            upset_rank_limit,
+            excluded=set(),
+            prefer_weak=prefer_weak,
+            stage=stage,
+            team_features=team_features,
+        )
+        pool[category] = ordered
+    return pool
+
+
+def _ticket_picked_teams(ticket: Mapping[str, Sequence[str]]) -> set[str]:
+    return {str(team) for teams in ticket.values() for team in (teams or [])}
+
+
+def _local_swap_search(
+    seed_ticket: Mapping[str, List[str]],
+    candidate_pool: Mapping[str, List[str]],
+    score_fn,
+    max_swaps: int,
+) -> Dict[str, List[str]]:
+    """Deterministic single-pick local search maximising ``score_fn(ticket)``.
+
+    Starting from ``seed_ticket`` (the EV greedy), repeatedly try replacing one
+    picked team in one category with the best-scoring non-picked candidate. Keep
+    the first strictly-improving swap; stop at a local optimum or ``max_swaps``.
+    Cross-category duplicate teams are never introduced (keeps the dedup
+    invariant ``choose_pickems`` guarantees). This is O(samples x swaps), never a
+    full ticket enumeration (review red line b).
+    """
+    ticket: Dict[str, List[str]] = {cat: list(teams) for cat, teams in seed_ticket.items()}
+    best_score = score_fn(ticket)
+    for _ in range(max(0, max_swaps)):
+        improved = False
+        for category in _PICKEM_CATEGORY_KEYS:
+            slot_teams = ticket.get(category, [])
+            for position in range(len(slot_teams)):
+                current_team = slot_teams[position]
+                others = _ticket_picked_teams(ticket) - {current_team}
+                for candidate in candidate_pool.get(category, []):
+                    if candidate == current_team or candidate in others:
+                        continue
+                    trial = {cat: list(teams) for cat, teams in ticket.items()}
+                    trial[category][position] = candidate
+                    trial_score = score_fn(trial)
+                    if trial_score > best_score + 1e-12:
+                        ticket = trial
+                        best_score = trial_score
+                        improved = True
+                        break
+                if improved:
+                    break
+            if improved:
+                break
+        if not improved:
+            break
+    return {category: list(ticket.get(category, [])) for category in _PICKEM_CATEGORY_KEYS}
+
+
+def _field_hit_probabilities(
+    crowd_probabilities: Optional[Mapping[str, Mapping[str, float]]],
+    joint_samples: Sequence[Mapping[str, Mapping[str, object]]],
+) -> Mapping[str, Mapping[str, float]]:
+    """Per-(team, category) probability the *field* (crowd) gets that pick right.
+
+    With real crowd pick-popularity data this is supplied via
+    ``crowd_probabilities``. Absent that, the field is approximated by the
+    model's own marginal hit rate over the joint samples (a documented
+    degradation: it assumes the crowd picks the chalk, so "contrarian" reduces to
+    "fade the marginal favourite").
+    """
+    if crowd_probabilities:
+        return crowd_probabilities
+    counts: Dict[str, Dict[str, int]] = {}
+    n = len(joint_samples)
+    for sample in joint_samples:
+        for team, outcome in sample.items():
+            bucket = counts.setdefault(team, {key: 0 for key in _PICKEM_CATEGORY_KEYS})
+            for key in _PICKEM_CATEGORY_KEYS:
+                if bool(outcome.get(key)):
+                    bucket[key] += 1
+    return {
+        team: {key: (value / n if n else 0.0) for key, value in bucket.items()}
+        for team, bucket in counts.items()
+    }
+
+
+def _leveraged_reward(
+    ticket: Mapping[str, Sequence[str]],
+    joint_samples: Sequence[Mapping[str, Mapping[str, object]]],
+    field_probabilities: Mapping[str, Mapping[str, float]],
+    leverage_strength: float,
+) -> float:
+    """Expected pool-share-style reward for a contrarian ticket.
+
+    For each correct pick in a sample we award ``1 / field_prob`` raised to
+    ``leverage_strength`` -- i.e. nailing a pick the field rarely gets right pays
+    far more than agreeing with the chalk. Averaging over the shared joint
+    samples yields the expected leveraged reward (a pool-share proxy: my upside
+    grows as the field's hit probability shrinks). With ``leverage_strength=0``
+    this collapses to plain expected hits.
+
+    ROBUSTNESS / SAMPLING FLOOR: when the field probability is itself a
+    Monte-Carlo estimate over ``N`` joint samples, the finest non-zero rate it
+    can resolve is ``1 / N``. Without a floor, a longshot the field "hits" only
+    1-2 times out of N gets a weight that explodes faster than its own hit rate
+    shrinks, so for ``leverage_strength > 1`` the objective would chase whichever
+    rare outcomes happened to land in the finite sample (pure MC noise). We
+    therefore floor ``field_prob`` at ``1 / N`` before exponentiating. Even so,
+    the reward grows steeply in ``leverage_strength``; the recommended range is
+    roughly ``[0, 1.5]`` -- much larger values degrade toward "always fade the
+    rarest outcome" regardless of true edge.
+    """
+    if not joint_samples:
+        return 0.0
+    picks = _flatten_ticket(ticket)
+    strength = max(0.0, float(leverage_strength))
+    # Floor the field probability at the finest MC-resolvable non-zero rate so a
+    # 1-of-N longshot cannot dominate via sampling noise (see docstring).
+    field_floor = 1.0 / len(joint_samples)
+    weights: Dict[tuple[str, str], float] = {}
+    for category, team in picks:
+        field_prob = float(field_probabilities.get(team, {}).get(category, 0.5))
+        field_prob = max(field_prob, field_floor)
+        weights[(category, team)] = (1.0 / field_prob) ** strength
+    total = 0.0
+    for sample in joint_samples:
+        for category, team in picks:
+            outcome = sample.get(team)
+            if outcome is not None and bool(outcome.get(category)):
+                total += weights[(category, team)]
+    return total / len(joint_samples)
+
+
+def _choose_pickems_joint(
+    objective: str,
+    seed_ticket: Mapping[str, List[str]],
+    team_probabilities: Mapping[str, Mapping[str, float]],
+    rankings: Mapping[str, int],
+    slots: Mapping[str, int],
+    upset_rank_limit: int,
+    stage: str,
+    team_features: Mapping[str, Mapping[str, float]],
+    joint_samples: Sequence[Mapping[str, Mapping[str, object]]],
+    threshold: Optional[int],
+    crowd_probabilities: Optional[Mapping[str, Mapping[str, float]]],
+    leverage_strength: float,
+    max_swaps: int,
+) -> Dict[str, List[str]]:
+    candidate_pool = _candidate_pool(
+        team_probabilities,
+        rankings=rankings,
+        upset_rank_limit=upset_rank_limit,
+        stage=stage,
+        team_features=team_features,
+    )
+    if objective == "threshold_prob":
+        # Default K = the seed ticket's actual flattened pick count, NOT
+        # sum(slots). When a category cannot fill its slots (fewer candidates
+        # than slots) those counts diverge, and optimising P(hits >= sum(slots))
+        # would target an unreachable threshold (identically 0 -> flat objective)
+        # while evaluate_ticket_distribution reports P(hits >= flattened picks).
+        # Defaulting both to the flattened pick count keeps the optimiser's K and
+        # the reported distribution's K in agreement. In the canonical 16-team run
+        # the ticket fills every slot, so this equals sum(slots) (no behaviour
+        # change there).
+        total_picks = len(_flatten_ticket(seed_ticket))
+        k = total_picks if threshold is None else int(threshold)
+
+        def score_fn(ticket: Mapping[str, Sequence[str]]) -> float:
+            return ticket_threshold_probability(ticket, joint_samples, k)
+
+    else:  # leveraged
+        field_probabilities = _field_hit_probabilities(crowd_probabilities, joint_samples)
+
+        def score_fn(ticket: Mapping[str, Sequence[str]]) -> float:
+            return _leveraged_reward(ticket, joint_samples, field_probabilities, leverage_strength)
+
+    return _local_swap_search(seed_ticket, candidate_pool, score_fn, max_swaps)
 
 
 def _top_teams(

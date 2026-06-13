@@ -7,7 +7,15 @@ from typing import Any, Dict, Iterable, Mapping, Optional
 from .data import read_matches_csv, read_teams_csv
 from .odds import market_probability_from_row
 from .predictor import MatchPredictor
-from .strategy import adjust_probability_toward_market_probability, choose_pickems, describe_pickem_risk, describe_pickems
+from .series import series_win_prob
+from .strategy import (
+    DEFAULT_PICKEM_OBJECTIVE,
+    adjust_probability_toward_market_probability,
+    choose_pickems,
+    describe_pickem_risk,
+    describe_pickems,
+    evaluate_ticket_distribution,
+)
 from .swiss import TeamSeed, simulate_swiss
 
 
@@ -25,6 +33,11 @@ def model_driven_pickems(
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
     fixture_rows: Optional[Iterable[Mapping[str, Any]]] = None,
+    pickem_objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    pickem_threshold: Optional[int] = None,
+    pickem_pairing: str = "legacy",
+    series_uplift: bool = False,
+    leverage_strength: float = 1.0,
 ) -> Dict[str, object]:
     teams_data = {str(row["team"]): dict(row) for row in team_rows}
     materialized_fixtures = [dict(row) for row in (fixture_rows or [])]
@@ -63,11 +76,23 @@ def model_driven_pickems(
                     model_probability,
                     market_probability=_num(market_signal.get("probability_team1"), 0.5),
                 )
+            # BO3 series uplift (opt-in): the model/market probability above is a
+            # per-MAP win probability; series.series_win_prob composes it into the
+            # BO3 series win rate under map independence (a documented first-order
+            # approximation, see series.py). Disabled by default so the historic
+            # BO1/BO3 single-map behaviour is byte-for-byte unchanged.
+            map_probability = adjusted_probability
+            series_uplift_applied = bool(series_uplift and best_of > 1)
+            if series_uplift_applied:
+                adjusted_probability = series_win_prob(map_probability, best_of)
             probability_cache[key] = adjusted_probability
             detail_cache[key] = {
                 **details,
                 "model_probability_team1": model_probability,
                 "adjusted_probability_team1": adjusted_probability,
+                "map_probability_team1": map_probability,
+                "series_uplift_applied": series_uplift_applied,
+                "best_of": best_of,
                 "market_adjustment_applied": market_adjustment_applied,
                 "market_adjustment_source": fixture.get("market_adjustment_source") or ((market_signal or {}).get("source")),
                 "market_probability_team1": (market_signal or {}).get("probability_team1"),
@@ -75,14 +100,42 @@ def model_driven_pickems(
             }
         return probability_cache[key]
 
-    simulation = simulate_swiss(teams, swiss_predictor, simulations=simulations, seed=seed)
+    resolved_objective = str(pickem_objective or DEFAULT_PICKEM_OBJECTIVE).strip().lower()
+    # The joint objectives (threshold_prob / leveraged) need the full per-bracket
+    # outcome vectors; collect them only when actually required (the expected_hits
+    # default never pays the memory cost). Buchholz pairing is opt-in to keep the
+    # historic legacy pairing as the default MC engine.
+    collect_joint = resolved_objective != DEFAULT_PICKEM_OBJECTIVE
+    simulation = simulate_swiss(
+        teams,
+        swiss_predictor,
+        simulations=simulations,
+        seed=seed,
+        pairing=pickem_pairing,
+        collect_joint=collect_joint,
+    )
     sample_match_probabilities = _sample_probabilities(probability_cache, teams, swiss_predictor)
-    pickems = choose_pickems(simulation.team_probabilities, rankings=rankings, slots=slots, stage=stage, team_features=teams_data)
+    pickems = choose_pickems(
+        simulation.team_probabilities,
+        rankings=rankings,
+        slots=slots,
+        stage=stage,
+        team_features=teams_data,
+        objective=resolved_objective,
+        joint_samples=simulation.joint_samples if collect_joint else None,
+        threshold=pickem_threshold,
+        leverage_strength=leverage_strength,
+    )
     pickem_risk_details = describe_pickem_risk(
         simulation.team_probabilities,
         rankings=rankings,
         stage=stage,
         team_features=teams_data,
+    )
+    pickem_distribution = (
+        evaluate_ticket_distribution(pickems, simulation.joint_samples, threshold=pickem_threshold)
+        if collect_joint
+        else None
     )
     return {
         "trained_matches": predictor.trained_matches,
@@ -100,8 +153,10 @@ def model_driven_pickems(
         "stage_strategy": _stage_strategy(stage),
         "team_probabilities": simulation.team_probabilities,
         "pickems": pickems,
+        "pickem_objective": resolved_objective,
         "pickem_details": describe_pickems(simulation.team_probabilities, pickems, rankings=rankings, risk_details=pickem_risk_details),
         "pickem_risk_details": pickem_risk_details,
+        "pickem_distribution": pickem_distribution,
         "sample_match_probabilities": sample_match_probabilities,
         "sample_match_details": _sample_details(detail_cache, sample_match_probabilities),
         "market_adjustment_summary": _market_adjustment_summary(detail_cache),
@@ -121,6 +176,11 @@ def model_driven_pickems_file(
     max_age_days: int = 90,
     ensemble_weights: Optional[Mapping[str, float]] = None,
     fixtures_path: Optional[str] = None,
+    pickem_objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    pickem_threshold: Optional[int] = None,
+    pickem_pairing: str = "legacy",
+    series_uplift: bool = False,
+    leverage_strength: float = 1.0,
 ) -> Dict[str, object]:
     profiles: Optional[Mapping[str, Mapping[str, Any]]] = None
     if profiles_path:
@@ -139,6 +199,11 @@ def model_driven_pickems_file(
         max_age_days=max_age_days,
         ensemble_weights=ensemble_weights,
         fixture_rows=read_matches_csv(fixtures_path) if fixtures_path else None,
+        pickem_objective=pickem_objective,
+        pickem_threshold=pickem_threshold,
+        pickem_pairing=pickem_pairing,
+        series_uplift=series_uplift,
+        leverage_strength=leverage_strength,
     )
 
 

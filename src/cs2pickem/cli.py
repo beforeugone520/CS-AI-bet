@@ -87,6 +87,35 @@ def main() -> int:
     pickem_parser.add_argument("--epochs", type=int, default=50)
     pickem_parser.add_argument("--stage", default="default", choices=["default", "challengers", "legends"], help="stage-specific Pick'em risk profile")
     pickem_parser.add_argument("--max-age-days", type=int, default=90, help="freshness window for training rows")
+    pickem_parser.add_argument(
+        "--objective",
+        default="expected_hits",
+        choices=["expected_hits", "threshold_prob", "leveraged"],
+        help="Pick'em selection objective: expected_hits (default, greedy EV), threshold_prob (maximise P(hits>=K) over joint samples), or leveraged (contrarian pool-share tilt)",
+    )
+    pickem_parser.add_argument(
+        "--threshold",
+        type=int,
+        default=None,
+        help="K for the threshold_prob objective (default = total slot count, i.e. all picks correct)",
+    )
+    pickem_parser.add_argument(
+        "--pairing",
+        default="legacy",
+        choices=["legacy", "buchholz"],
+        help="Swiss pairing engine: legacy (default) or buchholz (Valve Major 1v9/Buchholz rules)",
+    )
+    pickem_parser.add_argument(
+        "--series-uplift",
+        action="store_true",
+        help="elevate single-map probabilities to BO3 series win rates via series.series_win_prob (map-independence approximation)",
+    )
+    pickem_parser.add_argument(
+        "--leverage-strength",
+        type=float,
+        default=1.0,
+        help="contrarian exponent for the leveraged objective (0 collapses to expected hits)",
+    )
     pickem_parser.add_argument("--output", help="optional JSON output path")
     answer_sheet_parser = subparsers.add_parser("answer-sheet", help="export a compact final Pick'em answer sheet from pickem/readiness reports")
     answer_sheet_parser.add_argument("--pickem-report", required=True, help="JSON output from pickem or pipeline command")
@@ -371,6 +400,11 @@ def main() -> int:
             stage=args.stage,
             max_age_days=args.max_age_days,
             fixtures_path=args.fixtures,
+            pickem_objective=args.objective,
+            pickem_threshold=args.threshold,
+            pickem_pairing=args.pairing,
+            series_uplift=args.series_uplift,
+            leverage_strength=args.leverage_strength,
         )
         return _emit(report, args.output)
     if args.command == "answer-sheet":

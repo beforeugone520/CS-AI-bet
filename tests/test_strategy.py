@@ -484,5 +484,333 @@ class StageStrategyTests(unittest.TestCase):
         self.assertAlmostEqual(details["advance"][0]["selection_margin"], 0.81 - 0.72 * 0.75)
 
 
+def _two_outcome_samples(advance_map, three_zero_map=None, zero_three_map=None):
+    """Build joint-sample-shaped vectors from boolean maps per category.
+
+    ``advance_map`` etc. map team -> list[bool], one entry per simulation. Missing
+    categories default to all-False. Records are not needed by the pickem joint
+    objectives (only the per-category booleans), so we leave a placeholder.
+    """
+    three_zero_map = three_zero_map or {}
+    zero_three_map = zero_three_map or {}
+    teams = set(advance_map) | set(three_zero_map) | set(zero_three_map)
+    n = max((len(values) for values in advance_map.values()), default=0)
+    samples = []
+    for index in range(n):
+        sample = {}
+        for team in teams:
+            sample[team] = {
+                "record": "n/a",
+                "advance": bool(advance_map.get(team, [False] * n)[index]),
+                "eliminate": False,
+                "3-0": bool(three_zero_map.get(team, [False] * n)[index]) if three_zero_map.get(team) else False,
+                "3-1": False,
+                "3-2": False,
+                "0-3": bool(zero_three_map.get(team, [False] * n)[index]) if zero_three_map.get(team) else False,
+                "1-3": False,
+                "2-3": False,
+            }
+        samples.append(sample)
+    return samples
+
+
+class PickemObjectiveTests(unittest.TestCase):
+    def _probabilities(self):
+        return {
+            "Alpha": {"3-0": 0.42, "advance": 0.91, "0-3": 0.01},
+            "Bravo": {"3-0": 0.30, "advance": 0.82, "0-3": 0.04},
+            "Charlie": {"3-0": 0.18, "advance": 0.62, "0-3": 0.12},
+            "Delta": {"3-0": 0.08, "advance": 0.31, "0-3": 0.46},
+        }
+
+    def test_default_objective_is_expected_hits_and_reproduces_current_output(self):
+        # Regression baseline (red line a): the named expected_hits objective and
+        # the default path must be IDENTICAL to the historic choose_pickems output.
+        from cs2pickem.strategy import DEFAULT_PICKEM_OBJECTIVE, choose_pickems
+
+        self.assertEqual(DEFAULT_PICKEM_OBJECTIVE, "expected_hits")
+        probabilities = self._probabilities()
+        rankings = {"Alpha": 1, "Bravo": 8, "Charlie": 20, "Delta": 35}
+        slots = {"3-0": 1, "advance": 2, "0-3": 1}
+
+        baseline = choose_pickems(probabilities, rankings=rankings, slots=slots)
+        named = choose_pickems(
+            probabilities, rankings=rankings, slots=slots, objective="expected_hits"
+        )
+        self.assertEqual(named, baseline)
+        # Alpha is consumed by the 3-0 slot, so cross-category dedup keeps it out
+        # of advance (historic choose_pickems behaviour, locked here unchanged).
+        self.assertEqual(baseline, {"3-0": ["Alpha"], "advance": ["Bravo", "Charlie"], "0-3": ["Delta"]})
+
+    def test_unknown_objective_raises(self):
+        from cs2pickem.strategy import choose_pickems
+
+        with self.assertRaises(ValueError):
+            choose_pickems(self._probabilities(), objective="bogus")
+
+    def test_threshold_and_leveraged_require_joint_samples(self):
+        from cs2pickem.strategy import choose_pickems
+
+        for objective in ("threshold_prob", "leveraged"):
+            with self.assertRaises(ValueError):
+                choose_pickems(self._probabilities(), objective=objective)
+            with self.assertRaises(ValueError):
+                choose_pickems(self._probabilities(), objective=objective, joint_samples=[])
+
+    def test_ticket_hits_in_sample_counts_correct_picks(self):
+        from cs2pickem.strategy import ticket_hits_in_sample
+
+        sample = {
+            "Alpha": {"advance": True, "3-0": True, "0-3": False},
+            "Bravo": {"advance": True, "3-0": False, "0-3": False},
+            "Delta": {"advance": False, "3-0": False, "0-3": True},
+        }
+        ticket = {"3-0": ["Alpha"], "advance": ["Alpha", "Bravo"], "0-3": ["Delta"]}
+        # Alpha-3-0 hit, Alpha-advance hit, Bravo-advance hit, Delta-0-3 hit => 4.
+        self.assertEqual(ticket_hits_in_sample(ticket, sample), 4)
+        # Flip Bravo advance to a miss => 3.
+        sample["Bravo"]["advance"] = False
+        self.assertEqual(ticket_hits_in_sample(ticket, sample), 3)
+
+    def test_threshold_probability_uses_joint_samples_not_marginals(self):
+        from cs2pickem.strategy import choose_pickems, ticket_threshold_probability
+
+        # Two advance slots, three candidates. Solo has the HIGHEST marginal
+        # advance rate (7/10) so the expected-hits seed picks it, but it is
+        # perfectly ANTI-correlated with the Pair: whenever Solo advances neither
+        # Pair member does. {Solo, Pair1} therefore NEVER scores 2 advance hits.
+        # Pair1 and Pair2 always co-advance (6/10) => P(2 hits) = 0.6. A marginal
+        # (expected_hits) optimiser cannot see this joint structure; the
+        # threshold objective must, by reading the shared samples.
+        T, F = True, False
+        advance = {
+            "Solo": [F, F, F, F, F, F, T, T, T, T],     # 4/10, disjoint from Pair
+            "Pair1": [T, T, T, T, T, T, F, F, F, F],    # 6/10
+            "Pair2": [T, T, T, T, T, T, F, F, F, F],    # identical to Pair1
+        }
+        samples = _two_outcome_samples(advance)
+        probabilities = {
+            # Marginal scores order Solo above the Pair so the EV seed takes Solo.
+            "Solo": {"3-0": 0.0, "advance": 0.7, "0-3": 0.0},
+            "Pair1": {"3-0": 0.0, "advance": 0.5, "0-3": 0.0},
+            "Pair2": {"3-0": 0.0, "advance": 0.49, "0-3": 0.0},
+        }
+        slots = {"3-0": 0, "advance": 2, "0-3": 0}
+
+        # Expected-hits seed (marginal) takes Solo first.
+        seed = choose_pickems(probabilities, slots=slots, objective="expected_hits")
+        self.assertIn("Solo", seed["advance"])
+        self.assertAlmostEqual(ticket_threshold_probability(seed, samples, 2), 0.0)
+
+        chosen = choose_pickems(
+            probabilities,
+            slots=slots,
+            objective="threshold_prob",
+            joint_samples=samples,
+            threshold=2,
+        )
+        # The joint objective swaps to the co-advancing pair.
+        self.assertEqual(set(chosen["advance"]), {"Pair1", "Pair2"})
+        self.assertAlmostEqual(
+            ticket_threshold_probability(chosen, samples, 2), 0.6
+        )
+        self.assertGreater(
+            ticket_threshold_probability(chosen, samples, 2),
+            ticket_threshold_probability(seed, samples, 2),
+        )
+
+    def test_evaluate_ticket_distribution_reports_samples_and_confidence(self):
+        from cs2pickem.strategy import evaluate_ticket_distribution
+
+        T, F = True, False
+        advance = {"Pair1": [T, T, T, F], "Pair2": [T, T, T, F]}
+        samples = _two_outcome_samples(advance)
+        ticket = {"3-0": [], "advance": ["Pair1", "Pair2"], "0-3": []}
+
+        summary = evaluate_ticket_distribution(ticket, samples, threshold=2)
+        self.assertEqual(summary["samples"], 4)
+        self.assertEqual(summary["total_picks"], 2)
+        self.assertEqual(summary["threshold"], 2)
+        # 3 of 4 samples have both picks correct.
+        self.assertAlmostEqual(summary["threshold_probability"], 0.75)
+        self.assertAlmostEqual(summary["expected_hits"], (2 + 2 + 2 + 0) / 4)
+        self.assertEqual(summary["hit_histogram"], {0: 1, 2: 3})
+        lo, hi = summary["threshold_probability_ci95"]
+        self.assertLessEqual(lo, summary["threshold_probability"])
+        self.assertGreaterEqual(hi, summary["threshold_probability"])
+
+    def test_leveraged_objective_fades_chalk_toward_contrarian_pick(self):
+        from cs2pickem.strategy import choose_pickems
+
+        # One advance slot. Chalk advances in ALL sims (field always nails it ->
+        # zero leverage). Contrarian advances in only some sims, but the field
+        # rarely gets it -> high pool-share reward. Expected-hits picks Chalk;
+        # leveraged should fade to the contrarian.
+        T, F = True, False
+        advance = {
+            "Chalk": [T] * 10,
+            "Contra": [T, F, T, F, F, F, F, F, F, F],  # 2/10 advance rate
+        }
+        samples = _two_outcome_samples(advance)
+        probabilities = {
+            "Chalk": {"3-0": 0.0, "advance": 0.99, "0-3": 0.0},
+            "Contra": {"3-0": 0.0, "advance": 0.20, "0-3": 0.0},
+        }
+        slots = {"3-0": 0, "advance": 1, "0-3": 0}
+
+        seed = choose_pickems(probabilities, slots=slots, objective="expected_hits")
+        self.assertEqual(seed["advance"], ["Chalk"])
+
+        leveraged = choose_pickems(
+            probabilities,
+            slots=slots,
+            objective="leveraged",
+            joint_samples=samples,
+            leverage_strength=2.0,
+        )
+        self.assertEqual(leveraged["advance"], ["Contra"])
+
+    def test_leveraged_with_zero_strength_collapses_to_expected_hits(self):
+        from cs2pickem.strategy import choose_pickems
+
+        T, F = True, False
+        advance = {
+            "Chalk": [T] * 10,
+            "Contra": [T, F, T, F, F, F, F, F, F, F],
+        }
+        samples = _two_outcome_samples(advance)
+        probabilities = {
+            "Chalk": {"3-0": 0.0, "advance": 0.99, "0-3": 0.0},
+            "Contra": {"3-0": 0.0, "advance": 0.20, "0-3": 0.0},
+        }
+        slots = {"3-0": 0, "advance": 1, "0-3": 0}
+
+        # leverage_strength=0 removes the contrarian tilt: reward == expected hits,
+        # so the higher-hit-rate Chalk wins again.
+        leveraged = choose_pickems(
+            probabilities,
+            slots=slots,
+            objective="leveraged",
+            joint_samples=samples,
+            leverage_strength=0.0,
+        )
+        self.assertEqual(leveraged["advance"], ["Chalk"])
+
+    def test_joint_objectives_preserve_slot_counts_and_dedup(self):
+        from cs2pickem.strategy import choose_pickems
+
+        probabilities = {
+            "Alpha": {"3-0": 0.42, "advance": 0.91, "0-3": 0.01},
+            "Bravo": {"3-0": 0.30, "advance": 0.82, "0-3": 0.04},
+            "Charlie": {"3-0": 0.18, "advance": 0.62, "0-3": 0.12},
+            "Delta": {"3-0": 0.08, "advance": 0.31, "0-3": 0.46},
+        }
+        rankings = {"Alpha": 1, "Bravo": 8, "Charlie": 20, "Delta": 35}
+        slots = {"3-0": 1, "advance": 2, "0-3": 1}
+        T, F = True, False
+        advance = {
+            "Alpha": [T, T, T, T, F],
+            "Bravo": [T, T, F, T, F],
+            "Charlie": [F, T, T, F, T],
+            "Delta": [F, F, F, T, T],
+        }
+        three_zero = {"Alpha": [T, F, T, F, F], "Bravo": [F, T, F, F, T]}
+        zero_three = {"Delta": [T, T, F, T, T], "Charlie": [F, F, T, F, F]}
+        samples = _two_outcome_samples(advance, three_zero, zero_three)
+
+        for objective, kwargs in (
+            ("threshold_prob", {"threshold": 3}),
+            ("leveraged", {"leverage_strength": 1.5}),
+        ):
+            ticket = choose_pickems(
+                probabilities,
+                rankings=rankings,
+                slots=slots,
+                objective=objective,
+                joint_samples=samples,
+                **kwargs,
+            )
+            self.assertEqual(len(ticket["3-0"]), 1, objective)
+            self.assertEqual(len(ticket["advance"]), 2, objective)
+            self.assertEqual(len(ticket["0-3"]), 1, objective)
+            all_teams = [t for teams in ticket.values() for t in teams]
+            self.assertEqual(len(all_teams), len(set(all_teams)), objective)
+            for team in all_teams:
+                self.assertIn(team, probabilities, objective)
+
+    def test_threshold_default_k_matches_flattened_picks_not_slot_sum(self):
+        # WF-2E review fix: when a category cannot fill its slots, the default
+        # threshold-search K must equal the ticket's flattened pick count (what
+        # evaluate_ticket_distribution reports by default), NOT sum(slots). With
+        # K=sum(slots) the search would optimise an unreachable threshold and the
+        # reported distribution would use a different K.
+        from cs2pickem.strategy import (
+            _choose_pickems_joint,
+            _flatten_ticket,
+            evaluate_ticket_distribution,
+        )
+
+        T, F = True, False
+        # Two co-advancing teams, but slots ask for THREE advance picks.
+        advance = {"Pair1": [T, T, T, F], "Pair2": [T, T, T, F]}
+        samples = _two_outcome_samples(advance)
+        probabilities = {
+            "Pair1": {"3-0": 0.0, "advance": 0.75, "0-3": 0.0},
+            "Pair2": {"3-0": 0.0, "advance": 0.75, "0-3": 0.0},
+        }
+        slots = {"3-0": 0, "advance": 3, "0-3": 0}  # 3 slots, only 2 candidates
+        seed = {"3-0": [], "advance": ["Pair1", "Pair2"], "0-3": []}
+
+        chosen = _choose_pickems_joint(
+            "threshold_prob",
+            seed_ticket=seed,
+            team_probabilities=probabilities,
+            rankings={},
+            slots=slots,
+            upset_rank_limit=15,
+            stage="default",
+            team_features={},
+            joint_samples=samples,
+            threshold=None,  # exercise the default-K path
+            crowd_probabilities=None,
+            leverage_strength=1.0,
+            max_swaps=64,
+        )
+        flattened = len(_flatten_ticket(chosen))
+        self.assertEqual(flattened, 2)  # only two teams could fill the slots
+        # Optimiser's default K and the distribution's default K must agree.
+        distribution = evaluate_ticket_distribution(chosen, samples)
+        self.assertEqual(distribution["threshold"], flattened)
+        # And P(hits >= 2) is genuinely reachable (3/4 samples), not the
+        # identically-zero P(hits >= sum(slots)=3) the old default targeted.
+        self.assertAlmostEqual(distribution["threshold_probability"], 0.75)
+
+    def test_leveraged_reward_floors_field_prob_at_inverse_sample_count(self):
+        # WF-2E review fix: a longshot the field hits only 1/N times must not be
+        # rewarded as if field_prob -> 0 (MC tail noise). The field probability is
+        # floored at 1/N, so its weight is capped at (N)^strength rather than
+        # exploding without bound.
+        from cs2pickem.strategy import _leveraged_reward
+
+        T, F = True, False
+        n = 20
+        # "Longshot" hits exactly once (1/20); field also hits exactly once.
+        advance = {"Longshot": [T] + [F] * (n - 1)}
+        samples = _two_outcome_samples(advance)
+        field = {"Longshot": {"advance": 1.0 / n}}  # 1/N field hit rate
+        ticket = {"3-0": [], "advance": ["Longshot"], "0-3": []}
+
+        strength = 2.0
+        reward = _leveraged_reward(ticket, samples, field, strength)
+        # Floored weight = (1 / (1/N))^strength = N^strength; the single hit (1/N
+        # of samples) yields reward = N^strength / N = N^(strength-1).
+        self.assertAlmostEqual(reward, n ** (strength - 1.0))
+        # A field_prob BELOW the floor would have produced a strictly larger
+        # reward; flooring caps it at the value above.
+        unfloored_field = {"Longshot": {"advance": 1.0 / (10 * n)}}
+        unfloored = _leveraged_reward(ticket, samples, unfloored_field, strength)
+        self.assertAlmostEqual(unfloored, reward)
+
+
 if __name__ == "__main__":
     unittest.main()
