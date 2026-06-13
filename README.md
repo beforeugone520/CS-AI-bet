@@ -10,7 +10,7 @@
 <br>
 
 [![Counter-Strike 2](https://img.shields.io/badge/Counter--Strike_2-IEM_Cologne_Major_2026-ff5722?style=for-the-badge&labelColor=0a0908)](https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/)
-[![Static Site](https://img.shields.io/badge/Static_Site-GitHub_Pages-46d2ff?style=for-the-badge&labelColor=0a0908)](#-静态网站部署)
+[![Live Demo](https://img.shields.io/badge/🎯_在线体验-LIVE_DEMO-ff5722?style=for-the-badge&labelColor=0a0908)](https://beforeugone520.github.io/CS-AI-bet/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ee6a8?style=for-the-badge&labelColor=0a0908)](LICENSE)
 
 ![Vanilla JS](https://img.shields.io/badge/Vanilla_JS-ESM_无构建-f7df1e?style=flat-square&labelColor=0a0908)
@@ -21,7 +21,7 @@
 
 <br>
 
-[**🎯 在线指挥中心**](#-静态网站部署) ·
+[**🎯 在线体验 Live Demo ↗**](https://beforeugone520.github.io/CS-AI-bet/) ·
 [数据处理与建模](docs/data-processing.md) ·
 [赛前答案 JSON](data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_2026-06-01.json) ·
 [Round 4 检查点](data/cologne2026/predictions/fivee_6m_stage1_2026-06-01/final_fused_pickem_checkpoint_round4_2026-06-05.json)
@@ -251,6 +251,9 @@ Stage 1 全部结束前，只做 checkpoint 复盘，不提前计算最终 Pick'
 ---
 
 ## 🚀 静态网站部署
+
+> ### 🎯 在线站点 → **<https://beforeugone520.github.io/CS-AI-bet/>**
+> 打开即是默认的 **PREDICT** 全交互瑞士轮预测器，可一键切换 **LIVE** 实况看板。`main` 分支 push 后由 [`pages.yml`](.github/workflows/pages.yml) 自动构建并发布到 `gh-pages`。
 
 `site/` 是 GitHub Pages 静态站入口，只公开 IEM Cologne Major 2026 的 Swiss 选择器页面：已完成赛果锁定，未完成对局可在浏览器里本地模拟。**纯 ES Module，无需打包工具**——克隆即可起本地服务预览。
 
