@@ -2,35 +2,124 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IEM Cologne Major 2026 Simulator</title>
-  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#06090d">
+  <meta name="description" content="IEM Cologne Major 2026 Pick'em 战术情报终端 —— 瑞士轮赛果锁定、本地模拟、模型/专家/市场融合预测与 Pick'em 兑现追踪。">
+  <title>IEM Cologne Major 2026 · Pick'em 战术情报终端</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 </head>
-<body>
+<body data-theme="dark">
+  <!-- ===== Ambient atmosphere stack (persistent, behind app) ===== -->
+  <div class="atmosphere" aria-hidden="true">
+    <canvas id="ambient" class="atmosphere__canvas"></canvas>
+    <div class="atmosphere__grid"></div>
+    <div class="atmosphere__glow atmosphere__glow--ember"></div>
+    <div class="atmosphere__glow atmosphere__glow--cyan"></div>
+    <div class="atmosphere__scanline"></div>
+    <div class="atmosphere__vignette"></div>
+  </div>
+
   <a class="skip-link" href="#app">跳到主要内容</a>
-  <header class="topbar appbar">
-    <div class="game-tabs" aria-label="Game">
-      <button class="game-tab active" type="button">CS</button>
-      <button class="game-tab" type="button" disabled>R6</button>
+
+  <!-- ===== Tactical command bar ===== -->
+  <header class="topbar appbar" role="banner">
+    <div class="topbar__left">
+      <div class="game-tabs" aria-label="Game">
+        <button class="game-tab active" type="button" aria-pressed="true">CS</button>
+        <button class="game-tab" type="button" disabled aria-disabled="true">R6</button>
+      </div>
+      <a class="brand" href="#/" aria-label="Majors.im 首页">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+            <circle cx="16" cy="16" r="11" stroke="currentColor" stroke-width="1.7" stroke-opacity="0.85"/>
+            <path d="M16 1.5V8M16 24v6.5M1.5 16H8M24 16h6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="2.4" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand__type">
+          <span class="brand__name">MAJORS<span class="brand__dot">.</span>IM</span>
+          <span class="brand__kicker">PICK'EM TERMINAL</span>
+        </span>
+      </a>
     </div>
-    <div class="brand">Majors.im</div>
-    <button class="event-select" type="button">
+
+    <button class="event-select" type="button" aria-label="当前赛事 IEM Cologne Major 2026">
       <span class="event-badge"><img src="./assets/events/iem.png" alt=""></span>
-      <span class="event-title-full">IEM Cologne Major 2026</span>
-      <span class="event-title-short">2026</span>
+      <span class="event-meta">
+        <span class="event-title-full">IEM Cologne Major 2026</span>
+        <span class="event-sub">Counter-Strike 2 · Stage 1 Swiss</span>
+      </span>
+      <span class="event-title-short">CGN&nbsp;26</span>
+      <span class="event-chevron" aria-hidden="true">▾</span>
     </button>
-    <div class="appbar-actions" aria-label="Display actions">
-      <button type="button" title="Language">US</button>
-      <button type="button" title="Theme">◐</button>
-      <button type="button" title="Help">?</button>
-      <button type="button" title="Info">i</button>
+
+    <div class="topbar__right">
+      <div class="signal" id="signal" role="status" aria-live="polite" title="数据来源状态">
+        <span class="signal__pulse" aria-hidden="true"></span>
+        <span class="signal__text">FEED · 同步中</span>
+      </div>
+      <div class="appbar-actions" aria-label="Display actions">
+        <button type="button" class="icon-btn" data-action="theme" title="切换主题" aria-label="切换主题">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+        </button>
+        <a href="https://github.com/beforeugone520/CS-AI-bet" target="_blank" rel="noopener" class="icon-btn" title="GitHub 仓库" aria-label="GitHub 仓库">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.21-3.37-1.21-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.56 2.36 1.11 2.94.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05A9.36 9.36 0 0 1 12 6.84c.85 0 1.71.12 2.51.34 1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.35 4.79-4.58 5.05.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+        </a>
+        <button type="button" class="icon-btn" data-action="help" title="使用帮助" aria-label="使用帮助">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.6 9.4a2.4 2.4 0 0 1 4.7.7c0 1.6-2.3 2-2.3 3.6"/><path d="M12 17.2h.01"/></svg>
+        </button>
+      </div>
+      <button class="mobile-menu-button" type="button" aria-label="切换主题" title="切换主题" data-action="theme">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </div>
-    <button class="mobile-menu-button" type="button" aria-label="Menu">☰</button>
   </header>
+
+  <!-- ===== App mount ===== -->
   <main id="app" tabindex="-1">
-    <section class="loading">Loading command center data...</section>
+    <section class="boot">
+      <div class="boot__reticle" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <p class="boot__title">IEM Cologne Major 2026 Simulator</p>
+      <p class="boot__status">正在载入指挥中心数据流<span class="boot__dots"><i>.</i><i>.</i><i>.</i></span></p>
+    </section>
   </main>
+
+  <!-- ===== Persistent footer ===== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <span class="brand__mark sm" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="18" height="18" fill="none"><circle cx="16" cy="16" r="11" stroke="currentColor" stroke-width="1.7" stroke-opacity="0.85"/><path d="M16 1.5V8M16 24v6.5M1.5 16H8M24 16h6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="16" r="2.4" fill="currentColor"/></svg>
+        </span>
+        <div>
+          <strong>MAJORS.IM</strong>
+          <span class="muted">CS2 Major Pick'em 战术情报终端</span>
+        </div>
+      </div>
+      <nav class="site-footer__links" aria-label="资源">
+        <a href="https://github.com/beforeugone520/CS-AI-bet" target="_blank" rel="noopener">仓库</a>
+        <a href="https://github.com/beforeugone520/CS-AI-bet/blob/main/docs/data-processing.md" target="_blank" rel="noopener">建模链路</a>
+        <a href="https://esports.gg/news/counter-strike-2/iem-cologne-major-2026-stage-1-overview-results/" target="_blank" rel="noopener">赛果来源</a>
+        <a href="https://www.hltv.org/major" target="_blank" rel="noopener">HLTV Major</a>
+      </nav>
+      <p class="site-footer__note muted">
+        融合权重 专家 0.30 · 市场 0.20 · 模型 0.50 ·
+        队标版权归各战队所有，仅用于赛事可视化。
+      </p>
+    </div>
+  </footer>
+
+  <!-- floating tooltip layer -->
+  <div id="tip" class="tip" role="tooltip" aria-hidden="true"></div>
+
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

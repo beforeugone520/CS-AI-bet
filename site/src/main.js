@@ -3,6 +3,7 @@ import { resetSwissState, applySwissWinner, clearSwissSelections, fixtureKey, gr
 import { emptyBracketState, applyBracketWinner } from "./bracket.js";
 import { classifyPickem, summarizePickem } from "./pickem.js";
 import { renderApp } from "./render.js";
+import { initChrome, afterRender, setSignal } from "./effects.js";
 
 const root = document.querySelector("#app");
 let appData = null;
@@ -10,6 +11,9 @@ let swissState = null;
 let bracketState = null;
 let swissViewMode = "simple";
 
+const handlers = { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner };
+
+initChrome();
 loadCurrentRoute();
 window.addEventListener("hashchange", loadCurrentRoute);
 
@@ -25,11 +29,17 @@ function loadCurrentRoute() {
         bracketState = emptyBracketState(data.stage.bracket);
       }
       appData = prepareAppData(data);
-      renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
+      setSignal(data.sourceStatus, data.latest);
+      paint(true);
     })
     .catch((error) => {
-      root.innerHTML = `<section class="panel panel-head"><h1>数据加载失败</h1><p class="muted">${error.message}</p></section>`;
+      root.innerHTML = `<section class="simulator-page"><div class="future-stage-card hud"><span class="hud-c1"></span><span class="hud-c2"></span><span class="future-stage-kicker">SIGNAL LOST</span><h2>数据加载失败</h2><p class="muted">${escapeText(error.message)}</p></div></section>`;
     });
+}
+
+function paint(animate) {
+  renderApp(root, appData, handlers);
+  afterRender(root, { animate });
 }
 
 function onSwissWinner(fixtureIndex, winner) {
@@ -63,12 +73,12 @@ function onBracketWinner(matchId, winner) {
       champion_path: { champion: bracketState.champion }
     }
   });
-  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
+  paint(false);
 }
 
 function rerender() {
   appData = prepareAppData(appData);
-  renderApp(root, appData, { onSwissWinner, onSwissUndo, onSwissReset, onSwissViewMode, onBracketWinner });
+  paint(false);
 }
 
 function prepareAppData(data) {
@@ -106,17 +116,19 @@ function enrichPickem(data) {
   const rows = classifyPickem(data.pickem, records);
   return {
     ...data,
-    pickemRuntime: {
-      rows,
-      summary: summarizePickem(rows)
-    }
+    pickemRuntime: { rows, summary: summarizePickem(rows) }
   };
 }
 
 function bracketPayloadFromState(state) {
   const bracket = { quarterfinals: [], semifinals: [], final: [] };
   for (const match of Object.values(state.matches)) {
+    if (!bracket[match.round]) bracket[match.round] = [];
     bracket[match.round].push(match);
   }
   return bracket;
+}
+
+function escapeText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
