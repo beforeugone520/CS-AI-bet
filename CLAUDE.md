@@ -7,7 +7,9 @@
 
 ## 项目结构（两块相对独立）
 
-- **Python ML 工具链** `src/cs2pickem/` —— CS2 Major Pick'em 预测建模 / CLI。开发约定见根目录 `AGENTS.md`（加速依赖、纯 Python 回退、`CS2PICKEM_ACCELERATED_MLP`）。测试：`PYTHONPATH=src python3 -m unittest discover -s tests -v`。
+- **Python ML 工具链** `src/cs2pickem/` —— CS2 Major Pick'em 预测建模 / CLI。开发约定见根目录 `AGENTS.md`（加速依赖、纯 Python 回退、`CS2PICKEM_ACCELERATED_MLP`）。测试：`PYTHONPATH=src python3 -m unittest discover -s tests -v`（当前 512 项）。
+  - **WF-2 建模升级现状**：生产默认已采纳 **Glicko-2 赛前评级**（`MatchPredictor.train` 默认 `rating_mode='glicko'`，Elo 并存）+ **logit_pool 市场融合**（`model_weight≈0.30`，`forecast`/`pickem` 两条生产路径显式传参）。其余建模轴（Bradley-Terry 先验 `inject_bt`、多方法校准 `calibration_method`、`include_unverified`、`devig_method` 变体、Glicko-MOV）**实现但保持默认关闭、仅 opt-in**——WF-2F 大回测判定它们 no_significant_diff / 回归 / 不可证伪，详见 `docs/modeling-upgrade-2026-06.md`。
+  - **底层常量刻意不动**：`strategy.DEFAULT_FUSION_METHOD='legacy_clip'` / `DEFAULT_MODEL_WEIGHT=0.35` 与 `tuning._DEFAULT_RATING_MODE='elo'` 被行为契约测试与 A/B 同口径基线锁定，**故意不改**；生产翻转通过调用点显式传 `strategy.PRODUCTION_FUSION_METHOD` / `PRODUCTION_MODEL_WEIGHT` 实现。后续改动**勿擅自改这些全局常量或其他默认**——只翻有证据支持的默认是 WF-2F 红线。
 - **前端静态站** `site/` —— 零构建纯 ES Module 站点（战术情报终端 UI + majors.im 式瑞士轮预测器），部署到 GitHub Pages。**与 Python 栈无耦合**：纯前端/视觉改动不应触碰 `src/`、`tests/`、`scripts/`。
 
 ## 前端约定（site/）

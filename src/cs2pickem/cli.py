@@ -68,7 +68,7 @@ def main() -> int:
     tune_parser.add_argument("--market-weight", type=float, default=0.30, help="market probability weight for historical model+market fusion diagnostics")
     tune_parser.add_argument("--probability-objective", default="log_loss", choices=["accuracy", "log_loss", "brier_score", "ece"], help="objective used to choose raw vs calibrated test probabilities")
     tune_parser.add_argument("--elo-modes", default="with", help="comma-separated Elo feature modes to compare: with,without")
-    tune_parser.add_argument("--rating-modes", default="elo", help="comma-separated rating sources to compare: elo,glicko (WF-2C skeleton; A/B verdict deferred to WF-2F)")
+    tune_parser.add_argument("--rating-modes", default="elo", help="comma-separated rating sources to compare: elo,glicko (WF-2F verdict: glicko significant and now the production train/serve default; this axis runs same-口径 optimize-matches A/B)")
     tune_parser.add_argument("--inject-bt-modes", default="off", help="comma-separated Bradley-Terry strength-prior modes to compare: off,on (default off keeps the byte-identical Elo-only grid)")
     tune_parser.add_argument("--calibration-method-modes", default="platt", help="comma-separated calibration methods to A/B same-口径: platt,beta,temperature (default platt keeps legacy behaviour)")
     tune_parser.add_argument("--fusion-method-modes", default="legacy_clip", help="comma-separated market-fusion methods to compare: legacy_clip,logit_pool (default legacy_clip keeps the convex linear blend)")

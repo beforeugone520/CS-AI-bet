@@ -303,10 +303,30 @@ PYTHONPATH=src AI_UPDATE_NOTES="本次只分析最新完赛结果" \
 
 ---
 
+## 🧪 建模升级（WF-2）
+
+`cs2pickem` 在 WF-2 阶段补齐了一批建模能力，并用同口径回测 + 显著性检验（paired bootstrap / Diebold-Mariano）做了诚实裁决——**只把有证据支持的两项翻成生产默认**，其余实现但默认关闭，仅作 opt-in。完整裁决矩阵与真实回测数字见 [WF-2 升级报告](docs/modeling-upgrade-2026-06.md)。
+
+| 能力 | 状态 | 裁决依据 |
+| --- | --- | --- |
+| **Glicko-2 赛前评级**（MOV 阻尼 + 不活跃 RD 膨胀，Elo 并存） | ✅ **已采纳为默认** | holdout logloss 0.6806 → 0.6700，显著改进 |
+| **logit_pool 概率融合**（对数意见池，model_weight≈0.30，偏市场） | ✅ **已采纳为默认** | 赔率子集 logloss 0.6371 → 0.5874，显著改进 |
+| Bradley-Terry 实力先验（`inject_bt`） | ⚪ 实现，默认关闭 | no_significant_diff，待多赛季再裁 |
+| 多方法校准（platt/beta/temperature） | ⚪ 实现，默认仍 platt | no_significant_diff，待更大样本 |
+| 未验证特征（`include_unverified`） | ⚪ 实现，默认关闭 | no_significant_diff |
+| Shin / power de-vig 变体 | ⚪ 实现，默认仍 multiplicative；生产 forecast/pickem 路径硬编码 multiplicative，仅 `optimize-matches` A/B 可对照 | **回测回归** |
+| Glicko-MOV 多赛季再裁决 | ⚪ 实现，记为待验证 | 不可证伪（缺回合分语料覆盖） |
+| Buchholz 配对 / series BO3 提升 / threshold·leveraged pickem EV / Kelly 下注 | ⚪ 实现，按需 opt-in | 赛制 / EV / 下注层，默认沿用历史口径 |
+
+> 诚实口径：显著改进的两项已采纳为默认；未证明（BT、多方法校准、unverified）、回归（de-vig 变体）与不可证伪（Glicko-MOV）项**如实记录为「实现但未默认启用，待多赛季或回合分语料」**，不粉饰为全面提升。
+
+---
+
 ## 📚 技术二级菜单
 
 | 想看什么 | 入口 |
 | --- | --- |
+| WF-2 建模升级与裁决矩阵（真实回测数字） | [升级报告](docs/modeling-upgrade-2026-06.md) |
 | 数据清洗、特征工程、模型融合、市场信号和 Swiss 模拟链路 | [处理链路](docs/data-processing.md#处理链路) |
 | 安装、验证、端到端样例 | [安装与验证](docs/data-processing.md#安装与验证) |
 | `update`、`train`、`forecast`、`pickem`、`backtest-*` 等命令 | [命令总览](docs/data-processing.md#命令总览) |

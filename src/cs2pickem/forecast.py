@@ -7,7 +7,12 @@ from .bp import merge_bp_into_fixtures
 from .data import read_matches_csv, write_json
 from .odds import market_probability_from_row
 from .predictor import MatchPredictor
-from .strategy import adjust_probability_toward_market_probability, single_match_pick
+from .strategy import (
+    PRODUCTION_FUSION_METHOD,
+    PRODUCTION_MODEL_WEIGHT,
+    adjust_probability_toward_market_probability,
+    single_match_pick,
+)
 
 
 SWISS_PRESSURE_FIELDS = (
@@ -65,9 +70,14 @@ def forecast_fixtures(
         market_adjustment_applied = bool(market_signal and not market_signal.get("proxy"))
         adjusted = raw_probability
         if market_adjustment_applied:
+            # Production fusion (WF-2F): logarithmic opinion pool leaning on the market
+            # (model weight ~0.30). The library default stays legacy_clip; this call point
+            # opts in explicitly via the centralised production constants.
             adjusted = adjust_probability_toward_market_probability(
                 raw_probability,
                 market_probability=_num(market_signal.get("probability_team1"), 0.5),
+                fusion_method=PRODUCTION_FUSION_METHOD,
+                model_weight=PRODUCTION_MODEL_WEIGHT,
             )
         confidence_margin = abs(adjusted - 0.5)
         effective_minimum_margin = _effective_minimum_margin(fixture, minimum_margin, bo1_minimum_margin)

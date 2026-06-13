@@ -10,6 +10,8 @@ from .predictor import MatchPredictor
 from .series import series_win_prob
 from .strategy import (
     DEFAULT_PICKEM_OBJECTIVE,
+    PRODUCTION_FUSION_METHOD,
+    PRODUCTION_MODEL_WEIGHT,
     adjust_probability_toward_market_probability,
     choose_pickems,
     describe_pickem_risk,
@@ -72,9 +74,14 @@ def model_driven_pickems(
             market_adjustment_applied = bool(market_signal and not market_signal.get("proxy"))
             adjusted_probability = model_probability
             if market_adjustment_applied:
+                # Production fusion (WF-2F): logarithmic opinion pool leaning on the market
+                # (model weight ~0.30). Library default stays legacy_clip; this production
+                # call point opts in explicitly via the centralised constants.
                 adjusted_probability = adjust_probability_toward_market_probability(
                     model_probability,
                     market_probability=_num(market_signal.get("probability_team1"), 0.5),
+                    fusion_method=PRODUCTION_FUSION_METHOD,
+                    model_weight=PRODUCTION_MODEL_WEIGHT,
                 )
             # BO3 series uplift (opt-in): the model/market probability above is a
             # per-MAP win probability; series.series_win_prob composes it into the

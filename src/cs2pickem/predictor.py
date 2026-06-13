@@ -89,13 +89,19 @@ class MatchPredictor:
         calibration_method: str = "platt",
         calibration_cv_folds: int = 0,
         inject_bt: bool = False,
-        rating_mode: str = "elo",
+        rating_mode: str = "glicko",
         inject_glicko: bool = False,
     ) -> "MatchPredictor":
-        # The added rating engine is selected by rating_mode ('elo' default keeps the engine
-        # off) OR explicitly by inject_glicko; rating_mode='glicko' implies Glicko injection.
-        # inject_bt is an orthogonal switch (BT can ride alongside either rating mode). Both
-        # default off so the historic Elo-only train/serve behaviour is bit-for-bit unchanged.
+        # Production rating engine (WF-2F verdict): rating_mode defaults to 'glicko' because the
+        # same-口径 backtest found Glicko's pre-match rating diff a significant improvement over
+        # the Elo-only baseline. Glicko is injected when rating_mode=='glicko' OR inject_glicko;
+        # rating_mode='elo' is the retained opt-in baseline (Elo still rides alongside Glicko --
+        # inject_elo stays True -- so the elo columns and the glicko_diff/glicko_rd_sum candidates
+        # both compete in FeatureSelector). inject_bt is an orthogonal switch (BT can ride with
+        # either mode) and stays off by default (no_significant_diff in WF-2F). The train-side
+        # Glicko injection is paired with the serve-side apply_final_glicko_to_match below
+        # (team_glicko_state is populated only when use_glicko is True), so there is no
+        # train/serve skew on either the default (Glicko) or the opt-in (Elo) path.
         use_glicko = bool(inject_glicko) or str(rating_mode).strip().lower() == "glicko"
         cleaned_history = sorted(clean_matches([dict(row) for row in history_rows], reference_date=reference_date, max_age_days=max_age_days), key=lambda row: row["date"])
         prepared_history, final_elo, feature_preparation = prepare_reliability_features(

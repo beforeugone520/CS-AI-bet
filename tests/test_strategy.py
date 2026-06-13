@@ -32,6 +32,38 @@ class MarketFusionTests(unittest.TestCase):
             adjust_probability_toward_market_probability(0.60, 0.90, fusion_method="legacy_clip"),
         )
 
+    def test_production_fusion_constants_are_logit_pool_at_market_lean_weight(self):
+        # WF-2F flip: the PRODUCTION call points (forecast / pickem) opt into the logarithmic
+        # opinion pool at a market-leaning model weight of ~0.30. These constants are distinct
+        # from the LIBRARY bare-call defaults (legacy_clip / 0.35), which stay locked by the
+        # behaviour-contract test above and by the tuning diagnostic口径 -- the production flip is
+        # applied at the call site, never by mutating the library defaults.
+        from cs2pickem.strategy import (
+            DEFAULT_FUSION_METHOD,
+            DEFAULT_MODEL_WEIGHT,
+            FUSION_METHODS,
+            PRODUCTION_FUSION_METHOD,
+            PRODUCTION_MODEL_WEIGHT,
+            adjust_probability_toward_market_probability,
+        )
+
+        self.assertEqual(PRODUCTION_FUSION_METHOD, "logit_pool")
+        self.assertIn(PRODUCTION_FUSION_METHOD, FUSION_METHODS)
+        self.assertAlmostEqual(PRODUCTION_MODEL_WEIGHT, 0.30)
+        # The production flip must not have leaked into the library bare-call defaults.
+        self.assertEqual(DEFAULT_FUSION_METHOD, "legacy_clip")
+        self.assertAlmostEqual(DEFAULT_MODEL_WEIGHT, 0.35)
+        # Using the production constants pulls a confident model hard toward a contrary market
+        # (far beyond the legacy +/-0.03 clip), confirming the call-site opt-in is live.
+        prod = adjust_probability_toward_market_probability(
+            0.80, 0.30,
+            fusion_method=PRODUCTION_FUSION_METHOD,
+            model_weight=PRODUCTION_MODEL_WEIGHT,
+        )
+        legacy = adjust_probability_toward_market_probability(0.80, 0.30)
+        self.assertLess(prod, legacy)
+        self.assertLess(prod, 0.5)
+
     def test_legacy_clip_respects_custom_max_adjustment_and_clips_to_unit_interval(self):
         from cs2pickem.strategy import adjust_probability_toward_market_probability
 

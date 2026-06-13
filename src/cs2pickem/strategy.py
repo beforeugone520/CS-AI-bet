@@ -54,6 +54,22 @@ DEFAULT_FUSION_METHOD = "legacy_clip"
 # -- it is deliberately NOT estimated on a single event's tiny holdout (review point
 # 8: that fits noise). Multi-season re-litigation is deferred to WF-2F.
 DEFAULT_MODEL_WEIGHT = 0.35
+
+# --------------------------------------------------------------------------- #
+# Production fusion defaults (WF-2F verdict).
+#
+# The bare-call library defaults above (DEFAULT_FUSION_METHOD='legacy_clip',
+# DEFAULT_MODEL_WEIGHT=0.35) are LOCKED by behaviour-contract tests and the
+# tuning diagnostic口径 -- they are intentionally NOT changed here. Instead the
+# two PRODUCTION fusion call points (forecast.forecast_fixtures and
+# pickem.model_driven_pickems / swiss_predictor) opt into the logit pool by
+# passing these constants explicitly. WF-2F adjudicated the logarithmic opinion
+# pool a significant improvement over the legacy arithmetic clip, with a model
+# weight of ~0.30 (i.e. leaning further on the market than the 0.35 frozen
+# diagnostic prior). Centralising them here keeps the production fusion口径 in one
+# referenceable place while the library/tuning defaults stay byte-identical.
+PRODUCTION_FUSION_METHOD = "logit_pool"
+PRODUCTION_MODEL_WEIGHT = 0.30
 # Logit-pool guard: clip probabilities into [_LOGIT_POOL_EPS, 1 - _LOGIT_POOL_EPS]
 # before taking logits and clip the pooled output so 0/1 inputs never overflow.
 _LOGIT_POOL_EPS = 1e-6
