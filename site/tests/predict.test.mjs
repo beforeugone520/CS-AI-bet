@@ -41,3 +41,16 @@ test("blank predict board renders only the 8 opening cards", () => {
   assert.equal((html.match(/predict-card/g) || []).length, 8);
   assert.match(html, /与真实赛果一致/);
 });
+
+test("predict cards carry FLIP keys, actionable hints, and terminal trace hooks", () => {
+  const blank = buildSwiss({}, realData);
+  const blankHtml = renderPredictHtml(blank, null, "simple", { pickCount: 0 });
+  assert.equal((blankHtml.match(/data-mk=/g) || []).length, 8, "one FLIP key per card");
+  assert.equal((blankHtml.match(/is-actionable/g) || []).length, 8, "all opening matches actionable");
+
+  const picks = picksFromResults(stage.results);
+  const full = buildSwiss(picks, realData);
+  const fullHtml = renderPredictHtml(full, null, "simple", { pickCount: countPicks(picks, full.validKeys) });
+  assert.match(fullHtml, /term-chip/, "fully-played board has terminal chips");
+  assert.ok(/term-chip[^>]*data-predict-team=/.test(fullHtml), "terminal chips carry trace hook");
+});
