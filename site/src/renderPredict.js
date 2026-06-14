@@ -103,7 +103,7 @@ function renderPredictCard(m) {
   const isReal = !!(m.fromReal && m.realWinner);
   const seedOf = (t) => SEED[t] != null ? `#${SEED[t]}` : "";
   return `
-    <div class="swiss-match-card predict-card ${decided ? "has-winner" : ""} ${statusClass} ${m.decider ? "is-decider" : ""}">
+    <div class="swiss-match-card predict-card ${decided ? "has-winner" : ""} ${!decided && m.team1 && m.team2 ? "is-actionable" : ""} ${statusClass} ${m.decider ? "is-decider" : ""}" data-mk="${escapeHtml(m.key)}">
       <div class="match-ribbon">
         <span>BO${m.bo}${m.decider ? " · 决胜" : ""}</span>
         <strong class="ribbon-src ${isReal ? "src-real" : "src-sim"}" title="${isReal ? "与真实赛果一致" : "引擎模拟配对"}">${isReal ? "● REAL" : "◌ SIM"}</strong>
@@ -158,7 +158,7 @@ function renderTermChip(row, status) {
     ? `<img src="./assets/teams/${escapeHtml(logoFile)}.png" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
     : `<span class="team-fallback">${escapeHtml(teamMark(row.team))}</span>`;
   return `
-    <div class="term-chip" data-status="${status}" style="--team:${accent}">
+    <div class="term-chip" data-status="${status}" data-predict-team="${escapeHtml(row.team)}" style="--team:${accent}">
       <span class="term-chip__logo">${logo}</span>
       <span class="term-chip__name">${escapeHtml(row.team)}</span>
       <span class="term-chip__rec status-pill mono">${row.wins}-${row.losses}</span>

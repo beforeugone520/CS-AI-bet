@@ -5,7 +5,8 @@ import { classifyPickem, summarizePickem } from "./pickem.js";
 import { buildSwiss, picksFromResults, realRoundsFromStage, countPicks } from "./swissSim.js";
 import { renderApp, renderHero } from "./render.js";
 import { renderPredictWorkspace } from "./renderPredict.js";
-import { initChrome, afterRender, setSignal } from "./effects.js";
+import { initChrome, afterRender, setSignal, initPredictTrace, captureRects, playFlip, showConflictToast } from "./effects.js";
+import { diffPrunedPicks } from "./trace.js";
 
 const root = document.querySelector("#app");
 
@@ -109,6 +110,7 @@ function renderPredictBoard(animate) {
     });
   }
   afterRender(root, { animate });
+  initPredictTrace(root, bracket);
 }
 
 function onSwissMode(mode) {
@@ -118,6 +120,7 @@ function onSwissMode(mode) {
 
 function onPredictPick(mk, team) {
   if (!mk || !team) return;
+  const oldRects = captureRects(root);
   if (predictPicks[mk] === team) {
     delete predictPicks[mk];                         // click winner again -> deselect
     predictOrder = predictOrder.filter((k) => k !== mk);
@@ -125,7 +128,11 @@ function onPredictPick(mk, team) {
     predictPicks[mk] = team;
     if (!predictOrder.includes(mk)) predictOrder.push(mk);
   }
+  // surface downstream picks this edit invalidates, before the board prunes them
+  const dropped = diffPrunedPicks(predictPicks, buildSwiss(predictPicks, realData)).filter((d) => d.key !== mk);
   renderPredictBoard(false);
+  playFlip(root, oldRects);
+  if (dropped.length) showConflictToast(dropped);
 }
 
 function onPredictUndo() {

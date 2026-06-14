@@ -4,6 +4,8 @@
    behind prefers-reduced-motion; the page is fully usable with none of it.
    ========================================================================== */
 
+import { traceTeam, computeFlipTransforms } from "./trace.js";
+
 const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let ambientStarted = false;
@@ -249,4 +251,73 @@ function initAmbient() {
 function debounce(fn, ms) {
   let t = null;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* ---------- PREDICT: hover-to-trace a team's whole path ---------- */
+export function initPredictTrace(root, bracket) {
+  if (!root) return;
+  const board = root.querySelector(".predict-board");
+  if (!board || !bracket) return;
+  const clear = () => {
+    board.classList.remove("has-trace");
+    board.querySelectorAll(".is-traced").forEach((el) => el.classList.remove("is-traced"));
+  };
+  const apply = (team) => {
+    if (!team) { clear(); return; }
+    const { matchKeys } = traceTeam(bracket, team);
+    board.classList.add("has-trace");
+    board.querySelectorAll("[data-mk]").forEach((card) => {
+      card.classList.toggle("is-traced", matchKeys.has(card.dataset.mk));
+    });
+  };
+  const teamOf = (e) => {
+    const el = e.target.closest && e.target.closest("[data-predict-team]");
+    return el ? el.dataset.predictTeam : null;
+  };
+  board.addEventListener("mouseover", (e) => apply(teamOf(e)));
+  board.addEventListener("mouseleave", clear);
+  board.addEventListener("focusin", (e) => apply(teamOf(e)));
+  board.addEventListener("focusout", clear);
+}
+
+/* ---------- PREDICT: FLIP reorder animation ---------- */
+export function captureRects(root) {
+  const rects = {};
+  if (!root) return rects;
+  root.querySelectorAll("[data-mk]").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    rects[el.dataset.mk] = { left: r.left, top: r.top };
+  });
+  return rects;
+}
+
+export function playFlip(root, oldRects) {
+  if (!root || REDUCE || !window.gsap || !oldRects) return;
+  const moves = computeFlipTransforms(oldRects, captureRects(root));
+  if (!moves.length) return;
+  const byKey = new Map();
+  root.querySelectorAll("[data-mk]").forEach((el) => byKey.set(el.dataset.mk, el));
+  for (const { key, dx, dy } of moves) {
+    const el = byKey.get(key);
+    if (el) window.gsap.fromTo(el, { x: dx, y: dy }, { x: 0, y: 0, duration: 0.42, ease: "power2.out" });
+  }
+}
+
+/* ---------- PREDICT: non-silent conflict toast ---------- */
+export function showConflictToast(dropped) {
+  if (!dropped || !dropped.length) return;
+  let toast = document.querySelector(".predict-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "predict-toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    document.body.appendChild(toast);
+  }
+  const labels = dropped.slice(0, 3).map((d) => d.label);
+  const more = dropped.length > 3 ? ` 等 ${dropped.length} 项` : "";
+  toast.textContent = `重排后这些预测已失效：${labels.join("、")}${more}`;
+  toast.classList.add("is-on");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove("is-on"), 2200);
 }
