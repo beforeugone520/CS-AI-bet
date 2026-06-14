@@ -8,26 +8,26 @@
   <img src="images/pipeline-overview.png" width="900" alt="CS2 Pick'em offline prediction pipeline visual" />
 </p>
 
-`cs2pickem` 是一套面向 CS2 Major Pick'em 的离线工具链：从原始比赛流水出发，完成数据清洗、无未来泄漏的滚动特征、在线赛前 Elo、按时间切分的训练/验证/测试、验证集概率校准、模型融合、市场赔率/民调信号审计、瑞士轮蒙特卡洛模拟，最终输出带风险控制的 `3-0 / 晋级 / 0-3` 选择清单。
+`cs2pickem` 是一套面向 CS2 Major Pick'em 的离线工具链：从原始比赛流水出发，完成数据清洗、无未来泄漏的滚动特征、赛前 Elo + Glicko-2 评级（生产默认 Glicko，Elo 并存）、按时间切分的训练/验证/测试、验证集概率校准、模型融合、市场赔率/民调信号 logit_pool 融合与审计、瑞士轮蒙特卡洛模拟，最终输出带风险控制的 `3-0 / 晋级 / 0-3` 选择清单。
 
 核心包不依赖第三方库，用系统 Python 即可端到端运行；安装可选依赖后会优先使用 scikit-learn / XGBoost / joblib 加速逻辑回归、随机森林与 XGBoost 分量。任一加速依赖缺失或导入失败时，会自动回退到纯 Python 实现。神经网络分量默认保留纯 Python 路径且默认权重为 0，只有显式设置 `CS2PICKEM_ACCELERATED_MLP=1` 才尝试 sklearn MLP。
 
 | 阶段 | 模块 | 说明 |
 | --- | --- | --- |
 | 1. 数据清洗 | `cleaning` | 过滤二队/Mix/弃赛/低级别赛事、剔除 3σ 异常值、填充 H2H 中性默认值 |
-| 2. 特征工程 | `features` `enrichment` `reliability` | 排名差、RMR 差、Major 历史差、近期胜率、地图胜率、选手状态、赛前 Elo、瑞士轮状态等 |
+| 2. 特征工程 | `features` `enrichment` `reliability` | 排名差、RMR 差、Major 历史差、近期胜率、地图胜率、选手状态、赛前 Elo + Glicko-2（生产默认，MOV 阻尼，Elo 并存）、瑞士轮状态等 |
 | 3. 时间切分 | `splitting` | 按时间顺序拆分 train/val/test，提供时间序列交叉验证折，带防泄漏日期边界 |
 | 4. 模型融合 | `models` `predictor` | Logistic / RandomForest / XGBoost 主栈，自动记录后端、权重、超参数与特征准备策略 |
-| 5. 校准调参 | `calibration` `tuning` | 验证集 Platt 校准、滚动 fold 评估、候选模型/Top-K/Elo/市场权重对比 |
+| 5. 校准调参 | `calibration` `tuning` | 验证集 Platt 校准（默认；beta/temperature 为 opt-in）、滚动 fold 评估、候选模型/Top-K/Elo·Glicko/市场权重对比；生产 odds 融合默认 `logit_pool`（model_weight 0.30），多方法校准与 power/shin de-vig 为 opt-in |
 | 6. 市场信号 | `odds` `forecast` `pickem` | 十进制赔率、5E 别名、美式赔率、显式市场概率、HLTV poll proxy 的统一解析与审计 |
 | 7. Pick'em 策略 | `swiss` `strategy` `selection` | 瑞士轮模拟并输出 `3-0/晋级/0-3` 候选，应用低置信规避和风险分层 |
 
 核心特性：
 
 - 零依赖即可运行：核心链路只用标准库，`ml` / `scrape` / `viz` 可选依赖按需增强。
-- 无未来数据泄漏：滚动特征、赛前 Elo、选手窗口、赔率/BP 合并全部按比赛日期截断，并默认剔除不稳定身份特征。
+- 无未来数据泄漏：滚动特征、赛前 Elo + Glicko-2、选手窗口、赔率/BP 合并全部按比赛日期截断，并默认剔除不稳定身份特征。Glicko-2 按赛前周期批量更新，与 Elo 同样无泄漏。
 - 三模型主栈 + 可审计融合：默认主栈为 LogisticRegression / RandomForest / XGBoost，原始权重 `0.20/0.30/0.35/0.00`，模型内部归一化；纯 Python NN 作为保底组件保留。
-- 概率校准与回归验证：训练报告与 `optimize-matches` 支持按时间切分、滚动验证、Brier/ECE/Log Loss、Platt 校准、with/without Elo 对比。
+- 概率校准与回归验证：训练报告与 `optimize-matches` 支持按时间切分、滚动验证、Brier/ECE/Log Loss、Platt 校准（默认；beta/temperature opt-in）、with/without Elo 与 Elo/Glicko 对比。
 - 市场信号有边界：真实赔率会参与轻量修正；HLTV fan poll 等民调只作为 proxy 报告，不直接当赔率使用。
 - 瑞士轮蒙特卡洛：蛇形种子配对、同战绩优先、避免复赛，BO3 晋级/淘汰自动处理。
 - 风险感知策略：赔率修正、低置信规避、弱队爆冷降权、挑战者/传奇组分层加权。
@@ -416,8 +416,8 @@ CS-AI-bet/
 │   ├── pipeline.py / workflow.py   # 一键离线工作流编排
 │   ├── cleaning.py           # 数据清洗
 │   ├── enrichment.py         # 无泄漏滚动特征 + 队伍地图画像
-│   ├── reliability.py        # 在线赛前 Elo + 不稳定身份特征屏蔽
-│   ├── calibration.py        # Platt 概率校准
+│   ├── reliability.py        # 赛前 Elo + Glicko-2（默认）+ BT 注入（opt-in）+ 不稳定身份特征屏蔽
+│   ├── calibration.py        # Platt（默认）/ beta / temperature 概率校准
 │   ├── tuning.py             # optimize-matches 回归验证与候选调参
 │   ├── features.py / selection.py / imbalance.py
 │   ├── models.py / predictor.py / evaluation.py / splitting.py
@@ -443,8 +443,8 @@ CS-AI-bet/
 | `daily-update` | 配置驱动的多源每日增量更新，去重追加长期训练 CSV |
 | `dataset_store` | 长期训练 CSV 增量追加、去重、覆盖范围 manifest |
 | `enrichment` | 从原始流水生成无未来泄漏的滚动状态特征与队伍地图画像 |
-| `reliability` | 按赛前时间线注入 Elo，过滤高泄漏/高漂移身份特征 |
-| `calibration` / `tuning` | Platt 校准、滚动验证、候选模型/Top-K/Elo/市场权重对比 |
+| `reliability` | 按赛前时间线注入 Elo + Glicko-2（生产默认，`inject_glicko` 或 `rating_mode='glicko'`），可选注入 BT（`inject_bt`）；过滤高泄漏/高漂移身份特征。train/serve 配对：拟合期 `prepare_reliability_features(inject_glicko=True)` 注入 Glicko 列并快照 `team_glicko_state`，serve 端 `apply_final_glicko_to_match` 随该状态自动给上场 fixture 注入同口径列，二者必须同时生效 |
+| `calibration` / `tuning` | Platt 校准（默认；beta/temperature opt-in）、滚动验证、候选模型/Top-K/Elo·Glicko/市场权重对比 |
 | `forecast` | 赛前 fixtures 单场胜率、真实赔率修正、选手状态摘要、低置信规避、未知地图 Top3 均值预测；`apply-forecast-policy` 可在不重训时重打标策略 |
 | `bp` | 合并赛前地图 BP 情报，确认地图后改用确认地图特征 |
 | `odds` | 多平台赔率归一化、source URL 优先匹配、市场概率与 proxy 信号审计 |
@@ -457,6 +457,22 @@ CS-AI-bet/
 | `export` | 从 Pick'em/readiness 报告生成最终答案单、选择边际与警告摘要 |
 | `swiss` / `pickem` / `strategy` | 瑞士轮模拟、Pick'em 清单生成与风险感知选择策略 |
 | `workflow` / `pipeline` | 一键离线编排训练、预测、模拟、审计与答案单输出 |
+
+## WF-2 裁决矩阵
+
+WF-2（提交链 WF-2A~2F）补齐评级 / 概率质量 / 赛制 / 下注若干 SOTA 能力，WF-2F 用同口径 A/B + 显著性检验（paired bootstrap + Diebold-Mariano）逐项裁决。`mean Δlogloss = baseline_loss − config_loss`，正值表示候选更好。完整动机与阶段叙事见 [WF-2 升级报告](modeling-upgrade-2026-06.md)。
+
+| 轴 | 默认 | 点估计 Δlogloss | 显著性 | 结论 |
+| --- | --- | --- | --- | --- |
+| Glicko-2 赛前评级 | **采纳为默认** `rating_mode='glicko'` | +0.0106（0.6806→0.6700，n=1301） | DM p≈0.0007，显著 | 生产默认（Elo 并存注入） |
+| logit_pool 融合（model_weight≈0.30） | **采纳为默认**（forecast/pickem） | +0.0496（vs legacy_clip@0.30，n=515）；+0.267（vs 纯市场 mw=0） | DM p=0，显著 | 生产融合默认 |
+| Bradley-Terry `inject_bt` | 关闭（opt-in） | −0.0008 | p≈0.24，no_significant_diff | 实现保留，默认关闭 |
+| 多方法校准 beta / temperature | 仍 `platt` | beta −0.0005 / temp −0.0006 | p 均 >0.2，no_significant_diff | 默认仍 platt |
+| `include_unverified` 特征 | 关闭 | −0.0010 | p≈0.10，no_significant_diff | 默认关闭 |
+| de-vig power / shin | 仍 `multiplicative` | power −0.0083 / shin −0.0047 | p≈0.001 / 0.0003，**显著回归** | 默认仍 multiplicative |
+| Glicko-MOV | MOV 阻尼随 glicko 启用 | 不可证伪 | 缺回合分语料覆盖 | 实现保留，记为待验证 |
+
+> 回归说明：本次默认翻转**无数值基线测试需更新**——`strategy.DEFAULT_FUSION_METHOD='legacy_clip'` / `DEFAULT_MODEL_WEIGHT=0.35` 与 `tuning._DEFAULT_RATING_MODE='elo'` 是被行为契约测试锁定的库/诊断默认，刻意保持字节一致；生产翻转通过 `forecast`/`pickem` 调用点显式传 `PRODUCTION_FUSION_METHOD` / `PRODUCTION_MODEL_WEIGHT` 与 `MatchPredictor.train(rating_mode='glicko')` 默认实现。`tuning` 仍保留 `elo` + `legacy` 作为同口径 A/B 基线，是为了让 Elo↔Glicko、legacy_clip↔logit_pool 在 `optimize-matches` 里可对照评估，而非生产路径口径。全量 512 项测试在翻转后保持全绿，并新增了 serve 端一致性守护（`glicko_diff` 非零）。
 
 ## 设计原则
 

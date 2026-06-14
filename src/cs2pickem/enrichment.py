@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections import Counter, defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -9,6 +10,11 @@ from .cleaning import parse_date
 from .ratings import compute_elo_ratings
 
 ELO_TIER_K = {"S": 32.0, "A": 20.0, "B": 14.0, "C": 10.0}
+ELO_BASE = 1500.0
+
+# Approximate length of a 6-month window in days; used to bound the "_6m" winrate
+# features so their name matches the window they actually summarise.
+SIX_MONTH_DAYS = 182
 
 
 PLAYER_FIELDS = (
@@ -20,37 +26,102 @@ PLAYER_FIELDS = (
 )
 
 
+@dataclass(frozen=True)
+class WinrateConfig:
+    """Three independent, separately-switchable winrate refinements.
+
+    Every knob is OFF / neutral by default so untouched call sites reproduce the
+    legacy unweighted win-fraction exactly. Each is a pre-match transform of the
+    same leakage-free rolling history (no future rows, no current result).
+
+    - ``time_decay``: weight each prior result by ``0.5 ** (age_days / half_life)``.
+      ``half_life_days=None`` disables it.
+    - ``strength_of_schedule``: weight each prior result by opponent quality, using the
+      opponent's pre-match Elo snapshot stored at record time (leakage-free). A logistic
+      of ``(opp_elo - ELO_BASE) / sos_elo_scale`` makes beating strong teams count more.
+      ``enable_sos=False`` disables it.
+    - ``bayesian_shrinkage``: pull a small-sample winrate toward the 0.5 prior with a
+      symmetric Beta pseudocount. ``shrinkage_pseudocount=0.0`` disables it.
+
+    The three combine multiplicatively on the weights (decay * sos) and the shrinkage is
+    applied to the resulting weighted statistic, but each is gated by its own flag so they
+    are genuinely independent.
+    """
+
+    half_life_days: Optional[float] = None
+    enable_sos: bool = False
+    sos_elo_scale: float = 400.0
+    shrinkage_pseudocount: float = 0.0
+
+    @property
+    def time_decay_on(self) -> bool:
+        return self.half_life_days is not None and self.half_life_days > 0
+
+    @property
+    def shrinkage_on(self) -> bool:
+        return self.shrinkage_pseudocount > 0
+
+    @property
+    def any_weighting(self) -> bool:
+        return self.time_decay_on or self.enable_sos
+
+
 @dataclass
 class TeamHistory:
-    results: Deque[tuple[str, bool, int, str]] = field(default_factory=deque)
+    # (date, won, best_of, map, opp_elo). opp_elo is the opponent's pre-match Elo
+    # snapshot at record time, kept so strength-of-schedule weighting is leakage-free.
+    results: Deque[tuple[str, bool, int, str, float]] = field(default_factory=deque)
     player_values: Dict[str, Deque[float]] = field(default_factory=lambda: defaultdict(deque))
     current_streak: int = 0
 
 
-def enrich_match_history(rows: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+def enrich_match_history(
+    rows: Iterable[Mapping[str, Any]],
+    *,
+    winrate_half_life_days: Optional[float] = None,
+    enable_sos: bool = False,
+    sos_elo_scale: float = 400.0,
+    winrate_shrinkage_pseudocount: float = 0.0,
+) -> List[Dict[str, Any]]:
+    """Enrich rows with leakage-free pre-match rolling features.
+
+    The optional, default-off keyword knobs refine the recent/mode/map winrate features
+    independently (see :class:`WinrateConfig`). With all defaults this reproduces the
+    legacy behaviour exactly.
+    """
+    config = WinrateConfig(
+        half_life_days=winrate_half_life_days,
+        enable_sos=enable_sos,
+        sos_elo_scale=sos_elo_scale,
+        shrinkage_pseudocount=winrate_shrinkage_pseudocount,
+    )
     histories: Dict[str, TeamHistory] = defaultdict(TeamHistory)
     h2h: Dict[frozenset[str], List[str]] = defaultdict(list)
     enriched_rows: List[Dict[str, Any]] = []
 
     ordered = sorted((dict(row) for row in rows), key=lambda item: item["date"])
-    elo_per_match, _ = compute_elo_ratings(ordered, base=1500.0, k=24.0, tier_k=ELO_TIER_K)
+    elo_per_match, _ = compute_elo_ratings(ordered, base=ELO_BASE, k=24.0, tier_k=ELO_TIER_K)
     for row, elo in zip(ordered, elo_per_match):
         team1 = str(row["team1"])
         team2 = str(row["team2"])
         map_name = _map_name(row.get("map"))
         played_at = parse_date(row["date"])
         enriched = dict(row)
-        enriched["team1_elo"] = elo["team1_elo_pre"]
-        enriched["team2_elo"] = elo["team2_elo_pre"]
+        team1_elo_pre = elo["team1_elo_pre"]
+        team2_elo_pre = elo["team2_elo_pre"]
+        enriched["team1_elo"] = team1_elo_pre
+        enriched["team2_elo"] = team2_elo_pre
 
-        _apply_team_features(enriched, "team1", team1, team2, map_name, played_at, histories, h2h)
-        _apply_team_features(enriched, "team2", team2, team1, map_name, played_at, histories, h2h)
+        _apply_team_features(enriched, "team1", team1, team2, map_name, played_at, histories, h2h, config)
+        _apply_team_features(enriched, "team2", team2, team1, map_name, played_at, histories, h2h, config)
         enriched["h2h_team1_winrate"] = _h2h_winrate(h2h[frozenset({team1, team2})], team1)
         enriched_rows.append(enriched)
 
         winner = str(row.get("winner", ""))
-        _record_result(histories[team1], row, team1, winner == team1)
-        _record_result(histories[team2], row, team2, winner == team2)
+        # Each team's opponent pre-match Elo is the SAME snapshot used to score this match,
+        # so storing it for later SoS weighting never reads a future / current result.
+        _record_result(histories[team1], row, team1, winner == team1, opp_elo=team2_elo_pre)
+        _record_result(histories[team2], row, team2, winner == team2, opp_elo=team1_elo_pre)
         h2h[frozenset({team1, team2})].append(winner)
 
     return enriched_rows
@@ -98,14 +169,15 @@ def _apply_team_features(
     played_at,
     histories: Dict[str, TeamHistory],
     h2h: Dict[frozenset[str], List[str]],
+    config: WinrateConfig = WinrateConfig(),
 ) -> None:
     history = histories[team]
     row[f"{prefix}_matches_30d"] = _matches_since(history.results, played_at, days=30)
-    row[f"{prefix}_recent_winrate_5"] = _recent_winrate(history.results, limit=5)
-    row[f"{prefix}_recent_winrate_10"] = _recent_winrate(history.results, limit=10)
-    row[f"{prefix}_bo1_winrate_6m"] = _mode_winrate(history.results, best_of=1)
-    row[f"{prefix}_bo3_winrate_6m"] = _mode_winrate(history.results, best_of=3)
-    row[f"{prefix}_map_winrate"] = _map_winrate(history.results, map_name)
+    row[f"{prefix}_recent_winrate_5"] = _recent_winrate(history.results, limit=5, config=config, played_at=played_at)
+    row[f"{prefix}_recent_winrate_10"] = _recent_winrate(history.results, limit=10, config=config, played_at=played_at)
+    row[f"{prefix}_bo1_winrate_6m"] = _mode_winrate(history.results, best_of=1, played_at=played_at, window_days=SIX_MONTH_DAYS, config=config)
+    row[f"{prefix}_bo3_winrate_6m"] = _mode_winrate(history.results, best_of=3, played_at=played_at, window_days=SIX_MONTH_DAYS, config=config)
+    row[f"{prefix}_map_winrate"] = _map_winrate(history.results, map_name, config=config, played_at=played_at)
     row[f"{prefix}_current_streak"] = history.current_streak
     row[f"{prefix}_h2h_winrate_vs_opponent"] = _h2h_winrate(h2h[frozenset({team, opponent})], team)
 
@@ -115,11 +187,11 @@ def _apply_team_features(
             row[key] = _recent_mean(history.player_values[field_name], default=_default_player_value(field_name))
 
 
-def _record_result(history: TeamHistory, row: Mapping[str, Any], team: str, won: bool) -> None:
+def _record_result(history: TeamHistory, row: Mapping[str, Any], team: str, won: bool, opp_elo: float = ELO_BASE) -> None:
     best_of = int(_num(row.get("best_of"), 1))
     map_name = _map_name(row.get("map"))
     played_at = str(row["date"])
-    history.results.append((played_at, won, best_of, map_name))
+    history.results.append((played_at, won, best_of, map_name, float(opp_elo)))
     history.current_streak = history.current_streak + 1 if won and history.current_streak >= 0 else 1 if won else history.current_streak - 1 if history.current_streak <= 0 else -1
 
     prefix = "team1" if row.get("team1") == team else "team2"
@@ -129,30 +201,106 @@ def _record_result(history: TeamHistory, row: Mapping[str, Any], team: str, won:
             history.player_values[field_name].append(value)
 
 
-def _matches_since(results: Iterable[tuple[str, bool, int, str]], played_at, days: int) -> int:
+def _matches_since(results: Iterable[tuple], played_at, days: int) -> int:
     cutoff = played_at - timedelta(days=days)
-    return sum(1 for raw_date, _, _, _ in results if parse_date(raw_date) >= cutoff)
+    return sum(1 for record in results if parse_date(record[0]) >= cutoff)
 
 
-def _recent_winrate(results: Deque[tuple[str, bool, int, str]], limit: int) -> float:
+def _decay_weight(raw_date: str, played_at, config: WinrateConfig) -> float:
+    """Exponential recency weight; 1.0 when decay is off or the reference date is unknown."""
+    if not config.time_decay_on or played_at is None:
+        return 1.0
+    age_days = max(0.0, (played_at - parse_date(raw_date)).days)
+    return 0.5 ** (age_days / config.half_life_days)
+
+
+def _sos_weight(opp_elo: float, config: WinrateConfig) -> float:
+    """Opponent-quality weight via a logistic of the opponent's pre-match Elo.
+
+    Normalised so an *average* opponent (Elo == ELO_BASE) has weight 1.0, a very
+    strong opponent approaches 2.0 and a very weak one approaches 0.0. This mean-1
+    scaling keeps strength-of-schedule orthogonal to bayesian shrinkage: with SoS on
+    but shrinkage off the effective sample size (``total_weight``) stays ~N instead
+    of ~N/2, so the two knobs no longer cross-talk through the shrinkage denominator
+    (review red-line a: the three winrate refinements must be genuinely independent).
+    Returns 1.0 (neutral) when SoS is off.
+    """
+    if not config.enable_sos:
+        return 1.0
+    scale = config.sos_elo_scale if config.sos_elo_scale else 400.0
+    return 2.0 / (1.0 + math.exp(-(opp_elo - ELO_BASE) / scale))
+
+
+def _weighted_winrate(
+    selected: List[tuple],
+    config: WinrateConfig,
+    played_at,
+) -> float:
+    """Weighted win fraction over ``selected`` records with optional shrinkage.
+
+    Each record is ``(date, won, best_of, map, opp_elo)``. Weight = decay * sos (each
+    gated by its own flag). With both off every weight is 1.0 and this reduces to the
+    legacy unweighted fraction. Shrinkage then pulls the (effective-sample) statistic
+    toward 0.5 via a symmetric Beta pseudocount.
+    """
+    if not selected:
+        return 0.5
+    total_weight = 0.0
+    win_weight = 0.0
+    for record in selected:
+        raw_date, won = record[0], record[1]
+        opp_elo = record[4] if len(record) > 4 else ELO_BASE
+        weight = _decay_weight(raw_date, played_at, config) * _sos_weight(opp_elo, config)
+        total_weight += weight
+        if won:
+            win_weight += weight
+    if total_weight <= 0.0:
+        return 0.5
+    if not config.shrinkage_on:
+        return win_weight / total_weight
+    # Symmetric Beta pseudocount: split the pseudocount evenly across win/loss so the
+    # prior mean is exactly 0.5. Larger effective samples are shrunk proportionally less.
+    half = config.shrinkage_pseudocount / 2.0
+    return (win_weight + half) / (total_weight + 2.0 * half)
+
+
+def _recent_winrate(
+    results: Deque[tuple],
+    limit: int,
+    config: WinrateConfig = WinrateConfig(),
+    played_at=None,
+) -> float:
     selected = list(results)[-limit:]
-    if not selected:
-        return 0.5
-    return sum(1 for _, won, _, _ in selected if won) / len(selected)
+    return _weighted_winrate(selected, config, played_at)
 
 
-def _mode_winrate(results: Deque[tuple[str, bool, int, str]], best_of: int) -> float:
-    selected = [won for _, won, mode, _ in results if mode == best_of]
-    if not selected:
-        return 0.5
-    return sum(1 for won in selected if won) / len(selected)
+def _mode_winrate(
+    results: Deque[tuple],
+    best_of: int,
+    played_at=None,
+    window_days: Optional[int] = None,
+    config: WinrateConfig = WinrateConfig(),
+) -> float:
+    if played_at is not None and window_days is not None:
+        cutoff = played_at - timedelta(days=window_days)
+        selected = [
+            record
+            for record in results
+            if record[2] == best_of and parse_date(record[0]) >= cutoff
+        ]
+    else:
+        selected = [record for record in results if record[2] == best_of]
+    return _weighted_winrate(selected, config, played_at)
 
 
-def _map_winrate(results: Deque[tuple[str, bool, int, str]], map_name: str) -> float:
-    selected = [won for _, won, _, played_map in results if played_map == map_name]
-    if not selected:
-        return 0.5
-    return sum(1 for won in selected if won) / len(selected)
+def _map_winrate(
+    results: Deque[tuple],
+    map_name: str,
+    config: WinrateConfig = WinrateConfig(),
+    played_at=None,
+) -> float:
+    selected = [record for record in results if record[3] == map_name]
+    return _weighted_winrate(selected, config, played_at)
 
 
 def _h2h_winrate(winners: List[str], team: str, limit: int = 3) -> float:

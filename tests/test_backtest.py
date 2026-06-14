@@ -1818,6 +1818,132 @@ class PickemBacktestTests(unittest.TestCase):
         self.assertEqual(report["cases"], 1)
         self.assertEqual(report["case_reports"][0]["history_path"], history_path)
 
+    def _replay_case(self, **overrides):
+        case = {
+            "name": "replay-knobs",
+            "history": history_rows(),
+            "teams": team_rows(),
+            "profiles": profiles(),
+            "results": [
+                {"team": "Alpha", "wins": 3, "losses": 0},
+                {"team": "Bravo", "wins": 0, "losses": 3},
+                {"team": "Charlie", "wins": 1, "losses": 3},
+                {"team": "Delta", "wins": 3, "losses": 1},
+            ],
+            "reference_date": "2026-05-31",
+            "simulations": 20,
+            "seed": 5,
+            "top_k": 6,
+            "epochs": 3,
+            "slots": {"3-0": 1, "advance": 2, "0-3": 1},
+        }
+        case.update(overrides)
+        return case
+
+    def test_replay_suite_defaults_keep_legacy_series_off_expected_hits(self):
+        from cs2pickem.backtest import replay_pickem_backtest_suite
+
+        report = replay_pickem_backtest_suite([self._replay_case()], pass_threshold=0, pass_rate_target=1.0)
+        config = report["case_reports"][0]["generated_summary"]["pickem_config"]
+        self.assertEqual(config["pickem_objective"], "expected_hits")
+        self.assertEqual(config["pickem_pairing"], "legacy")
+        self.assertFalse(config["series_uplift"])
+        self.assertIsNone(config["pickem_threshold"])
+        self.assertEqual(config["leverage_strength"], 1.0)
+
+    def test_replay_suite_level_knobs_flow_into_generated_config(self):
+        from cs2pickem.backtest import replay_pickem_backtest_suite
+
+        report = replay_pickem_backtest_suite(
+            [self._replay_case()],
+            pass_threshold=0,
+            pass_rate_target=1.0,
+            pickem_objective="threshold_prob",
+            pickem_threshold=3,
+            pickem_pairing="buchholz",
+            series_uplift=True,
+            leverage_strength=2.0,
+        )
+        config = report["case_reports"][0]["generated_summary"]["pickem_config"]
+        self.assertEqual(config["pickem_objective"], "threshold_prob")
+        self.assertEqual(config["pickem_threshold"], 3)
+        self.assertEqual(config["pickem_pairing"], "buchholz")
+        self.assertTrue(config["series_uplift"])
+        self.assertEqual(config["leverage_strength"], 2.0)
+
+    def test_replay_case_level_knobs_override_suite_defaults(self):
+        from cs2pickem.backtest import replay_pickem_backtest_suite
+
+        case = self._replay_case(
+            pickem_objective="leveraged",
+            pickem_pairing="buchholz",
+            series_uplift=True,
+            leverage_strength=1.5,
+        )
+        # Suite defaults are the production baseline; the case must win.
+        report = replay_pickem_backtest_suite([case], pass_threshold=0, pass_rate_target=1.0)
+        config = report["case_reports"][0]["generated_summary"]["pickem_config"]
+        self.assertEqual(config["pickem_objective"], "leveraged")
+        self.assertEqual(config["pickem_pairing"], "buchholz")
+        self.assertTrue(config["series_uplift"])
+        self.assertEqual(config["leverage_strength"], 1.5)
+
+    def test_replay_suite_file_passes_knobs_through(self):
+        from cs2pickem.backtest import replay_pickem_backtest_suite_file
+        from cs2pickem.data import write_matches_csv
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            suite_path = os.path.join(tmpdir, "suite.json")
+            history_path = os.path.join(tmpdir, "history.csv")
+            teams_path = os.path.join(tmpdir, "teams.csv")
+            results_path = os.path.join(tmpdir, "results.csv")
+            profiles_path = os.path.join(tmpdir, "profiles.json")
+            write_matches_csv(history_path, history_rows())
+            write_matches_csv(teams_path, team_rows())
+            write_matches_csv(
+                results_path,
+                [
+                    {"team": "Alpha", "wins": 3, "losses": 0},
+                    {"team": "Bravo", "wins": 0, "losses": 3},
+                    {"team": "Charlie", "wins": 1, "losses": 3},
+                    {"team": "Delta", "wins": 3, "losses": 1},
+                ],
+            )
+            with open(profiles_path, "w", encoding="utf-8") as handle:
+                json.dump(profiles(), handle)
+            with open(suite_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "cases": [
+                            {
+                                "name": "file-knobs",
+                                "history_path": history_path,
+                                "teams_path": teams_path,
+                                "profiles_path": profiles_path,
+                                "results_path": results_path,
+                                "reference_date": "2026-05-31",
+                                "simulations": 20,
+                                "seed": 5,
+                                "top_k": 6,
+                                "epochs": 3,
+                                "slots": {"3-0": 1, "advance": 2, "0-3": 1},
+                                "pickem_pairing": "buchholz",
+                            }
+                        ]
+                    },
+                    handle,
+                )
+            report = replay_pickem_backtest_suite_file(
+                suite_path,
+                pass_threshold=0,
+                pass_rate_target=1.0,
+                series_uplift=True,
+            )
+        config = report["case_reports"][0]["generated_summary"]["pickem_config"]
+        # case-level pairing override + suite-level series_uplift both honoured
+        self.assertEqual(config["pickem_pairing"], "buchholz")
+        self.assertTrue(config["series_uplift"])
+
 
 if __name__ == "__main__":
     unittest.main()

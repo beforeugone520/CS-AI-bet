@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from .data import read_matches_csv, read_teams_csv, write_json, write_matches_csv
 from .pickem import model_driven_pickems
+from .strategy import DEFAULT_PICKEM_OBJECTIVE
 
 
 PICKEM_CATEGORIES = ("3-0", "advance", "0-3")
@@ -424,6 +425,11 @@ def replay_pickem_backtest_suite_file(
     top_k: int = 25,
     epochs: int = 50,
     max_age_days: int = 90,
+    pickem_objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    pickem_threshold: int | None = None,
+    pickem_pairing: str = "legacy",
+    series_uplift: bool = False,
+    leverage_strength: float = 1.0,
 ) -> Dict[str, object]:
     with open(suite_path, encoding="utf-8") as handle:
         payload = json.load(handle)
@@ -440,6 +446,11 @@ def replay_pickem_backtest_suite_file(
         top_k=top_k,
         epochs=epochs,
         max_age_days=max_age_days,
+        pickem_objective=pickem_objective,
+        pickem_threshold=pickem_threshold,
+        pickem_pairing=pickem_pairing,
+        series_uplift=series_uplift,
+        leverage_strength=leverage_strength,
     )
     report["suite_path"] = suite_path
     if output_path:
@@ -486,10 +497,23 @@ def replay_pickem_backtest_suite(
     top_k: int = 25,
     epochs: int = 50,
     max_age_days: int = 90,
+    pickem_objective: str = DEFAULT_PICKEM_OBJECTIVE,
+    pickem_threshold: int | None = None,
+    pickem_pairing: str = "legacy",
+    series_uplift: bool = False,
+    leverage_strength: float = 1.0,
 ) -> Dict[str, object]:
+    # Suite-level defaults for the format/pickem knobs (Swiss pairing, BO3 series
+    # uplift, and the pick'em objective) wired through to ``model_driven_pickems``
+    # so a backtest/adjudication can compare configurations on the same cases.
+    # Defaults stay legacy / series-off / expected_hits so the historic behaviour
+    # is byte-for-byte unchanged; each case may override any knob individually.
     case_reports = []
     for index, case in enumerate(cases, start=1):
         name = str(case.get("name") or f"case-{index}")
+        resolved_objective = str(case.get("pickem_objective", pickem_objective))
+        case_threshold = case.get("pickem_threshold", pickem_threshold)
+        resolved_threshold = int(case_threshold) if case_threshold is not None else None
         pickem_report = model_driven_pickems(
             history_rows=case.get("history", []),
             team_rows=case.get("teams", []),
@@ -504,6 +528,11 @@ def replay_pickem_backtest_suite(
             max_age_days=int(case.get("max_age_days", max_age_days)),
             ensemble_weights=case.get("ensemble_weights"),
             fixture_rows=case.get("fixtures"),
+            pickem_objective=resolved_objective,
+            pickem_threshold=resolved_threshold,
+            pickem_pairing=str(case.get("pickem_pairing", pickem_pairing)),
+            series_uplift=bool(case.get("series_uplift", series_uplift)),
+            leverage_strength=float(case.get("leverage_strength", leverage_strength)),
         )
         score_report = evaluate_pickem_result(
             pickem_report.get("pickems", {}),
@@ -523,6 +552,13 @@ def replay_pickem_backtest_suite(
                 "ensemble_weights": pickem_report.get("ensemble_weights", {}),
                 "probability_calibration": pickem_report.get("probability_calibration", {}),
                 "market_adjustment_summary": pickem_report.get("market_adjustment_summary", {}),
+                "pickem_config": {
+                    "pickem_objective": pickem_report.get("pickem_objective", resolved_objective),
+                    "pickem_threshold": resolved_threshold,
+                    "pickem_pairing": str(case.get("pickem_pairing", pickem_pairing)),
+                    "series_uplift": bool(case.get("series_uplift", series_uplift)),
+                    "leverage_strength": float(case.get("leverage_strength", leverage_strength)),
+                },
             },
             "score_report": score_report,
         }
@@ -612,6 +648,11 @@ def _copy_optional_replay_settings(case: Mapping[str, Any], output: Dict[str, ob
         "stage",
         "max_age_days",
         "ensemble_weights",
+        "pickem_objective",
+        "pickem_threshold",
+        "pickem_pairing",
+        "series_uplift",
+        "leverage_strength",
     ):
         if key in case:
             output[key] = case[key]

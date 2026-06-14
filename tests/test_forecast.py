@@ -629,6 +629,72 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(details["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
         self.assertGreater(details["team1_elo"], details["team2_elo"])
 
+    def test_default_rating_mode_glicko_pairs_train_and_serve_injection(self):
+        # WF-2F flip: rating_mode defaults to 'glicko'. This locks the train/serve PAIR so a
+        # future regression that flips only the train side or only the serve side is caught:
+        #   - train side: feature_preparation['glicko'] must be populated (rolling pre-match
+        #     snapshots with teams>0), and Elo must STILL be injected alongside it.
+        #   - serve side: apply_final_glicko_to_match must run on the upcoming fixture (the
+        #     prepared row carries a non-zero glicko_diff of the correct sign). If train injected
+        #     glicko but serve did not (team_glicko_state empty), glicko_diff would be absent ->
+        #     this asserts the anti-skew invariant holds on the default path.
+        from cs2pickem.predictor import MatchPredictor
+        from cs2pickem.reliability import apply_final_glicko_to_match
+
+        predictor = MatchPredictor.train(history_rows(), reference_date="2026-05-31", top_k=10, epochs=3)
+
+        glicko_report = predictor.feature_preparation["glicko"]
+        self.assertEqual(glicko_report["basis"], "chronological_pre_match_rolling")
+        self.assertGreater(glicko_report["teams"], 0)
+        # Elo coexists with Glicko (it is not replaced); both feed FeatureSelector.
+        self.assertEqual(
+            predictor.feature_preparation["elo"]["basis"], "chronological_pre_match_online"
+        )
+        self.assertTrue(predictor.team_glicko_state)
+
+        fixture = {
+            "date": "2026-06-01",
+            "event": "IEM Cologne Major",
+            "event_tier": "S",
+            "team1": "Alpha",
+            "team2": "Bravo",
+            "best_of": 1,
+            "map": "mirage",
+        }
+        # Serve-side injection runs inside predict_probability_details; re-deriving here proves
+        # the populated state is what scores upcoming fixtures.
+        prepared = apply_final_glicko_to_match(fixture, predictor.team_glicko_state)
+        self.assertNotEqual(prepared["glicko_diff"], 0.0)
+        # Alpha won 7 of 8 in history_rows() -> higher Glicko -> positive Alpha-minus-Bravo diff.
+        self.assertGreater(prepared["glicko_diff"], 0.0)
+        self.assertGreater(prepared["glicko_rd_sum"], 0.0)
+
+    def test_rating_mode_elo_opt_in_leaves_glicko_unapplied(self):
+        # The Elo-only baseline is retained as an explicit opt-in. With rating_mode='elo' there
+        # is no Glicko injection on either side: train leaves the glicko report not_applied and
+        # team_glicko_state empty, so the serve-side apply_final_glicko_to_match is a no-op (no
+        # glicko_diff column). This is the negative control for the default-path pairing above.
+        from cs2pickem.predictor import MatchPredictor
+
+        predictor = MatchPredictor.train(
+            history_rows(), reference_date="2026-05-31", top_k=10, epochs=3, rating_mode="elo"
+        )
+        self.assertEqual(predictor.feature_preparation["glicko"]["basis"], "not_applied")
+        self.assertFalse(predictor.team_glicko_state)
+        details = predictor.predict_probability_details(
+            {
+                "date": "2026-06-01",
+                "event": "IEM Cologne Major",
+                "event_tier": "S",
+                "team1": "Alpha",
+                "team2": "Bravo",
+                "best_of": 1,
+                "map": "mirage",
+            }
+        )
+        # Elo still applied; no glicko leaks onto the served row.
+        self.assertEqual(details["feature_preparation"]["elo"]["basis"], "chronological_pre_match_online")
+
     def test_forecast_file_workflow_reads_csv_and_profiles_json(self):
         from cs2pickem.data import write_matches_csv
         from cs2pickem.forecast import forecast_fixtures_file

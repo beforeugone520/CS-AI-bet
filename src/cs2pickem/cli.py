@@ -68,6 +68,12 @@ def main() -> int:
     tune_parser.add_argument("--market-weight", type=float, default=0.30, help="market probability weight for historical model+market fusion diagnostics")
     tune_parser.add_argument("--probability-objective", default="log_loss", choices=["accuracy", "log_loss", "brier_score", "ece"], help="objective used to choose raw vs calibrated test probabilities")
     tune_parser.add_argument("--elo-modes", default="with", help="comma-separated Elo feature modes to compare: with,without")
+    tune_parser.add_argument("--rating-modes", default="elo", help="comma-separated rating sources to compare: elo,glicko (WF-2F verdict: glicko significant and now the production train/serve default; this axis runs same-口径 optimize-matches A/B)")
+    tune_parser.add_argument("--inject-bt-modes", default="off", help="comma-separated Bradley-Terry strength-prior modes to compare: off,on (default off keeps the byte-identical Elo-only grid)")
+    tune_parser.add_argument("--calibration-method-modes", default="platt", help="comma-separated calibration methods to A/B same-口径: platt,beta,temperature (default platt keeps legacy behaviour)")
+    tune_parser.add_argument("--fusion-method-modes", default="legacy_clip", help="comma-separated market-fusion methods to compare: legacy_clip,logit_pool (default legacy_clip keeps the convex linear blend)")
+    tune_parser.add_argument("--model-weight-values", default="0.35", help="comma-separated logit-pool model-weight priors to sweep (only affects the logit_pool fusion method)")
+    tune_parser.add_argument("--include-unverified-modes", default="off", help="comma-separated gated/unverified-feature modes to compare: off,on (default off keeps the strong-signal-only candidate pool)")
     tune_parser.add_argument("--output", help="optional JSON output path")
     simulate_parser = subparsers.add_parser("simulate", help="simulate Swiss from a team CSV")
     simulate_parser.add_argument("--teams", required=True, help="CSV with team,seed,strength columns")
@@ -86,6 +92,35 @@ def main() -> int:
     pickem_parser.add_argument("--epochs", type=int, default=50)
     pickem_parser.add_argument("--stage", default="default", choices=["default", "challengers", "legends"], help="stage-specific Pick'em risk profile")
     pickem_parser.add_argument("--max-age-days", type=int, default=90, help="freshness window for training rows")
+    pickem_parser.add_argument(
+        "--objective",
+        default="expected_hits",
+        choices=["expected_hits", "threshold_prob", "leveraged"],
+        help="Pick'em selection objective: expected_hits (default, greedy EV), threshold_prob (maximise P(hits>=K) over joint samples), or leveraged (contrarian pool-share tilt)",
+    )
+    pickem_parser.add_argument(
+        "--threshold",
+        type=int,
+        default=None,
+        help="K for the threshold_prob objective (default = total slot count, i.e. all picks correct)",
+    )
+    pickem_parser.add_argument(
+        "--pairing",
+        default="legacy",
+        choices=["legacy", "buchholz"],
+        help="Swiss pairing engine: legacy (default) or buchholz (Valve Major 1v9/Buchholz rules)",
+    )
+    pickem_parser.add_argument(
+        "--series-uplift",
+        action="store_true",
+        help="elevate single-map probabilities to BO3 series win rates via series.series_win_prob (map-independence approximation)",
+    )
+    pickem_parser.add_argument(
+        "--leverage-strength",
+        type=float,
+        default=1.0,
+        help="contrarian exponent for the leveraged objective (0 collapses to expected hits)",
+    )
     pickem_parser.add_argument("--output", help="optional JSON output path")
     answer_sheet_parser = subparsers.add_parser("answer-sheet", help="export a compact final Pick'em answer sheet from pickem/readiness reports")
     answer_sheet_parser.add_argument("--pickem-report", required=True, help="JSON output from pickem or pipeline command")
@@ -131,6 +166,35 @@ def main() -> int:
     replay_suite_parser.add_argument("--top-k", type=int, default=25, help="default selected feature count per replay case")
     replay_suite_parser.add_argument("--epochs", type=int, default=50, help="default training epochs per replay case")
     replay_suite_parser.add_argument("--max-age-days", type=int, default=90, help="default freshness window per replay case")
+    replay_suite_parser.add_argument(
+        "--objective",
+        default="expected_hits",
+        choices=["expected_hits", "threshold_prob", "leveraged"],
+        help="default Pick'em selection objective per replay case (case-level pickem_objective overrides)",
+    )
+    replay_suite_parser.add_argument(
+        "--threshold",
+        type=int,
+        default=None,
+        help="default K for the threshold_prob objective (case-level pickem_threshold overrides)",
+    )
+    replay_suite_parser.add_argument(
+        "--pairing",
+        default="legacy",
+        choices=["legacy", "buchholz"],
+        help="default Swiss pairing engine per replay case (case-level pickem_pairing overrides)",
+    )
+    replay_suite_parser.add_argument(
+        "--series-uplift",
+        action="store_true",
+        help="default BO3 series uplift per replay case (case-level series_uplift overrides)",
+    )
+    replay_suite_parser.add_argument(
+        "--leverage-strength",
+        type=float,
+        default=1.0,
+        help="default leveraged-objective exponent per replay case (case-level leverage_strength overrides)",
+    )
     replay_suite_parser.add_argument("--output", help="optional JSON output path")
     enrich_parser = subparsers.add_parser("enrich", help="build rolling training features from raw match CSV")
     enrich_parser.add_argument("--matches", required=True, help="raw chronological or unsorted match CSV")
@@ -250,6 +314,35 @@ def main() -> int:
     pipeline_parser.add_argument("--required-source", action="append", dest="required_sources", help="source name that must appear in the supplied source manifests")
     pipeline_parser.add_argument("--source-reference-time", help="ISO timestamp used to evaluate source freshness; defaults to current UTC")
     pipeline_parser.add_argument("--maximum-source-age-hours", type=int, help="maximum allowed age for each supplied source manifest; defaults to 24 when source manifests are supplied")
+    pipeline_parser.add_argument(
+        "--pickem-objective",
+        default="expected_hits",
+        choices=["expected_hits", "threshold_prob", "leveraged"],
+        help="Pick'em selection objective for the pipeline pickem stage (default expected_hits; behaviour unchanged)",
+    )
+    pipeline_parser.add_argument(
+        "--pickem-threshold",
+        type=int,
+        default=None,
+        help="K for the threshold_prob objective (default = total slot count)",
+    )
+    pipeline_parser.add_argument(
+        "--pickem-pairing",
+        default="legacy",
+        choices=["legacy", "buchholz"],
+        help="Swiss pairing engine for the pipeline pickem stage (default legacy; behaviour unchanged)",
+    )
+    pipeline_parser.add_argument(
+        "--pickem-series-uplift",
+        action="store_true",
+        help="elevate BO3 map probabilities to series win rates in the pipeline pickem stage (default off)",
+    )
+    pipeline_parser.add_argument(
+        "--pickem-leverage-strength",
+        type=float,
+        default=1.0,
+        help="contrarian exponent for the leveraged objective (default 1.0)",
+    )
     update_parser = subparsers.add_parser("update", help="parse cached/source HTML into a match JSON dataset")
     update_input = update_parser.add_mutually_exclusive_group(required=True)
     update_input.add_argument("--html", help="path to saved HLTV-like result HTML")
@@ -351,6 +444,12 @@ def main() -> int:
             market_weight=args.market_weight,
             probability_objective=args.probability_objective,
             elo_modes=_parse_str_list(args.elo_modes),
+            rating_modes=_parse_str_list(args.rating_modes),
+            inject_bt_modes=_parse_bool_list(args.inject_bt_modes),
+            calibration_method_modes=_parse_str_list(args.calibration_method_modes),
+            fusion_method_modes=_parse_str_list(args.fusion_method_modes),
+            model_weight_values=_parse_float_list(args.model_weight_values),
+            include_unverified_modes=_parse_bool_list(args.include_unverified_modes),
         )
         return _emit(report, args.output)
     if args.command == "simulate":
@@ -369,6 +468,11 @@ def main() -> int:
             stage=args.stage,
             max_age_days=args.max_age_days,
             fixtures_path=args.fixtures,
+            pickem_objective=args.objective,
+            pickem_threshold=args.threshold,
+            pickem_pairing=args.pairing,
+            series_uplift=args.series_uplift,
+            leverage_strength=args.leverage_strength,
         )
         return _emit(report, args.output)
     if args.command == "answer-sheet":
@@ -426,6 +530,11 @@ def main() -> int:
             top_k=args.top_k,
             epochs=args.epochs,
             max_age_days=args.max_age_days,
+            pickem_objective=args.objective,
+            pickem_threshold=args.threshold,
+            pickem_pairing=args.pairing,
+            series_uplift=args.series_uplift,
+            leverage_strength=args.leverage_strength,
         )
         return _emit(report, args.output)
     if args.command == "enrich":
@@ -553,6 +662,11 @@ def main() -> int:
             required_sources=args.required_sources,
             source_reference_time=args.source_reference_time,
             maximum_source_age_hours=args.maximum_source_age_hours,
+            pickem_objective=args.pickem_objective,
+            pickem_threshold=args.pickem_threshold,
+            pickem_pairing=args.pickem_pairing,
+            series_uplift=args.pickem_series_uplift,
+            leverage_strength=args.pickem_leverage_strength,
         )
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
@@ -706,6 +820,29 @@ def _parse_int_list(value: str) -> list[int]:
 
 def _parse_str_list(value: str) -> list[str]:
     return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def _parse_float_list(value: str) -> list[float]:
+    return [float(item.strip()) for item in str(value).split(",") if item.strip()]
+
+
+_TRUE_TOKENS = {"on", "true", "1", "yes", "with"}
+_FALSE_TOKENS = {"off", "false", "0", "no", "without"}
+
+
+def _parse_bool_list(value: str) -> list[bool]:
+    parsed: list[bool] = []
+    for item in str(value).split(","):
+        token = item.strip().lower()
+        if not token:
+            continue
+        if token in _TRUE_TOKENS:
+            parsed.append(True)
+        elif token in _FALSE_TOKENS:
+            parsed.append(False)
+        else:
+            raise ValueError(f"unknown boolean mode: {item!r}; expected one of on/off")
+    return parsed
 
 
 if __name__ == "__main__":

@@ -14,6 +14,74 @@ TEAM_SCOPED_FIELDS = {
     "team2_picks": "team1_picks",
 }
 
+# Structured BP feature keys exposed to FeatureBuilder. All are swap-invariant
+# (symmetric sums / order-invariant overlaps / match-level scalars) so they never
+# break the team1-minus-team2 antisymmetry of the feature matrix.
+BP_STRUCTURED_KEYS = (
+    "bp_applied",
+    "bp_confidence",
+    "bp_total_bans",
+    "bp_ban_overlap",
+    "bp_total_picks",
+)
+
+
+def bp_structured_features(row: Mapping[str, Any]) -> Dict[str, float]:
+    """Derive structured, swap-invariant ban/pick features from a (possibly BP-merged) row.
+
+    ``bp_applied`` gates the rest: when no intel was merged every derived field is 0.0 so
+    the majority of rows without BP stay neutral instead of injecting noise. All outputs are
+    symmetric under a team1<->team2 swap:
+
+    - ``bp_total_bans`` / ``bp_total_picks``: symmetric counts ``|t1| + |t2|`` (veto / pick
+      depth magnitude, conservative sum form, never a single-team absolute column).
+    - ``bp_ban_overlap``: size of the set intersection of both teams' bans (order-invariant)
+      -> contested veto / shared map-pool aversion signal.
+    - ``bp_confidence``: analyst confidence for the intel (match-level scalar).
+    """
+    applied = 1.0 if _truthy(row.get("bp_applied")) else 0.0
+    if not applied:
+        return {key: 0.0 for key in BP_STRUCTURED_KEYS}
+
+    team1_bans = _parse_map_list(row.get("team1_bans"))
+    team2_bans = _parse_map_list(row.get("team2_bans"))
+    team1_picks = _parse_map_list(row.get("team1_picks")) + _parse_map_list(row.get("team1_pick"))
+    team2_picks = _parse_map_list(row.get("team2_picks")) + _parse_map_list(row.get("team2_pick"))
+    return {
+        "bp_applied": 1.0,
+        "bp_confidence": _num(row.get("bp_confidence"), 0.0),
+        "bp_total_bans": float(len(team1_bans) + len(team2_bans)),
+        "bp_ban_overlap": float(len(set(team1_bans) & set(team2_bans))),
+        "bp_total_picks": float(len(team1_picks) + len(team2_picks)),
+    }
+
+
+def _parse_map_list(value: Any) -> List[str]:
+    """Parse a pipe/comma/semicolon-delimited map list into normalized names (order kept)."""
+    if value in (None, ""):
+        return []
+    raw = str(value)
+    for separator in (";", ","):
+        raw = raw.replace(separator, "|")
+    items = [_normalize_map(part) for part in raw.split("|")]
+    return [item for item in items if item and item not in {"unknown", "tbd", "none"}]
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value in (None, ""):
+        return False
+    text = str(value).strip().lower()
+    if text in {"0", "false", "no", "n", "none"}:
+        return False
+    if text in {"1", "true", "yes", "y"}:
+        return True
+    try:
+        return float(text) != 0.0
+    except (TypeError, ValueError):
+        return bool(text)
+
 
 def merge_bp_into_fixtures(
     fixture_rows: Iterable[Mapping[str, Any]],
