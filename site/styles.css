@@ -1331,3 +1331,56 @@ body.theme-arctic .atmosphere__glow--ember {
   .reveal { opacity: 1; transform: none; }
   .atmosphere__canvas { display: none; }
 }
+
+/* ===== PREDICT selector — majors.im interaction feel ===== */
+.predict-board.has-trace .predict-card:not(.is-traced) {
+  opacity: .3;
+  filter: saturate(.35);
+  transition: opacity .18s ease, filter .18s ease;
+}
+.predict-card.is-traced {
+  outline: 1px solid var(--team, #ff8a2e);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--team, #ff8a2e), 0 6px 24px rgba(0, 0, 0, .4);
+  transition: box-shadow .18s ease, outline-color .18s ease;
+}
+.predict-card.is-actionable { position: relative; }
+.predict-card.is-actionable::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(110, 231, 168, .28);
+  animation: predict-pulse 2.4s ease-in-out infinite;
+}
+@keyframes predict-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(110, 231, 168, .14); }
+  50% { box-shadow: 0 0 0 1px rgba(110, 231, 168, .5); }
+}
+.predict-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 16px);
+  max-width: min(92vw, 540px);
+  padding: 10px 16px;
+  background: rgba(10, 12, 16, .92);
+  border: 1px solid rgba(255, 138, 46, .4);
+  border-radius: 10px;
+  color: #f4f6f8;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.predict-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) {
+  .predict-card.is-actionable::after { animation: none; }
+  .predict-board.has-trace .predict-card:not(.is-traced),
+  .predict-card.is-traced,
+  .predict-toast { transition: none; }
+}
